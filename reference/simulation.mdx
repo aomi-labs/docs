@@ -1,0 +1,94 @@
+---
+title: Simulation Reference
+description: Technical deep-dive into Aomi's simulation-first transaction pipeline.
+---
+
+The simulation pipeline is the core safety mechanism of the Aomi platform. Every transaction is simulated on a forked network before it reaches the user's wallet.
+
+## Fork Management
+
+Simulation runs on Anvil forks — ephemeral instances of the network state that include pending state from the current session.
+
+### ForkProvider Types
+
+| Provider | Description |
+|----------|-------------|
+| `ForkProvider::Latest` | Fork from the latest block |
+| `ForkProvider::Block(number)` | Fork from a specific block |
+| `ForkProvider::Timestamp(ts)` | Fork from a block near the given timestamp |
+
+### Initialization
+
+```rust
+let fork = ForkProvider::new(Anvil::new()
+    .fork_url("https://eth-mainnet.g.alchemy.com/v2/...")
+    .fork_block_number(18_500_000)
+);
+```
+
+### Snapshots
+
+Snapshots allow reverting to a known state after simulation, enabling multiple simulations without recreating the fork.
+
+```rust
+let snapshot_id = fork.snapshot().await?;
+// run simulation
+fork.revert(snapshot_id).await?;
+// fork is now back to the snapshotted state
+```
+
+## SimulateContractCall Tool
+
+The primary tool for simulating contract interactions.
+
+```rust
+#[tool(name = "simulate_contract_call")]
+async fn simulate_contract_call(
+    contract: Address,
+    abi: String,
+    function: String,
+    args: Vec<Value>,
+) -> Result<SimulationResult, ToolError> {
+    // forks network, executes call, returns result
+}
+```
+
+### Simulation Result
+
+```rust
+struct SimulationResult {
+    success: bool,
+    return_data: Value,
+    gas_used: U256,
+    state_changes: Vec<StateChange>,
+    logs: Vec<Log>,
+}
+```
+
+## Batch Simulation
+
+Multiple transactions can be simulated in batch, returning results for each. The LLM can compare outcomes and choose the optimal path.
+
+## Wallet Approval Flow
+
+1. AI constructs transaction(s)
+2. Simulation runs on fork
+3. Results presented to user (token changes, gas, state diffs)
+4. User reviews and approves
+5. Transaction submitted to real network
+6. Wallet signs locally
+
+## Error Handling
+
+| Error | Cause | Recovery |
+|-------|-------|----------|
+| `SimulationFailed` | Contract reverted or invalid input | Fix parameters and retry |
+| `ForkCreationFailed` | RPC unavailable or rate limited | Retry with backoff |
+| `InsufficientBalance` | Not enough tokens for the operation | Notify user |
+| `Unauthorized` | Sender lacks permission | Verify wallet/approval |
+
+## Next Steps
+
+- [Non-Custodial Automation](/concepts/non-custodial-wallets) — wallet security model
+- [Account Abstraction](/reference/account-abstraction) — session keys and gas sponsorship
+- [Execution](/concepts/architecture) — transaction pipeline overview

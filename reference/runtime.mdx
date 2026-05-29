@@ -1,0 +1,73 @@
+---
+title: Runtime
+description: Architecture of the Aomi hosted runtime — session management, streaming, and event handling.
+---
+
+The Aomi runtime is the hosted execution environment that manages sessions, processes messages, and coordinates tool execution.
+
+## Session Manager
+
+The session manager handles the full session lifecycle:
+
+- **Create** — new conversation sessions with unique IDs
+- **Load** — three-tier loading: memory cache → database → create new
+- **Persist** — messages saved as the conversation progresses
+- **Cleanup** — background task removes stale sessions
+
+### Session Lifecycle
+
+```
+User Message → Session Manager → Message Processing → Tool Execution → Response Streaming
+                                                                    ↓
+                                                          State Persistence
+```
+
+## Reconstructor
+
+The reconstructor handles session reconciliation — restoring session state from persisted data when a user returns to an existing conversation.
+
+## History Backend
+
+Pluggable persistence layer for session history:
+
+- In-memory for development
+- Database-backed for production
+- Custom backends via the `HistoryBackend` trait
+
+## Background Tasks
+
+| Task | Frequency | Purpose |
+|------|-----------|---------|
+| Title generation | On session create | Auto-generate conversation titles |
+| Session cleanup | Periodic | Remove expired/stale sessions |
+
+## Streaming & Events
+
+Messages stream via Server-Sent Events (SSE). The runtime pushes events as they happen:
+
+```json
+event: text
+data: {"token": "The"}
+
+event: text  
+data: {"token": "current"}
+
+event: text
+data: {"token": "price"}
+```
+
+## App Isolation
+
+Each App runs in an isolated environment with its own tool registry, model configuration, and API key scope. No cross-App data sharing.
+
+## Performance
+
+- Sub-100ms message processing for cache hits
+- Concurrent session handling
+- Automatic scaling based on load
+
+## Next Steps
+
+- [API Reference](/reference/api-reference) — HTTP API documentation
+- [Sessions](/reference/sessions) — session management details
+- [Architecture](/concepts/architecture) — platform overview

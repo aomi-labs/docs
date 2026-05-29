@@ -1,0 +1,85 @@
+---
+title: Building Apps
+description: Construct and deploy AomiApps using the Rust SDK.
+---
+
+AomiApps are the deployment unit of the platform — each App bundles tools, preamble, model, and credentials into a single addressable endpoint.
+
+## CoreAppBuilder
+
+The `CoreAppBuilder` is the entry point for constructing an AomiApp.
+
+```rust
+use aomi_sdk::prelude::*;
+
+let app = CoreAppBuilder::new("mycoindex")
+    .add_tool(get_token_price)
+    .add_tool(execute_trade)
+    .add_tool(get_portfolio)
+    .with_preamble("You are the MyCoinDex trading agent...")
+    .with_model("claude-sonnet-4-20250514")
+    .with_docs_store(my_document_store)
+    .build();
+```
+
+## Tool Definitions
+
+Tools are defined using the `#[tool]` macro:
+
+```rust
+#[tool(
+    name = "execute_trade",
+    description = "Execute a trade on MyCoinDex"
+)]
+async fn execute_trade(
+    pair: String,
+    side: TradeSide,
+    amount: String,
+) -> Result<TradeResult, ToolError> {
+    // call your API
+}
+```
+
+## Preamble
+
+The system prompt that defines agent behavior. The preamble should clearly state:
+
+- What the agent does
+- What rules it follows
+- When to use each tool
+- Business logic constraints
+
+## Model Selection
+
+```rust
+.with_model("claude-sonnet-4-20250514")
+```
+
+Models can be changed at runtime without redeploying the App.
+
+## RAG Document Store
+
+```rust
+.with_docs_store(DocumentStore::new()
+    .add_document("faq.md")
+    .add_document("integration-guide.md")
+    .add_document("api-spec.md"))
+```
+
+## MCP Protocol Support
+
+Aomi supports the Model Context Protocol (MCP) for tool discovery and invocation. Tools can be defined as MCP servers and registered with the App.
+
+## Deployment
+
+```rust
+app.deploy("mycoindex").await?;
+```
+
+Deployment compiles the App, registers it with the runtime, and provisions a scoped API key. The App is immediately available at its dedicated endpoint.
+
+## Next Steps
+
+- [SDK Reference](/reference/sdk-api) — full SDK documentation
+- [Custom Tools](/guides/custom-tools) — detailed tool development
+- [API Reference](/reference/api-reference) — HTTP API documentation

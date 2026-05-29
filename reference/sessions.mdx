@@ -1,0 +1,61 @@
+---
+title: Sessions
+description: How chat sessions are created, managed, and persisted.
+---
+
+Sessions represent individual conversations between a user and an Aomi App. Each session maintains full message history, thread state, and wallet bindings.
+
+## Session Lifecycle
+
+### Three-Tier Load Strategy
+
+1. **Memory cache** — active sessions are held in memory for fast access
+2. **Database** — persisted sessions are loaded from the database
+3. **Create new** — if no existing session matches, a new one is created
+
+### Message Persistence Schema
+
+Messages are stored with:
+- Role (user, assistant, tool)
+- Content (text, tool calls, tool results)
+- Timestamps
+- Metadata (model used, tokens, latency)
+
+## Wallet Binding
+
+Each session can be bound to a wallet address, enabling the agent to transact on behalf of the user within that session.
+
+## Thread Management
+
+- **Create** — start a new thread within a session
+- **Switch** — between threads without losing context
+- **Rename** — auto-generated titles, editable by the user
+- **Delete** — remove threads and their history
+
+## Session State
+
+```json
+{
+  "session_id": "sess_xyz789",
+  "app": "mycoindex",
+  "model": "claude-sonnet-4-20250514",
+  "wallet": "0x...",
+  "messages": [...],
+  "created_at": "2024-01-01T00:00:00Z",
+  "updated_at": "2024-01-01T00:05:00Z"
+}
+```
+
+## Real-Time Updates
+
+Session state updates are pushed via SSE (`/api/sessions/:id/events`) for real-time UI synchronization.
+
+## Backend API
+
+See the [API Reference](/reference/api-reference) for session-related endpoints.
+
+## Next Steps
+
+- [API Reference](/reference/api-reference) — HTTP endpoint documentation
+- [Runtime](/reference/runtime) — runtime architecture
+- [Integration Guide](/guides/integration) — full platform walkthrough

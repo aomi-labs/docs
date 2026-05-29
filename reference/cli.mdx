@@ -1,0 +1,99 @@
+---
+title: CLI Reference
+description: Complete reference for the @aomi-labs/client CLI.
+---
+
+The Aomi CLI provides command-line access to all platform features.
+
+## Installation
+
+```bash
+npm install -g @aomi-labs/client
+```
+
+## Commands
+
+### `chat`
+
+Start an interactive chat session.
+
+```bash
+aomi chat [--app <app>] [--model <model>] [--key <api-key>]
+```
+
+### `app`
+
+Manage Aomi Apps.
+
+```bash
+aomi app list
+aomi app switch <app-name>
+aomi app info <app-name>
+```
+
+### `model`
+
+Switch AI models.
+
+```bash
+aomi model list
+aomi model set <model-name>
+```
+
+### `chain`
+
+Select blockchain network.
+
+```bash
+aomi chain list
+aomi chain set <chain-id>
+```
+
+### `secret`
+
+Manage secrets and API keys.
+
+```bash
+aomi secret set <key> <value>
+aomi secret list
+aomi secret remove <key>
+```
+
+### `session`
+
+View and manage sessions.
+
+```bash
+aomi session list
+aomi session show <id>
+aomi session delete <id>
+```
+
+### `sign`
+
+Sign transactions.
+
+```bash
+aomi sign <tx-data>
+```
+
+## Options
+
+| Flag | Description |
+|------|-------------|
+| `--app, -a` | Target Aomi App |
+| `--model, -m` | AI model to use |
+| `--key, -k` | API key for authentication |
+| `--chain, -c` | Blockchain network |
+| `--help, -h` | Show help |
+| `--version, -v` | Show version |
+
+## Session State
+
+Session data is stored under `~/.aomi/` as JSON files. Each file represents a conversation session with full message history.
+
+## Next Steps
+
+- [CLI Usage](/guides/cli-usage) — CLI usage guide for development
+- [Integration Guide](/guides/integration) — full platform walkthrough
+- [Evals & Testing](/guides/evals-testing) — test assistant behavior

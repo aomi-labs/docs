@@ -1,0 +1,100 @@
+---
+title: SDK
+description: Complete Rust SDK reference for building agentic applications on Aomi.
+---
+
+The Aomi Rust SDK provides the core interface for building agentic applications — defining tools, configuring behavior, and managing conversations.
+
+## ChatAppBuilder
+
+The `ChatAppBuilder` is the entry point for creating an Aomi agent.
+
+### Constructor
+
+```rust
+ChatAppBuilder::new(name: &str) -> ChatAppBuilder
+```
+
+### Builder Methods
+
+| Method | Description |
+|--------|-------------|
+| `add_tool(tool)` | Register a callable tool |
+| `add_docs_tool(store)` | Add a RAG document store as a tool |
+| `build()` | Compile and return the ChatApp |
+
+## ChatApp
+
+The compiled agent runtime.
+
+| Method | Description |
+|--------|-------------|
+| `process_message(msg)` | Process a user message synchronously |
+| `stream_completion(msg)` | Process a message with streaming response |
+
+### Streaming
+
+```rust
+let mut stream = app.stream_completion(user_message).await;
+while let Some(event) = stream.next().await {
+    match event {
+        StreamEvent::Text(token) => print!("{}", token),
+        StreamEvent::ToolCall(tool) => handle_tool(tool),
+        StreamEvent::ToolResult(result) => handle_result(result),
+        StreamEvent::Done => break,
+    }
+}
+```
+
+### ChatCommand Variants
+
+Commands that the agent can emit during a conversation:
+
+| Command | Description |
+|---------|-------------|
+| `SendMessage(text)` | Send a text response |
+| `CallTool(name, args)` | Invoke a registered tool |
+| `ExecuteTransaction(tx)` | Execute an on-chain transaction |
+| `RequestApproval(action)` | Request user approval |
+
+## SystemEventQueue
+
+An event bus for system-level events — session created, message received, tool called, transaction simulated, error occurred. Subscribe to relevant events for monitoring and logging.
+
+## Custom Tools
+
+Define tools using either the `#[tool]` attribute macro or by implementing the `Tool` trait directly.
+
+### Macro-based
+
+```rust
+#[tool(name = "get_price", description = "Get token price")]
+async fn get_price(symbol: String) -> Result<f64, ToolError> {
+    // implementation
+}
+```
+
+### Trait-based
+
+```rust
+struct GetPriceTool;
+
+#[async_trait]
+impl Tool for GetPriceTool {
+    fn name(&self) -> &str { "get_price" }
+    fn description(&self) -> &str { "Get token price" }
+    async fn call(&self, args: Value) -> Result<Value, ToolError> {
+        // implementation
+    }
+}
+```
+
+## ToolScheduler
+
+Manages tool execution — parallel for independent tools, sequential for dependent ones, with automatic retry on transient failures.
+
+## Next Steps
+
+- [Building Apps](/reference/building-apps) — complete app deployment guide
+- [Custom Tools](/guides/custom-tools) — detailed tool development
+- [API Reference](/reference/api-reference) — HTTP API documentation

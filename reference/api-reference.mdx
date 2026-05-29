@@ -1,0 +1,164 @@
+---
+title: API Reference
+description: Complete HTTP API reference for the Aomi backend.
+---
+
+## Base URL
+
+All API endpoints are relative to your Aomi backend URL. Default: `https://api.aomi.dev`
+
+## Authentication
+
+Pass your API key via the `X-API-Key` header. Keys are scoped to specific Apps.
+
+| Status | Meaning |
+|--------|---------|
+| `401` | No API key provided |
+| `403` | Key does not authorize this App |
+
+## Endpoints
+
+### Create Session
+
+```
+POST /api/sessions
+```
+
+Creates a new chat session.
+
+**Request:**
+```json
+{
+  "app": "mycoindex",
+  "user_id": "user_abc123",
+  "metadata": {}
+}
+```
+
+**Response:**
+```json
+{
+  "session_id": "sess_xyz789",
+  "created_at": "2024-01-01T00:00:00Z"
+}
+```
+
+### Get Session
+
+```
+GET /api/sessions/:id
+```
+
+Returns session state and message history.
+
+### Send Message
+
+```
+POST /api/chat
+```
+
+Sends a message and streams the response via SSE.
+
+**Request:**
+```json
+{
+  "session_id": "sess_xyz789",
+  "message": "Swap 1 ETH for USDC",
+  "app": "mycoindex"
+}
+```
+
+**SSE Events:**
+```
+event: text
+data: {"token": "I'll"}
+
+event: text
+data: {"token": "simulate"}
+
+event: tool_call
+data: {"tool": "simulate_contract_call", "args": {...}}
+
+event: tool_result
+data: {"tool": "simulate_contract_call", "result": {...}}
+
+event: done
+```
+
+### Get Session State
+
+```
+GET /api/sessions/:id/state
+```
+
+Returns the current session state including pending tool calls, transaction status, and conversation context.
+
+### Interrupt Generation
+
+```
+POST /api/sessions/:id/interrupt
+```
+
+Stops the current generation.
+
+### Subscribe to Updates
+
+```
+GET /api/sessions/:id/events
+```
+
+SSE endpoint for real-time session updates.
+
+### Control Actions
+
+```
+POST /api/control
+```
+
+Update control state (model, app, network).
+
+```json
+{
+  "session_id": "sess_xyz789",
+  "model": "claude-sonnet-4-20250514",
+  "app": "research"
+}
+```
+
+### List Models
+
+```
+GET /api/models
+```
+
+Returns available AI models.
+
+### List Apps
+
+```
+GET /api/apps
+```
+
+Returns available Aomi Apps for the authenticated key.
+
+## Error Handling
+
+All errors return a JSON body:
+
+```json
+{
+  "error": "simulation_failed",
+  "message": "Contract reverted: insufficient output amount",
+  "details": {}
+}
+```
+
+## Rate Limits
+
+Rate limits apply per API key. Contact us for higher limits.
+
+## Next Steps
+
+- [Sessions](/reference/sessions) — session management details
+- [Runtime](/reference/runtime) — runtime architecture
+- [SDK Reference](/reference/sdk-api) — Rust SDK documentation
