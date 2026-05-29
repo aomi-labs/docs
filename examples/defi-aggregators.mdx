@@ -1,0 +1,44 @@
+---
+title: DeFi Aggregators
+description: Cross-chain swaps, liquidity, and yield across DeFi protocols.
+---
+
+Aomi integrates DeFi data and trading through multiple API surfaces — **DefiLlama** for market intelligence (prices, yields, TVL, bridges), **0x** and **LI.FI** for on-chain swap execution, and **CoW Protocol** for intent-based batch settlement. Aomi wraps each of these as tools so your AI assistant can look up prices, compare routes, and execute trades through the connected wallet.
+
+## Available Tools
+
+| Tool | Description | Source |
+|------|-------------|--------|
+| `GetTokenPrice` | Current price for any token | DefiLlama |
+| `SearchYieldPools` | Find highest-yield pools by protocol/chain | DefiLlama |
+| `GetProtocolTVL` | Total value locked for a protocol | DefiLlama |
+| `GetBridgeData` | Cross-chain bridge routes and fees | DefiLlama |
+| `GetSwapQuote` | Best swap route across aggregators | 0x / LI.FI |
+| `ExecuteSwap` | Execute a swap transaction | 0x / LI.FI |
+| `GetBatchAuction` | CoW Protocol batch auction prices | CoW Protocol |
+
+## Example Conversations
+
+**Market intelligence:**
+> "What's the current price of ETH?"
+> "Show me the top 10 yield pools on Arbitrum"
+> "What's the TVL of Uniswap v3?"
+
+**Swaps:**
+> "Swap 0.5 ETH for USDC on the cheapest route"
+> "Compare quotes for swapping 10k USDC to DAI across 0x and LI.FI"
+> "Bridge 5 ETH from Ethereum to Arbitrum"
+
+## How It Works
+
+1. User asks for a price, yield, or swap
+2. The assistant queries the relevant DeFi API
+3. For swaps: routes are compared across aggregators
+4. Best route is simulated before execution
+5. User reviews and signs in their wallet
+
+## Next Steps
+
+- [Polymarket](/examples/polymarket) — prediction market integration
+- [X APIs](/examples/x-apis) — social data integration
+- [Integration Guide](/guides/integration) — build your own integration

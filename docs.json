@@ -47,6 +47,16 @@
         ]
       },
       {
+        "group": "Examples",
+        "pages": [
+          "examples/index",
+          "examples/polymarket",
+          "examples/defi-aggregators",
+          "examples/x-apis",
+          "examples/metamask"
+        ]
+      },
+      {
         "group": "Reference",
         "pages": [
           "reference/sdk-api",

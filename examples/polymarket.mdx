@@ -1,0 +1,42 @@
+---
+title: Polymarket
+description: Prediction market integration — search markets, browse trades, and place orders.
+---
+
+Polymarket exposes three public API surfaces — **Gamma** for market metadata, **Data API** for trade history, and **CLOB** for order book and order submission. Aomi wraps these as tools so your AI assistant can search markets, resolve user intent, and execute trades through the connected wallet.
+
+## Available Tools
+
+| Tool | Description | Source API |
+|------|-------------|------------|
+| `SearchMarkets` | Search prediction markets by keyword | Gamma |
+| `GetMarketDetails` | Get market metadata, volume, liquidity | Gamma |
+| `GetTradeHistory` | Browse recent trades for a market | Data API |
+| `GetOrderBook` | View open orders and depth | CLOB API |
+| `PlaceOrder` | Submit a buy/sell order | CLOB API |
+| `GetPortfolio` | View your open positions and P&L | Gamma |
+
+## Example Conversations
+
+**Market research:**
+> "What are the hottest prediction markets right now?"
+> "Show me the order book for 'BTC > $100k by June'"
+> "What's the volume and liquidity on that market?"
+
+**Trading:**
+> "Buy 100 shares of 'ETH > $4k by July' at the current ask"
+> "What are my open positions?"
+> "Place a limit order on 'Fed cuts rates in June' at 60¢"
+
+## How It Works
+
+1. User asks a question about prediction markets
+2. The Aomi assistant calls the appropriate Polymarket API tools
+3. For trades, the transaction is simulated before execution
+4. User reviews and signs the transaction in their wallet
+
+## Next Steps
+
+- [DeFi Aggregators](/examples/defi-aggregators) — cross-chain swaps and liquidity
+- [X APIs](/examples/x-apis) — social data integration
+- [Integration Guide](/guides/integration) — build your own integration
