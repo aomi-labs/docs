@@ -120,25 +120,16 @@
         "href": "https://chat.aomi.dev"
       },
       {
-        "group": "Repositories",
-        "pages": [
-          {
-            "label": "aomi (widget + backend)",
-            "href": "https://github.com/aomi-labs/aomi"
-          },
-          {
-            "label": "aomi-sdk (Rust SDK)",
-            "href": "https://github.com/aomi-labs/aomi-sdk"
-          },
-          {
-            "label": "aomi-client-example",
-            "href": "https://github.com/aomi-labs/aomi-client-example"
-          },
-          {
-            "label": "skills (definitions)",
-            "href": "https://github.com/aomi-labs/skills"
-          }
-        ]
+        "label": "aomi (widget + backend)",
+        "href": "https://github.com/aomi-labs/aomi"
+      },
+      {
+        "label": "aomi-sdk (Rust SDK)",
+        "href": "https://github.com/aomi-labs/aomi-sdk"
+      },
+      {
+        "label": "skills (definitions)",
+        "href": "https://github.com/aomi-labs/skills"
       }
     ],
     "primary": {
