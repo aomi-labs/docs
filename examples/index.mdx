@@ -1,26 +1,42 @@
 ---
-title: Example integrations overview
-description: Production Aomi integrations built on public APIs — Polymarket prediction markets, DeFi aggregators, X (Twitter) social data, and embedded wallet experiences.
+title: "Example integrations overview"
+description: "Production Aomi integrations built on public APIs — Polymarket prediction markets, DeFi aggregators, X (Twitter) social data, and embedded wallet experiences."
 ---
 
-These examples demonstrate how Aomi integrates with real-world platforms to build agentic applications. Each platform featured here offers public, free APIs — which makes them ideal candidates for showcasing the full integration pipeline: wrapping endpoints as AI tools, configuring an Aomi App with a preamble and model, and deploying it as a live agent.
+Each example below shows the full integration pipeline: wrapping endpoints as AI tools, configuring an App with a preamble and model, and deploying it as a live agent. The patterns transfer directly to your own product.
 
-The purpose is not to endorse any specific platform, but to show how any product with accessible APIs can become an Aomi-powered agentic application. The patterns here — tool design, preamble structure, app configuration — apply directly to your own integration.
+## Platform integrations
 
-## Platform Applications
+<CardGroup cols={2}>
+  <Card title="Polymarket" icon="chart-line" href="/examples/polymarket">
+    Prediction market data and on-chain trading via Polymarket's public API.
+  </Card>
 
-These are production integrations built on public APIs:
+  <Card title="DeFi Aggregators" icon="arrow-right-arrow-left" href="/examples/defi-aggregators">
+    Cross-chain swaps, liquidity, and yield across DeFi protocols.
+  </Card>
 
-- [Polymarket](/examples/polymarket) — prediction market data and on-chain trading via Polymarket's public API
-- [DeFi Aggregators](/examples/defi-aggregators) — cross-chain swaps, liquidity, and yield across DeFi protocols
-- [X APIs](/examples/x-apis) — social data and sentiment as AI-accessible context
+  <Card title="X APIs" icon="hashtag" href="/examples/x-apis">
+    Social data and sentiment as AI-accessible context.
+  </Card>
 
-## Custom Integrations
+  <Card title="MetaMask" icon="wallet" href="/examples/metamask">
+    Embedding Aomi chat within wallets and wallet extensions.
+  </Card>
+</CardGroup>
 
-- [MetaMask](/examples/metamask) — embedding Aomi chat within wallets
+## Build your own
 
-## Next Steps
+<CardGroup cols={2}>
+  <Card title="Integration Guide" icon="plug" href="/guides/integration">
+    Full-stack walkthrough — APIs to a deployed Aomi App.
+  </Card>
 
-- [Integration Guide](/guides/integration) — full platform walkthrough
-- [Custom Tools](/guides/custom-tools) — extend Aomi with your own tools
-- [Quickstart](/getting-started/quickstart) — get started in minutes
+  <Card title="Custom Tools" icon="wrench" href="/guides/custom-tools">
+    Extend Aomi with your own typed tools.
+  </Card>
+
+  <Card title="Quickstart" icon="rocket" href="/getting-started/quickstart">
+    Get a chat widget running in minutes.
+  </Card>
+</CardGroup>

@@ -1,52 +1,125 @@
 ---
-title: CLI Usage
-description: Use the Aomi CLI during integration to validate system prompts, inspect chat sessions, simulate transaction execution, and debug tool calls locally.
+title: "CLI Usage"
+description: "Use the Aomi CLI during integration to validate system prompts, inspect chat sessions, simulate transaction execution, and debug tool calls locally."
 ---
 
-The Aomi CLI helps you validate prompts, inspect sessions, and simulate execution during integration development.
+Use the Aomi CLI to test your Apps without spinning up a frontend. This page is a task-driven tour; for full command syntax see the [CLI Reference](/reference/cli).
 
-## Installation
+## Install
 
 ```bash
 npm install -g @aomi-labs/client
-```
-
-## Quick Start
-
-Verify the installation:
-
-```bash
 aomi --help
 ```
 
-Start an interactive chat session:
+Set your API key once:
 
 ```bash
+aomi secret set api-key sk-your-key
+```
+
+## Task: Chat with your App locally
+
+Use this to sanity-check a preamble or new tool before deploying.
+
+<Steps>
+  <Step title="Select your App">
+    ```bash
+    aomi app use mycoindex
+    ```
+  </Step>
+  <Step title="Start a chat session">
+    ```bash
+    aomi chat
+    ```
+
+    Send messages, watch tool calls inline, and exit with `Ctrl+D`.
+  </Step>
+  <Step title="Re-open the session later">
+    ```bash
+    aomi session list
+    aomi chat --session <id>
+    ```
+  </Step>
+</Steps>
+
+## Task: Validate a preamble change
+
+Iterate on your system prompt without redeploying.
+
+```bash
+# Point at a local preamble file
+aomi app use mycoindex --preamble ./preambles/mycoindex.txt
 aomi chat
 ```
 
-## Core Commands
+Tweak the file, restart `aomi chat`, and the new preamble loads on the next message.
 
-| Command | Description |
-|---------|-------------|
-| `chat` | Start an interactive chat session |
-| `app` | Manage Aomi Apps |
-| `model` | Switch AI models |
-| `chain` | Select blockchain network |
-| `secret` | Manage secrets and API keys |
-| `session` | View and manage sessions |
-| `sign` | Sign transactions |
+## Task: Switch models mid-session
 
-## Secrets Ingestion
+Compare how different models handle the same prompt.
 
-The CLI supports loading secrets from environment variables or config files for secure API key management.
+```bash
+aomi model list
+aomi model use claude-sonnet
+# in chat: /model gpt-4o
+```
 
-## Transaction Flow
+The `/model` slash-command switches models inside an active chat session.
 
-The CLI follows the same simulation-first flow as the widget: construct, simulate, review, sign, execute. Session state is stored under `~/.aomi/`.
+## Task: Simulate a transaction
 
-## Next Steps
+Test on-chain actions against a forked network — no real funds at risk.
 
-- [CLI Reference](/reference/cli) — full CLI command reference
-- [Integration Guide](/guides/integration) — full platform walkthrough
-- [Evals & Testing](/guides/evals-testing) — test assistant behavior
+<Steps>
+  <Step title="Pick the chain">
+    ```bash
+    aomi chain use base
+    ```
+  </Step>
+  <Step title="Run a chat that triggers a transaction">
+    ```bash
+    aomi chat
+    > swap 100 USDC for ETH on Uniswap
+    ```
+
+    The CLI prints the simulation diff (balance changes, gas, contract calls).
+  </Step>
+  <Step title="Approve or reject">
+    Type `y` to sign locally via `aomi sign`, or `n` to drop the transaction.
+  </Step>
+</Steps>
+
+## Task: Debug a tool call
+
+When the model isn't calling a tool you expect:
+
+```bash
+aomi chat --verbose
+```
+
+Verbose mode prints the tools the model considered, the parameters it sent, and the raw response. Use it to spot ambiguous descriptions or missing parameters.
+
+## Task: Inspect or replay a session
+
+```bash
+aomi session list
+aomi session show <id>     # full transcript including tool calls
+aomi session replay <id>   # re-run against current App config
+```
+
+Replay is useful after a preamble or tool change — compare old vs. new behavior on the same inputs.
+
+## Where things live
+
+| What | Where |
+| --- | --- |
+| Session state | `~/.aomi/sessions/` |
+| Secrets | `~/.aomi/secrets.json` (encrypted) |
+| Config | `~/.aomi/config.yaml` |
+
+## Next steps
+
+- [CLI Reference](/reference/cli) — full command syntax and flags
+- [Evals & Testing](/guides/evals-testing) — automate behavioral tests
+- [Integration Guide](/guides/integration) — the full platform pipeline

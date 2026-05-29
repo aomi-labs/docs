@@ -1,54 +1,146 @@
 ---
-title: FAQ
-description: Frequently asked questions about Aomi — what tool calls are, wallet safety and custody, simulation, supported models, channels, and how to start integrating.
+title: "FAQ"
+description: "Frequently asked questions about Aomi — what tool calls are, wallet safety and custody, simulation, supported models, channels, and how to start integrating."
 ---
 
-## General
+## Getting started
+
+### What is Aomi?
+
+Aomi is a hosted runtime that turns your APIs into AI-callable tools and ships them as an embeddable chat experience — with simulation-first on-chain transactions and non-custodial wallets built in. See [What is Aomi?](/concepts/what-is-aomi) for more.
+
+### Who is Aomi for?
+
+Teams building agentic AI on top of blockchain APIs — DeFi protocols, exchanges, prediction markets, wallets, analytics tools. Anyone with a REST API and a need for a chat interface that can read on-chain state and propose transactions.
+
+### How do I get started?
+
+Run the [Quickstart](/getting-started/quickstart) to install the widget into a Next.js app in one command, or read the [Integration Guide](/guides/integration) for the full pipeline.
+
+### Do I need a backend?
+
+You need the APIs you want exposed as tools. The Aomi runtime is hosted — you don't run LLMs, the simulation pipeline, or session storage yourself.
+
+### Can I try Aomi without writing code?
+
+Yes — use the [Web App](https://chat.aomi.dev) or the [Telegram bot](https://t.me/aomi_sendit_bot) with the default App, no API key required.
+
+## Apps & tools
+
+### What is an Aomi App?
+
+An App is an isolated agent environment — its tools, system prompt (preamble), model, and API key. Switching Apps changes the agent's full capability surface. See [Apps & Authentication](/reference/apps-auth).
 
 ### What is a tool call?
 
-A tool call is the AI invoking one of your registered APIs or on-chain actions. When the assistant determines it needs data or needs to perform an action, it calls the appropriate tool, processes the result, and responds naturally.
+A tool call is the AI invoking one of your registered APIs or on-chain actions. When the assistant determines it needs data or to perform an action, it calls the appropriate tool, processes the result, and responds naturally.
 
-### Is my wallet safe?
+### Can multiple tools run at once?
 
-Yes. Aomi never holds your private keys or funds. Every transaction is simulated on a forked network before it reaches your wallet. You review the exact outcome — token changes, gas costs, contract calls — before signing.
+Yes. Tools can execute concurrently when the model issues parallel calls.
 
-### Can I use Aomi without a wallet?
+### How do I add custom tools?
 
-Yes. Many operations — checking prices, reading data, asking questions — do not require a wallet. Wallet connection is only needed for on-chain transactions.
+Use the Rust SDK to define a tool that wraps your API. See [Custom Tools](/guides/custom-tools).
+
+### Can I use my existing OpenAPI / REST endpoints?
+
+Yes — that's the intended path. Wrap each endpoint as a tool. A one-to-one mapping isn't required; you can group multiple endpoints into a single tool for cleaner LLM context.
 
 ## Models
 
 ### What AI models are available?
 
-Aomi supports Claude (Anthropic), GPT-4o (OpenAI), and 100+ models via OpenRouter. Switch between them at runtime without redeploying.
+Claude (Anthropic), GPT-4o (OpenAI), and 100\+ models via OpenRouter. Switch at runtime without redeploying.
 
 ### How do I change models?
 
-Use the model selector in the control bar (web app, widget) or the `/model` command (Telegram).
+Use the model selector in the ControlBar (widget, web app) or the `/model` command (Telegram).
 
-## Sessions
+### Can I use my own LLM API key?
+
+The hosted runtime uses Aomi-managed LLM credentials. For self-hosted deployments or BYO-key arrangements, [contact us](https://aomi.dev/contact).
+
+## Wallets & transactions
+
+### Is my wallet safe?
+
+Yes. Aomi never holds private keys or funds. Every transaction is simulated on a forked network before it reaches your wallet. You review token changes, gas, and contract calls before signing.
+
+### Can I use Aomi without a wallet?
+
+Yes. Reads, price checks, and most queries don't need a wallet. Wallet connection is only required for on-chain transactions.
+
+### What wallets are supported?
+
+Para handles connect and account management; signing flows through wagmi-compatible connectors (MetaMask, WalletConnect, Coinbase Wallet, and others).
+
+### What is simulation-first execution?
+
+Before any transaction reaches your wallet, Aomi forks the current network state with Anvil and simulates the transaction. You see the exact outcome before approving. See [Simulation Reference](/reference/simulation).
+
+### What chains are supported?
+
+Ethereum, Base, Arbitrum, and any EVM chain you configure. See the [Architecture page](/concepts/architecture) for setup.
+
+### What about gas sponsorship and session keys?
+
+Supported via [Account Abstraction](/reference/account-abstraction) — smoother UX without custody changes.
+
+## Sessions & threads
 
 ### How do threads work?
 
-Threads organize conversations into separate sessions. Each thread maintains its own history, context, and wallet binding. Create, switch, rename, and delete threads from the sidebar.
+Threads organize conversations into separate sessions. Each maintains its own history, context, and wallet binding. Create, switch, rename, and delete them from the sidebar.
 
 ### Why did the assistant refuse my request?
 
-The assistant operates within the constraints of the active App. If the App's preamble restricts certain actions or the required tools are not available, the assistant will refuse. Switch to a different App if you need different capabilities.
+The assistant operates inside the active App's constraints. If the preamble restricts certain actions, or the required tools aren't available in the App, it refuses. Switch Apps if you need different capabilities.
+
+### How long are sessions retained?
+
+Session and thread history is persisted per the runtime's configuration. See [Sessions Reference](/reference/sessions).
+
+## Integration & deployment
+
+### Should I use the widget or the headless library?
+
+Widget: fastest path, full chat UI, edit copied source files. Headless: full control over UI, build with `@aomi-labs/react` hooks. See [Frontend Setup](/guides/frontend-setup) for the comparison.
+
+### Can I embed Aomi inside another app (MetaMask, mobile, etc.)?
+
+Yes — see the [MetaMask example](/examples/metamask) for one pattern.
+
+### Does Aomi work in non-React frontends?
+
+The runtime API is plain HTTP \+ SSE, so any frontend can talk to it. The `@aomi-labs/react` hooks are React-only; for other frameworks, use the API directly.
+
+## Pricing & access
+
+### How much does Aomi cost?
+
+Pricing varies by usage and App configuration. [Contact us](https://aomi.dev/contact) for a quote.
+
+### How do I get an API key?
+
+[Contact us](https://aomi.dev/contact) or use the default App in the [Web App](https://chat.aomi.dev) and [Telegram bot](https://t.me/aomi_sendit_bot) for testing.
 
 ## Troubleshooting
 
 ### How do I report a problem?
 
-Reach out through the [Telegram bot](https://t.me/aomi_sendit_bot) or contact us at [aomi.dev/contact](https://aomi.dev/contact).
+Reach out through the [Telegram bot](https://t.me/aomi_sendit_bot) or [aomi.dev/contact](https://aomi.dev/contact).
 
 ### What data does the assistant have access to?
 
-The assistant has access to the tools and data sources configured in the active App. It cannot access data outside its App's scope. Conversation history is retained per session for context.
+Only the tools and data sources configured in the active App. It cannot access data outside the App's scope. Conversation history is retained per session for context.
 
-## Next Steps
+### My tool isn't being called — what's wrong?
+
+Common causes: the tool isn't registered in the active App, the description is unclear, or required parameters aren't typed. See [Troubleshooting](/guides/troubleshooting).
+
+## Next steps
 
 - [Quickstart](/getting-started/quickstart) — get started in minutes
-- [Troubleshooting](/guides/troubleshooting) — common issues and solutions
+- [Troubleshooting](/guides/troubleshooting) — common issues
 - [Changelog](/resources/changelog) — platform updates

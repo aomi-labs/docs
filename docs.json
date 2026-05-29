@@ -146,5 +146,18 @@
       "github": "https://github.com/aomi-labs",
       "telegram": "https://t.me/aomi_sendit_bot"
     }
+  },
+  "seo": {
+    "metatags": {
+      "og:site_name": "Aomi",
+      "og:type": "website",
+      "og:locale": "en_US",
+      "twitter:site": "@aomi",
+      "twitter:creator": "@aomi",
+      "twitter:card": "summary_large_image",
+      "author": "aomi labs",
+      "keywords": "aomi, agentic AI, blockchain, AI agents, non-custodial wallets, on-chain AI, AI tools, web3 chat, AI assistant, Anvil simulation"
+    },
+    "indexing": "navigable"
   }
 }
