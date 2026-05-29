@@ -1,4 +1,4 @@
-# Aomi Docs
+# Aomi Officical Documentation
 
 Documentation for [Aomi](https://aomi.dev) — the blockchain harness for agentic AI.
 
