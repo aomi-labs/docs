@@ -129,6 +129,13 @@ Additional AA flags:
 | `--aa-provider alchemy\|pimlico` | AA provider selection |
 | `--aa-mode 4337\|7702` | AA mode selection |
 
+You can further constrain AA execution:
+
+| Flag | Description |
+| --- | --- |
+| `--aa-provider alchemy\|pimlico` | AA provider selection |
+| `--aa-mode 4337\|7702` | AA mode selection |
+
 ## Options
 
 | Flag | Env | Description |
@@ -157,6 +164,39 @@ The CLI stores session files under `~/.aomi/`:
 - `secretHandles` — ingested secret handles for the session
 - `pendingTxs` — unsigned wallet requests
 - `signedTxs` — completed transactions
+
+```mermaid
+flowchart LR
+    USER["Terminal user"] --> CLI["aomi CLI"]
+    CLI --> STATE["~/.aomi session state"]
+    CLI --> API["Aomi backend API"]
+    STATE --> SID["sessionId"]
+    STATE --> CID["clientId"]
+    STATE --> SH["secretHandles"]
+    STATE --> TXS["pendingTxs / signedTxs"]
+    CID --> API
+    SH --> API
+```
+
+## Examples
+
+```bash
+# Start a session
+aomi chat "hello"
+
+# Switch models
+aomi model set gpt-5
+
+# Inject a secret, then use it immediately
+aomi --secret ALCHEMY_API_KEY=sk_live_123 chat "simulate a swap on Base"
+
+# Review local session state
+aomi status
+aomi log
+
+# Close the active local session pointer
+aomi close
+```
 
 ## Next Steps
 
