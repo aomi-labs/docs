@@ -1,0 +1,54 @@
+---
+title: FAQ
+description: Frequently asked questions about using Aomi.
+---
+
+## General
+
+### What is a tool call?
+
+A tool call is the AI invoking one of your registered APIs or on-chain actions. When the assistant determines it needs data or needs to perform an action, it calls the appropriate tool, processes the result, and responds naturally.
+
+### Is my wallet safe?
+
+Yes. Aomi never holds your private keys or funds. Every transaction is simulated on a forked network before it reaches your wallet. You review the exact outcome — token changes, gas costs, contract calls — before signing.
+
+### Can I use Aomi without a wallet?
+
+Yes. Many operations — checking prices, reading data, asking questions — do not require a wallet. Wallet connection is only needed for on-chain transactions.
+
+## Models
+
+### What AI models are available?
+
+Aomi supports Claude (Anthropic), GPT-4o (OpenAI), and 100+ models via OpenRouter. Switch between them at runtime without redeploying.
+
+### How do I change models?
+
+Use the model selector in the control bar (web app, widget) or the `/model` command (Telegram).
+
+## Sessions
+
+### How do threads work?
+
+Threads organize conversations into separate sessions. Each thread maintains its own history, context, and wallet binding. Create, switch, rename, and delete threads from the sidebar.
+
+### Why did the assistant refuse my request?
+
+The assistant operates within the constraints of the active App. If the App's preamble restricts certain actions or the required tools are not available, the assistant will refuse. Switch to a different App if you need different capabilities.
+
+## Troubleshooting
+
+### How do I report a problem?
+
+Reach out through the [Telegram bot](https://t.me/aomi_sendit_bot) or contact us at [aomi.dev/contact](https://aomi.dev/contact).
+
+### What data does the assistant have access to?
+
+The assistant has access to the tools and data sources configured in the active App. It cannot access data outside its App's scope. Conversation history is retained per session for context.
+
+## Next Steps
+
+- [Quickstart](/getting-started/quickstart) — get started in minutes
+- [Troubleshooting](/guides/troubleshooting) — common issues and solutions
+- [Changelog](/resources/changelog) — platform updates
