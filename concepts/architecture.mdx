@@ -3,26 +3,28 @@ title: Architecture
 description: Aomi platform architecture — how the runtime, transaction pipeline, and integration paths work together.
 ---
 
-<img src="/images/architecture-overview.png" alt="Architecture Overview" style={{maxWidth: "70%"}} />
+![Architecture Overview](/images/architecture-overview.png)
 
 ## Platform Overview
 
-Aomi is a hosted runtime that wraps your APIs as AI-callable tools and makes them available through chat interfaces. Every Aomi App ships with performant on-chain transactions by default — simulation-first execution, non-custodial wallet integration, and real-time streaming.
+Aomi is the blockchain harness for agentic AI. Every Aomi App ships with performant on-chain transactions by default — simulation-first execution, non-custodial wallet integration, and real-time streaming. You bring your APIs, configure an Aomi App with your tools and a system prompt, and deploy it across multiple channels without managing LLMs or infrastructure.
 
 ## How It Works
 
-1. **You provide your APIs** — REST endpoints, data feeds, trading actions, whatever your product does
-2. **Aomi wraps them as AI tools** — each API becomes a tool the Aomi App can invoke during conversations
-3. **We host the runtime** — configured with your branding, instructions, and model preferences
-4. **Users interact** — via an embedded chat widget, a headless integration, or a Telegram bot
+1. **You provide your APIs** — REST endpoints, data feeds, trading actions, whatever your product does.
+2. **Aomi wraps them as AI tools** — each API becomes a tool the Aomi App can invoke during conversations.
+3. **We host the runtime** — configured with your branding, instructions, and model preferences.
+4. **Users interact** — via an embedded chat widget, a headless integration, or a Telegram bot.
 
 ## Transaction Pipeline
 
 Aomi treats every on-chain transaction as a first-class operation with built-in safety guarantees.
 
-Before any transaction reaches a user's wallet, Aomi forks the current network state using [Anvil](https://book.getfoundry.sh/anvil/) and simulates the transaction against it. The user sees exact token changes, gas costs, and contract calls before signing anything. This simulation-first approach prevents AI-generated transactions from executing without verification.
+Before any transaction reaches a user's wallet, Aomi forks the current network state using [Anvil](https://book.getfoundry.sh/anvil/) and simulates the transaction against it. The user sees exact token changes, gas costs, and contract calls before signing anything. This simulation-first approach is how the system prevents AI-generated transactions from executing without verification.
 
-Aomi is **non-custodial** by design. It never holds private keys or funds. Wallet connection and account management run through [Para](https://www.getpara.com), while transaction signing happens locally in the user's wallet through wagmi-compatible connectors. The AI constructs and proposes transactions; the wallet signs them.
+Aomi is non-custodial by design. It never holds private keys or funds. Wallet connection and account management run through [Para](https://www.getpara.com), while transaction signing still happens locally in the user's wallet through wagmi-compatible connectors. The AI constructs and proposes transactions; the wallet signs them. Account abstraction is supported for session keys, gas sponsorship, and batched operations — smoother UX without compromising custody.
+
+This pipeline applies across all channels. Whether a user transacts through the web widget or a Telegram bot, the same simulation and approval flow runs.
 
 ## Key Features
 
@@ -38,17 +40,6 @@ Your APIs become AI-callable tools. When a user asks something that requires dat
 
 Choose from Anthropic (Claude), OpenAI (GPT-4), or models via OpenRouter. Switch models at runtime without redeploying.
 
-## Internal Architecture
-
-The platform is built in Rust with a modular crate architecture:
-
-- **Core runtime** — session management, message processing, streaming
-- **App system** — tool registration, preamble configuration, model selection
-- **Execution engine** — simulation, wallet integration, multi-network support
-- **API layer** — HTTP endpoints, SSE streaming, authentication
-
-Data flows through a system event bus that decouples components and enables real-time updates.
-
 ## Integration Paths
 
 |                    | Widget (shadcn)                                               | Headless Library                                            | Telegram Bot                                           |
@@ -57,7 +48,432 @@ Data flows through a system event bus that decouples components and enables real
 | **Install method** | `npx shadcn add`                                              | `npm install`                                               | No frontend code                                       |
 | **UI included**    | Full chat interface, sidebar, controls                        | None — build your own                                       | Telegram-native                                        |
 | **Customization**  | Edit copied source files                                      | Build from scratch                                          | Bot commands and panels                                |
+| **Dependencies**   | `@aomi-labs/react`, `@assistant-ui/react`, shadcn primitives  | `@aomi-labs/react`, `@assistant-ui/react`                   | None                                                   |
+| **Framework**      | Next.js (React)                                               | Any React app (API client works anywhere)                   | N/A                                                    |
+| **Code ownership** | Components copied to your project                             | Library imported from npm                                   | Hosted by Aomi                                         |
 | **Best for**       | Quick integration, standard chat UI, projects using shadcn/ui | Fully custom designs, non-standard layouts, maximum control | Reaching users on Telegram without frontend deployment |
+
+### Widget (shadcn)
+
+Pre-built UI components installed via the shadcn CLI. Complete chat interface out of the box, with every line of source code editable.
+
+```bash
+npx shadcn add https://aomi.dev/r/aomi-frame.json
+```
+
+### Headless Library
+
+Pure logic distributed as an npm package. Hooks, providers, API client, and utilities — zero UI opinions.
+
+```bash
+npm install @aomi-labs/react
+```
+
+### Telegram Bot
+
+Aomi hosts the bot and connects it to the same backend and tools as the widget. No frontend deployment needed.
+
+## Shared Foundation
+
+Both frontend paths use the same core. `@aomi-labs/react` provides all runtime logic — `AomiRuntimeProvider`, `useAomiRuntime`, `useControl`, `useUser`, and the `BackendApi` client. They share the same backend API endpoints for chat, threads, models, apps, and wallet operations, and the same authentication via API keys and wallet addresses.
+
+The widget is built on top of the headless library. Installing the widget pulls in `@aomi-labs/react` as a dependency automatically.
+
+**Start with the widget** if you want results quickly. The source code is copied into your project, so you can customize or replace individual components later. **Start with the headless library** if you have an existing design system and want to integrate Aomi logic into your own components from day one.
+
+## Platform Support
+
+| Platform            | Support                                                 |
+| ------------------- | ------------------------------------------------------- |
+| **Next.js 15**      | Primary target. App Router with Server Components.      |
+| **React 18 / 19**   | Supported via `@aomi-labs/react` and shadcn components. |
+| **Modern Browsers** | Chrome, Firefox, Safari, Edge (latest 2 versions).      |
+
+## Internal Architecture
+
+AOMI is an AI-powered blockchain operations assistant that transforms natural language into Web3 operations. Built with a streaming-first, modular design, it enables conversational interactions for querying blockchain state, executing swaps, calling smart contracts, and sending transactions.
+
+### System Overview
+
+```mermaid
+graph TB
+    subgraph "User Interfaces"
+        CLI[CLI]
+        TUI[TUI]
+        WEB[Web Frontend]
+    end
+
+    subgraph "API Layer"
+        HTTP[HTTP Backend<br/>Axum Server]
+        SSE[SSE Stream<br/>api/updates]
+    end
+
+    subgraph "Core Runtime"
+        SM[Session Manager]
+        CHAT[ChatApp<br/>LLM Orchestration]
+        SCHED[Tool Scheduler<br/>IO Bus]
+        SEQ[SystemEventQueue]
+    end
+
+    subgraph "Agentic Applications"
+        DEFAULT[ChatApp<br/>General Assistant]
+        FORGE[ForgeApp<br/>Contract Dev]
+        L2B[L2BeatApp<br/>Protocol Analysis]
+    end
+
+    subgraph "External Services"
+        ANTHROPIC[Anthropic Claude]
+        MCP[MCP Server]
+        ETHERSCAN[Etherscan API]
+        RPC[RPC Nodes]
+        BAML[BAML Server]
+    end
+
+    CLI --> SM
+    TUI --> SM
+    WEB --> HTTP
+    HTTP --> SM
+    SM --> SSE
+
+    SM --> DEFAULT
+    SM --> FORGE
+    SM --> L2B
+
+    DEFAULT --> CHAT
+    FORGE --> CHAT
+    L2B --> CHAT
+
+    CHAT --> SCHED
+    CHAT --> SEQ
+    CHAT --> ANTHROPIC
+
+    SCHED --> MCP
+    SCHED --> ETHERSCAN
+    SCHED --> RPC
+    SCHED --> BAML
+```
+
+### Crate Dependency Graph
+
+The workspace is organized into binary crates (executables) and library crates (shared functionality):
+
+```mermaid
+graph TD
+    subgraph "Binaries"
+        BIN_BACKEND[bin/backend<br/>HTTP API Server]
+        BIN_CLI[bin/cli<br/>Command Line]
+        BIN_TUI[bin/tui<br/>Terminal UI]
+    end
+
+    subgraph "Core Libraries"
+        CHAT[aomi-chat<br/>LLM Orchestration]
+        BACKEND[aomi-backend<br/>Session Management]
+        TOOLS[aomi-tools<br/>Tool Scheduler]
+    end
+
+    subgraph "Integrations"
+        MCP[aomi-mcp<br/>MCP Protocol]
+        RAG[aomi-rag<br/>Document Search]
+        BAML[aomi-baml<br/>Structured AI]
+    end
+
+    subgraph "Execution"
+        ANVIL[aomi-anvil<br/>Fork Management]
+        FORGE[aomi-forge<br/>Forge Agent]
+        SCRIPTS[aomi-scripts<br/>Script Generation]
+    end
+
+    subgraph "Testing"
+        EVAL[aomi-eval<br/>Evaluation Harness]
+    end
+
+    BIN_BACKEND --> CHAT
+    BIN_BACKEND --> BACKEND
+    BIN_CLI --> CHAT
+    BIN_CLI --> BACKEND
+    BIN_TUI --> CHAT
+
+    CHAT --> TOOLS
+    CHAT --> MCP
+    CHAT --> RAG
+
+    BACKEND --> CHAT
+
+    FORGE --> CHAT
+    FORGE --> SCRIPTS
+
+    SCRIPTS --> ANVIL
+    SCRIPTS --> BAML
+
+    EVAL --> CHAT
+    EVAL --> ANVIL
+```
+
+### Core Crates
+
+#### aomi-chat
+
+The heart of LLM orchestration. Manages agent creation, streaming completions, and system events.
+
+| Component           | Purpose                               |
+| ------------------- | ------------------------------------- |
+| `ChatApp`           | Main application wrapper              |
+| `ChatAppBuilder`    | Builder pattern for app configuration |
+| `stream_completion` | Async generator for LLM responses     |
+| `SystemEventQueue`  | Thread-safe event buffer              |
+| `ChatCommand`       | Streaming response variants           |
+
+#### aomi-backend
+
+Session and history management for multi-user scenarios.
+
+| Component        | Purpose                     |
+| ---------------- | --------------------------- |
+| `SessionManager` | Manages concurrent sessions |
+| `SessionState`   | Per-session state machine   |
+| `HistoryBackend` | Pluggable persistence       |
+| `ChatMessage`    | Message representation      |
+
+#### aomi-tools
+
+Centralized tool management via IO Scheduler pattern.
+
+| Component          | Purpose                            |
+| ------------------ | ---------------------------------- |
+| `ToolScheduler`    | Global tool registry and executor  |
+| `ToolApiHandler`   | Per-request handler                |
+| `ToolResultStream` | Streaming tool results             |
+| `AomiApiTool`      | Tool trait for single-result tools |
+| `MultiStepApiTool` | Tool trait for streaming tools     |
+
+#### aomi-anvil
+
+Anvil fork management for transaction simulation.
+
+| Component       | Purpose                  |
+| --------------- | ------------------------ |
+| `ForkProvider`  | Managed or external fork |
+| `AnvilInstance` | Spawned Anvil process    |
+| `ForkSnapshot`  | Fork state capture       |
+
+#### aomi-scripts
+
+Forge script generation and execution.
+
+| Component         | Purpose                      |
+| ----------------- | ---------------------------- |
+| `ForgeExecutor`   | Dependency-aware executor    |
+| `ScriptAssembler` | Script generation            |
+| `SourceFetcher`   | Background contract fetching |
+| `ExecutionPlan`   | Operation grouping           |
+
+#### aomi-eval
+
+Evaluation framework for testing agent behavior.
+
+| Component     | Purpose                  |
+| ------------- | ------------------------ |
+| `EvalHarness` | Test runner              |
+| `EvalCase`    | Test case definition     |
+| `Assertion`   | Balance/state assertions |
+
+### Data Flow
+
+#### System Events Flow
+
+```mermaid
+flowchart LR
+    subgraph Sources
+        TOOL[Tool Execution]
+        WALLET[Wallet Events]
+        BACKEND[Backend Status]
+    end
+
+    subgraph Queue
+        SEQ[SystemEventQueue<br/>Thread-safe buffer]
+    end
+
+    subgraph Consumers
+        SESSION[Session State]
+        SSE[SSE Endpoint]
+        AGENT[Agent History]
+    end
+
+    TOOL -->|push| SEQ
+    WALLET -->|push| SEQ
+    BACKEND -->|push| SEQ
+
+    SEQ -->|drain| SESSION
+    SESSION -->|inline events| SSE
+    SESSION -->|inject| AGENT
+```
+
+### Key Patterns
+
+#### Builder Pattern
+
+All agentic applications use the builder pattern for flexible configuration:
+
+```rust
+let app = ChatAppBuilder::new(&preamble).await?
+    .add_tool(GetContractABI)?
+    .add_tool(SimulateTransaction)?
+    .add_docs_tool(sender, None).await?
+    .build(skip_mcp, system_events, sender).await?;
+```
+
+#### Trait-Based Abstractions
+
+Core components use traits for testability and extensibility:
+
+```mermaid
+classDiagram
+    class AomiBackend {
+        <<trait>>
+        +system_events() SystemEventQueue
+        +process_message()
+    end
+
+    class AomiApiTool {
+        <<trait>>
+        +call(request) Response
+        +name() str
+        +description() str
+    end
+
+    class MultiStepApiTool {
+        <<trait>>
+        +call_stream(request, sender)
+        +validate(request)
+    end
+
+    class HistoryBackend {
+        <<trait>>
+        +load_history(public_key)
+        +save_history(messages)
+    end
+
+    ChatApp ..|> AomiBackend
+    ForgeApp ..|> AomiBackend
+    L2BeatApp ..|> AomiBackend
+
+    GetContractABI ..|> AomiApiTool
+    BraveSearch ..|> AomiApiTool
+
+    ForgeExecutor ..|> MultiStepApiTool
+```
+
+#### Streaming-First Design
+
+All LLM responses and tool results stream via async generators:
+
+```mermaid
+flowchart TD
+    subgraph "ChatCommand Variants"
+        ST[StreamingText<br/>Incremental text]
+        TC[ToolCall<br/>Tool invocation + stream]
+        ATR[AsyncToolResult<br/>Multi-step result]
+        COMP[Complete<br/>Response finished]
+        ERR[Error<br/>Failure]
+    end
+
+    subgraph "ToolResultStream"
+        SINGLE[Single Result<br/>Shared future]
+        MULTI[Multi-Step<br/>mpsc channel]
+    end
+
+    TC --> SINGLE
+    TC --> MULTI
+    MULTI --> ATR
+```
+
+#### Event Bus Architecture
+
+The SystemEventQueue acts as a central event bus:
+
+```mermaid
+flowchart TB
+    subgraph "Event Types"
+        INLINE[InlineDisplay<br/>UI notifications]
+        NOTICE[SystemNotice<br/>Status messages]
+        ERROR[SystemError<br/>Error messages]
+        ASYNC[AsyncUpdate<br/>Background updates]
+    end
+
+    subgraph "Routing"
+        QUEUE[SystemEventQueue]
+        HANDLER[handle_system_event]
+    end
+
+    subgraph "Destinations"
+        ACTIVE[active_system_events<br/>Immediate UI]
+        PENDING[pending_async_events<br/>SSE broadcast]
+    end
+
+    INLINE --> QUEUE
+    NOTICE --> QUEUE
+    ERROR --> QUEUE
+    ASYNC --> QUEUE
+
+    QUEUE --> HANDLER
+
+    HANDLER -->|inline| ACTIVE
+    HANDLER -->|async| PENDING
+```
+
+### External Integrations
+
+| Service          | Crate      | Purpose                |
+| ---------------- | ---------- | ---------------------- |
+| Anthropic Claude | aomi-chat  | LLM inference          |
+| MCP Server       | aomi-mcp   | Extended tool protocol |
+| Etherscan        | aomi-tools | Contract data          |
+| Brave Search     | aomi-tools | Web search             |
+| BAML Server      | aomi-baml  | Structured AI outputs  |
+| Alchemy/Infura   | aomi-tools | RPC endpoints          |
+
+### Configuration
+
+#### Environment Variables
+
+| Variable               | Required | Purpose                      |
+| ---------------------- | -------- | ---------------------------- |
+| `ANTHROPIC_API_KEY`    | Yes      | Claude API access            |
+| `DATABASE_URL`         | Yes      | PostgreSQL/SQLite connection |
+| `BRAVE_SEARCH_API_KEY` | No       | Web search                   |
+| `ETHERSCAN_API_KEY`    | No       | Contract data                |
+| `ALCHEMY_API_KEY`      | No       | RPC endpoints                |
+| `BAML_SERVER_URL`      | No       | Structured AI                |
+
+#### Network Configuration
+
+Networks are configured via `config.yaml`:
+
+```yaml
+networks:
+  ethereum:
+    rpc_url: "https://eth-mainnet.g.alchemy.com/v2/{key}"
+    chain_id: 1
+  base:
+    rpc_url: "https://base-mainnet.g.alchemy.com/v2/{key}"
+    chain_id: 8453
+```
+
+### Build & Run
+
+```bash
+# Development
+cargo run --bin backend     # HTTP API server
+cargo run --bin cli         # Interactive CLI
+cargo run --bin tui         # Terminal UI
+
+# Testing
+cargo test --all            # All tests
+cargo test --package aomi-tools  # Specific crate
+
+# Production
+docker build --target backend-runtime -t aomi-backend .
+```
 
 ## Next Steps
 
@@ -65,3 +481,4 @@ Data flows through a system event bus that decouples components and enables real
 - [Integration Guide](/guides/integration) — full-stack walkthrough
 - [API Reference](/reference/api-reference) — HTTP API documentation
 - [Runtime Reference](/reference/runtime) — runtime internals
+- [Simulation Reference](/reference/simulation) — transaction simulation pipeline
