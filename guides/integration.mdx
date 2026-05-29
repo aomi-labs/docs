@@ -9,11 +9,56 @@ To work with us on an integration, [contact us](https://aomi.dev/contact).
 
 ## The Pipeline
 
-1. **Your APIs** — your backend maintains user state and business logic
-2. **Aomi Tool Layer** — each API endpoint becomes a callable AI tool
-3. **AomiApp Configuration** — preamble, model, and RAG document store
-4. **Deployed App** — compiled and hosted as an isolated Aomi App
-5. **Client Integration** — widget, headless, or Telegram bot
+```mermaid
+flowchart LR
+    subgraph YOUR["1. Your APIs"]
+        direction TB
+        API1["GET /prices/eth"]
+        API2["POST /trades"]
+        API3["GET /portfolio/user123"]
+    end
+
+    subgraph AOMI["2. Aomi Tool Layer"]
+        direction TB
+        T1["GetTokenPrice"]
+        T2["ExecuteTrade"]
+        T3["GetPortfolio"]
+    end
+
+    subgraph CONFIG["3. AomiApp Configuration"]
+        direction TB
+        PREAMBLE["Preamble"]
+        MODEL["Model Selection"]
+        RAG["RAG Docs"]
+    end
+
+    subgraph NS_GROUP["4. Deployed App"]
+        direction TB
+        NS["mycoindex"]
+    end
+
+    subgraph CLIENT["5. Client Integration"]
+        direction TB
+        CL1["Widget"]
+        CL2["Headless"]
+        CL3["Telegram"]
+    end
+
+    API1 --> T1
+    API2 --> T2
+    API3 --> T3
+
+    T1 --> PREAMBLE
+    T2 --> PREAMBLE
+    T3 --> PREAMBLE
+    MODEL --> NS
+    RAG --> NS
+    PREAMBLE --> NS
+
+    NS --> CL1
+    NS --> CL2
+    NS --> CL3
+```
 
 Each tool wraps one or more of your API endpoints. A one-to-one mapping is not required — you can aggregate multiple endpoints into a single tool so the LLM's context stays clean and semantically coherent.
 

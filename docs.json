@@ -14,11 +14,12 @@
       {
         "group": "Getting Started",
         "pages": [
-          "getting-started/quickstart",
-          "getting-started/web-app",
-          "getting-started/telegram",
-          "getting-started/discord",
-          "getting-started/ios"
+        "getting-started/quickstart",
+        "getting-started/playground",
+        "getting-started/web-app",
+        "getting-started/telegram",
+        "getting-started/discord",
+        "getting-started/ios"
         ]
       },
       {
