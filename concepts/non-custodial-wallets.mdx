@@ -1,0 +1,57 @@
+---
+title: Non-Custodial Automation
+description: How Aomi handles transactions without holding your keys — simulation-first execution with wallet-level security.
+---
+
+Aomi **never holds your private keys or funds**. Every transaction is simulated on a forked network before it reaches your wallet, so you can review the exact on-chain outcome before approving.
+
+## How It Works
+
+The transaction pipeline follows a strict safety-first flow:
+
+1. **Request** — the AI determines a transaction is needed and constructs the call data
+2. **Simulate** — Aomi forks the network state using Anvil and executes the transaction against the fork
+3. **Review** — you see the exact outcome: token changes, gas costs, contract interactions
+4. **Sign** — only after your review does the transaction reach your wallet for signing
+5. **Execute** — the signed transaction is submitted to the network
+
+```
+User Request → AI Constructs Tx → Fork & Simulate → User Reviews → Wallet Signs → On-chain
+```
+
+## Wallet Integration
+
+Wallet connection runs through [Para](https://www.getpara.com) and wagmi-compatible connectors. The AI constructs and proposes transactions; your wallet signs them locally. Aomi never has access to your private keys.
+
+Supported actions:
+
+- Connect via WalletConnect
+- View balances and portfolio
+- Approve transactions with full context
+- Sign typed data (EIP-712)
+- Switch networks
+- Manage multiple wallets
+
+## Simulation Details
+
+Simulation runs on a forked network state using [Anvil](https://book.getfoundry.sh/anvil/). This means:
+
+- No gas costs for simulation
+- No state changes on the real network
+- Exact output visible before signing
+- Multiple transactions can be simulated in batch
+- Error detection before execution
+
+## Account Abstraction
+
+Account abstraction is supported for session keys, gas sponsorship, and batched operations — providing a smoother UX without compromising custody.
+
+## Supported Chains
+
+Aomi supports EVM-compatible chains including Ethereum mainnet, Arbitrum, Optimism, Base, Polygon, and more.
+
+## Next Steps
+
+- [Agentic Application](/concepts/what-is-aomi) — understand Apps and API keys
+- [Simulation Reference](/reference/simulation) — technical deep-dive
+- [Account Abstraction](/reference/account-abstraction) — session keys and gas sponsorship

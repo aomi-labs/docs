@@ -1,0 +1,59 @@
+---
+title: Key Concepts
+description: Core concepts that underpin the Aomi platform.
+---
+
+Two concepts are central to how Aomi works — worth understanding before you dive in.
+
+## Agentic Application
+
+The isolated agent environment that defines what the AI can do and access. Each App has:
+
+- **Tools** — the functions the agent can call (your APIs, on-chain actions, data sources)
+- **Preamble** — the system prompt that shapes agent behavior and constraints
+- **Model** — the LLM powering the agent (Claude, GPT-4o, or others)
+- **API key** — scoped credentials, isolated per App
+
+Both users and builders interact within an App. Switching Apps changes the agent's tools, context, and behavior entirely. Running multiple Apps means running multiple independent agents.
+
+## Non-Custodial Automation
+
+Aomi never holds your private keys or funds. Every transaction is simulated on a forked network before it reaches your wallet, so you can review the exact on-chain outcome before approving.
+
+This simulation-first approach is the key safety mechanism. Users see exact token changes, gas costs, and contract calls before signing anything. The AI constructs and proposes transactions; the wallet signs them locally.
+
+## Integration Paths
+
+Builders have three ways to integrate Aomi:
+
+| Path | Best For |
+|------|----------|
+| **Widget (shadcn)** | Quick integration, standard chat UI, projects using shadcn/ui |
+| **Headless Library** | Fully custom designs, non-standard layouts, maximum control |
+| **Telegram Bot** | Reaching users on Telegram without frontend deployment |
+
+Both frontend paths use the same core `@aomi-labs/react` package. The widget is built on top of the headless library.
+
+## For Users
+
+Access Aomi through any supported channel:
+
+- **Web App** at chat.aomi.dev — full chat interface
+- **Telegram** — @aomi_sendit_bot
+- **Discord** — coming soon
+- **iOS** — coming soon
+
+## For Builders
+
+Integrate Aomi into your product:
+
+- Quickstart — get a working widget in minutes
+- Integration Guide — full-stack walkthrough with examples
+- API Reference — complete HTTP API documentation
+- CLI — validate prompts, inspect sessions, simulate execution
+
+## Next Steps
+
+- [Quickstart](/getting-started/quickstart) — get started in minutes
+- [Integration Guide](/guides/integration) — learn the full platform pipeline
+- [Architecture](/concepts/architecture) — platform design deep-dive

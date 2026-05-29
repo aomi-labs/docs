@@ -1,0 +1,65 @@
+---
+title: Architecture
+description: Aomi platform architecture — how the runtime, transaction pipeline, and integration paths work together.
+---
+
+## Platform Overview
+
+Aomi is a hosted runtime that wraps your APIs as AI-callable tools and makes them available through chat interfaces. Every Aomi App ships with performant on-chain transactions by default — simulation-first execution, non-custodial wallet integration, and real-time streaming.
+
+## How It Works
+
+1. **You provide your APIs** — REST endpoints, data feeds, trading actions, whatever your product does
+2. **Aomi wraps them as AI tools** — each API becomes a tool the Aomi App can invoke during conversations
+3. **We host the runtime** — configured with your branding, instructions, and model preferences
+4. **Users interact** — via an embedded chat widget, a headless integration, or a Telegram bot
+
+## Transaction Pipeline
+
+Aomi treats every on-chain transaction as a first-class operation with built-in safety guarantees.
+
+Before any transaction reaches a user's wallet, Aomi forks the current network state using [Anvil](https://book.getfoundry.sh/anvil/) and simulates the transaction against it. The user sees exact token changes, gas costs, and contract calls before signing anything. This simulation-first approach prevents AI-generated transactions from executing without verification.
+
+Aomi is **non-custodial** by design. It never holds private keys or funds. Wallet connection and account management run through [Para](https://www.getpara.com), while transaction signing happens locally in the user's wallet through wagmi-compatible connectors. The AI constructs and proposes transactions; the wallet signs them.
+
+## Key Features
+
+### Streaming Responses
+
+Responses stream in real-time via Server-Sent Events. Text appears as the model generates it, with tool calls and results displayed inline.
+
+### Tool Calling
+
+Your APIs become AI-callable tools. When a user asks something that requires data or an action, the Aomi App calls the appropriate tool, processes the result, and responds naturally. Multiple tools can execute concurrently.
+
+### Multi-Model Support
+
+Choose from Anthropic (Claude), OpenAI (GPT-4), or models via OpenRouter. Switch models at runtime without redeploying.
+
+## Internal Architecture
+
+The platform is built in Rust with a modular crate architecture:
+
+- **Core runtime** — session management, message processing, streaming
+- **App system** — tool registration, preamble configuration, model selection
+- **Execution engine** — simulation, wallet integration, multi-network support
+- **API layer** — HTTP endpoints, SSE streaming, authentication
+
+Data flows through a system event bus that decouples components and enables real-time updates.
+
+## Integration Paths
+
+|                    | Widget (shadcn)                                               | Headless Library                                            | Telegram Bot                                           |
+| ------------------ | ------------------------------------------------------------- | ----------------------------------------------------------- | ------------------------------------------------------ |
+| **Setup time**     | Minutes                                                       | Hours                                                       | Managed by Aomi                                        |
+| **Install method** | `npx shadcn add`                                              | `npm install`                                               | No frontend code                                       |
+| **UI included**    | Full chat interface, sidebar, controls                        | None — build your own                                       | Telegram-native                                        |
+| **Customization**  | Edit copied source files                                      | Build from scratch                                          | Bot commands and panels                                |
+| **Best for**       | Quick integration, standard chat UI, projects using shadcn/ui | Fully custom designs, non-standard layouts, maximum control | Reaching users on Telegram without frontend deployment |
+
+## Next Steps
+
+- [Quickstart](/getting-started/quickstart) — get a working widget in minutes
+- [Integration Guide](/guides/integration) — full-stack walkthrough
+- [API Reference](/reference/api-reference) — HTTP API documentation
+- [Runtime Reference](/reference/runtime) — runtime internals
