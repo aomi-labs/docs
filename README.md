@@ -2,48 +2,6 @@
 
 Documentation for [Aomi](https://aomi.dev) — the blockchain harness for agentic AI.
 
-## Architecture
-
-```
-                    ┌─────────────────────────────────┐
-                    │          docs.aomi.dev            │
-                    │         (Mintlify hosted)         │
-                    └──────────────┬──────────────────┘
-                                   │
-                    ┌──────────────┴──────────────────┐
-                    │         docs.json                │
-                    │   (navigation + theme config)    │
-                    └──────────────────────────────────┘
-                                   │
-                    ┌──────────────┼──────────────────┐
-                    │              │                    │
-          ┌─────────┴──────┐  ┌───┴────┐  ┌───────────┴───────┐
-          │   User-facing  │  │Builder │  │     Reference      │
-          │  Getting Started│  │ Guides │  │   (API, SDK, CLI)  │
-          │  (web, tg, ds) │  │(widget,│  │   (runtime, sim,   │
-          │               │  │headless│  │   sessions, auth)   │
-          └────────────────┘  │tools,  │  └───────────────────┘
-                              │evals)  │
-                              └───┬────┘
-                                  │
-                    ┌─────────────┴─────────────┐
-                    │      Concepts              │
-                    │  (architecture, apps,      │
-                    │   non-custodial wallets)   │
-                    └───────────────────────────┘
-                                  │
-                    ┌─────────────┴─────────────┐
-                    │      Examples              │
-                    │  (Polymarket, DeFi, X,     │
-                    │   MetaMask integrations)   │
-                    └───────────────────────────┘
-                                  │
-                    ┌─────────────┴─────────────┐
-                    │      Resources             │
-                    │   (changelog, FAQ)         │
-                    └───────────────────────────┘
-```
-
 ## Walkthrough
 
 The docs are organized into six sections. Read them in order if you're new, or jump to what you need.
