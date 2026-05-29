@@ -8,60 +8,63 @@
     "dark": "#000000"
   },
   "favicon": "/favicon.svg",
-  "navigation": [
-    {
-      "group": "Getting Started",
-      "pages": [
-        "getting-started/quickstart",
-        "getting-started/web-app",
-        "getting-started/telegram",
-        "getting-started/discord",
-        "getting-started/ios"
-      ]
-    },
-    {
-      "group": "Platform Guides",
-      "pages": [
-        "guides/integration",
-        "guides/frontend-setup",
-        "guides/widget-installation",
-        "guides/headless-library",
-        "guides/cli-usage",
-        "guides/custom-tools",
-        "guides/evals-testing",
-        "guides/troubleshooting"
-      ]
-    },
-    {
-      "group": "Concepts",
-      "pages": [
-        "concepts/what-is-aomi",
-        "concepts/architecture",
-        "concepts/non-custodial-wallets",
-        "concepts/key-concepts"
-      ]
-    },
-    {
-      "group": "Reference",
-      "pages": [
-        "reference/sdk-api",
-        "reference/cli",
-        "reference/simulation",
-        "reference/account-abstraction",
-        "reference/runtime",
-        "reference/api-reference",
-        "reference/sessions",
-        "reference/building-apps"
-      ]
-    },
-    {
-      "group": "Resources",
-      "pages": [
-        "resources/changelog",
-        "resources/faq"
-      ]
-    }
-  ],
+  "navigation": {
+    "pages": [
+      "index",
+      {
+        "group": "Getting Started",
+        "pages": [
+          "getting-started/quickstart",
+          "getting-started/web-app",
+          "getting-started/telegram",
+          "getting-started/discord",
+          "getting-started/ios"
+        ]
+      },
+      {
+        "group": "Platform Guides",
+        "pages": [
+          "guides/integration",
+          "guides/frontend-setup",
+          "guides/widget-installation",
+          "guides/headless-library",
+          "guides/cli-usage",
+          "guides/custom-tools",
+          "guides/evals-testing",
+          "guides/troubleshooting"
+        ]
+      },
+      {
+        "group": "Concepts",
+        "pages": [
+          "concepts/what-is-aomi",
+          "concepts/architecture",
+          "concepts/non-custodial-wallets",
+          "concepts/key-concepts"
+        ]
+      },
+      {
+        "group": "Reference",
+        "pages": [
+          "reference/sdk-api",
+          "reference/cli",
+          "reference/simulation",
+          "reference/account-abstraction",
+          "reference/runtime",
+          "reference/api-reference",
+          "reference/sessions",
+          "reference/building-apps"
+        ]
+      },
+      {
+        "group": "Resources",
+        "pages": [
+          "resources/changelog",
+          "resources/faq"
+        ]
+      }
+    ]
+  },
   "logo": {
     "light": "/logo/light.svg",
     "dark": "/logo/dark.svg"
