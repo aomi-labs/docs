@@ -3,94 +3,160 @@ title: CLI Reference
 description: Complete reference for the @aomi-labs/client CLI.
 ---
 
-The Aomi CLI provides command-line access to all platform features.
+The Aomi CLI ships with `@aomi-labs/client` and exposes the `aomi` executable. Use it to chat with an Aomi backend, persist sessions, inspect wallet requests, and manage secrets.
 
 ## Installation
 
+### One-off
+
+```bash
+npx @aomi-labs/client --help
+```
+
+### Global
+
 ```bash
 npm install -g @aomi-labs/client
+aomi --version
 ```
 
-## Commands
+## Core Commands
 
-### `chat`
+```mermaid
+flowchart TD
+    START["aomi"] --> MODE{"Command type"}
+    MODE -->|"chat"| CHAT["aomi chat \"...\""]
+    MODE -->|"inspect"| INSPECT["aomi tx / log / status / events"]
+    MODE -->|"session"| SESSION["aomi session list/resume/delete"]
+    MODE -->|"secrets"| SECRET["aomi --secret ..."]
+    MODE -->|"sign"| SIGN["aomi sign tx-N"]
+    CHAT --> BACKEND["Send request to backend"]
+    SECRET --> STATE["Persist in local session state"]
+    BACKEND --> QUEUE{"Wallet request?"}
+    QUEUE -->|"yes"| TX["Inspect with aomi tx"]
+    TX --> SIGN
+    SIGN --> RESULT["Submit tx or signature"]
+```
 
-Start an interactive chat session.
+### chat
 
 ```bash
-aomi chat [--app <app>] [--model <model>] [--key <api-key>]
+aomi chat "swap 1 ETH for USDC"
+aomi chat "swap 1 ETH for USDC" --model claude-sonnet-4
+aomi chat "swap 1 ETH" --verbose
 ```
 
-### `app`
-
-Manage Aomi Apps.
+### app
 
 ```bash
 aomi app list
-aomi app switch <app-name>
-aomi app info <app-name>
+aomi app current
 ```
 
-### `model`
-
-Switch AI models.
+### model
 
 ```bash
 aomi model list
-aomi model set <model-name>
+aomi model current
+aomi model set claude-sonnet-4
 ```
 
-### `chain`
-
-Select blockchain network.
+### chain
 
 ```bash
 aomi chain list
-aomi chain set <chain-id>
 ```
 
-### `secret`
-
-Manage secrets and API keys.
+### secret
 
 ```bash
-aomi secret set <key> <value>
+aomi --secret ALCHEMY_API_KEY=sk_live_123 TENDERLY_ACCESS_TOKEN=tok_456
+aomi --secret ALCHEMY_API_KEY=sk_live_123 chat "check my wallet"
 aomi secret list
-aomi secret remove <key>
+aomi secret clear
 ```
 
-### `session`
-
-View and manage sessions.
+### session
 
 ```bash
 aomi session list
-aomi session show <id>
-aomi session delete <id>
+aomi session resume session-2
+aomi session delete session-2
 ```
 
-### `sign`
-
-Sign transactions.
+### sign
 
 ```bash
-aomi sign <tx-data>
+aomi sign tx-1 --private-key 0x...
 ```
+
+### Other
+
+```bash
+aomi log       # View local log
+aomi tx        # View pending transactions
+aomi status    # Session state summary
+aomi events    # View system events
+aomi close     # Close active session
+```
+
+## Transaction Flow
+
+```bash
+$ aomi chat "swap 1 ETH for USDC on Uniswap" --public-key 0xYourAddr --chain 1
+⚡ Wallet request queued: tx-1
+
+$ aomi tx
+Pending (1):
+  ⏳ tx-1  to: 0x3fC9...7FAD  value: 1000000000000000000  chain: 1
+
+$ aomi sign tx-1 --private-key 0xabc...
+✅ Sent! Hash: 0xabc123...
+```
+
+### Signing Modes
+
+| Mode | Description |
+| --- | --- |
+| default | Account abstraction first, automatic EOA fallback |
+| `--aa` | Require AA, no fallback |
+| `--eoa` | Force direct EOA execution |
+
+Additional AA flags:
+
+| Flag | Description |
+| --- | --- |
+| `--aa-provider alchemy\|pimlico` | AA provider selection |
+| `--aa-mode 4337\|7702` | AA mode selection |
 
 ## Options
 
-| Flag | Description |
-|------|-------------|
-| `--app, -a` | Target Aomi App |
-| `--model, -m` | AI model to use |
-| `--key, -k` | API key for authentication |
-| `--chain, -c` | Blockchain network |
-| `--help, -h` | Show help |
-| `--version, -v` | Show version |
+| Flag | Env | Description |
+| --- | --- | --- |
+| `--backend-url` | `AOMI_BACKEND_URL` | Backend URL |
+| `--api-key` | `AOMI_API_KEY` | API key for non-default apps |
+| `--app` | `AOMI_APP` | App name |
+| `--model` | `AOMI_MODEL` | Model to use |
+| `--secret <NAME=value>` | — | Ingest secret values |
+| `--public-key` | `AOMI_PUBLIC_KEY` | Wallet address |
+| `--private-key` | `PRIVATE_KEY` | Hex private key for signing |
+| `--rpc-url` | `CHAIN_RPC_URL` | RPC URL for tx submission |
+| `--chain` | `AOMI_CHAIN_ID` | Chain ID |
+| `--verbose, -v` | — | Stream tool calls live |
+| `--version, -V` | — | Print version |
 
 ## Session State
 
-Session data is stored under `~/.aomi/` as JSON files. Each file represents a conversation session with full message history.
+The CLI stores session files under `~/.aomi/`:
+
+- `sessionId` — active backend conversation
+- `clientId` — stable client identity for secret handles
+- `model` — last selected model
+- `publicKey` — persisted wallet address
+- `chainId` — persisted active chain
+- `secretHandles` — ingested secret handles for the session
+- `pendingTxs` — unsigned wallet requests
+- `signedTxs` — completed transactions
 
 ## Next Steps
 

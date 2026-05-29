@@ -34,6 +34,8 @@
           "guides/cli-usage",
           "guides/custom-tools",
           "guides/evals-testing",
+          "guides/execution",
+          "guides/script-generation",
           "guides/troubleshooting"
         ]
       },
@@ -41,6 +43,7 @@
         "group": "Concepts",
         "pages": [
           "concepts/what-is-aomi",
+          "concepts/how-it-works",
           "concepts/architecture",
           "concepts/non-custodial-wallets",
           "concepts/key-concepts"

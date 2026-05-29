@@ -53,17 +53,25 @@ Or an App can have multiple keys (production vs. development).
 
 ## Authentication Flow
 
-```
-Client → POST /api/chat?app=mycoindex
-           X-API-Key: sk-mcd-...
-           X-Session-Id: session-uuid
-              ↓
-Backend → Lookup API key in database
-              ↓
-          Check key authorizes requested App
-              ↓
-          Authorized? → Load/create session → Route to App
-          Denied?     → 401 (no key) or 403 (wrong scope)
+```mermaid
+sequenceDiagram
+    participant Client
+    participant Backend as Aomi Backend
+    participant DB as Database
+
+    Client->>Backend: POST /api/chat?app=mycoindex<br/>X-API-Key: sk-mcd-...<br/>X-Session-Id: session-uuid
+    Backend->>DB: Lookup API key
+    DB-->>Backend: Key record (authorized Apps)
+
+    alt Key valid and App authorized
+        Backend->>Backend: Load/create session
+        Backend->>Backend: Route to MyCoinDexApp
+        Backend-->>Client: SSE stream (200)
+    else Key invalid
+        Backend-->>Client: 401 Unauthorized
+    else App not authorized for key
+        Backend-->>Client: 403 Forbidden
+    end
 ```
 
 ## Sessions

@@ -16,13 +16,11 @@ Aomi **never holds your private keys or funds**. Every transaction is simulated 
 
 ## How It Works
 
-The transaction pipeline follows a strict safety-first flow:
-
 1. **Request** — the AI determines a transaction is needed and constructs the call data
-2. **Simulate** — Aomi forks the network state using Anvil and executes the transaction against the fork
-3. **Review** — you see the exact outcome: token changes, gas costs, contract interactions
-4. **Sign** — only after your review does the transaction reach your wallet for signing
-5. **Execute** — the signed transaction is submitted to the network
+2. **Simulate** — Aomi forks the network using Anvil and executes against the fork
+3. **Review** — you see exact token changes, gas costs, contract interactions
+4. **Sign** — only after review does the transaction reach your wallet
+5. **Execute** — the signed transaction is submitted on-chain
 
 ```
 User Request → AI Constructs Tx → Fork & Simulate → User Reviews → Wallet Signs → On-chain
@@ -30,20 +28,202 @@ User Request → AI Constructs Tx → Fork & Simulate → User Reviews → Walle
 
 ## Wallet Integration
 
-Wallet connection runs through [Para](https://www.getpara.com) and wagmi-compatible connectors. The AI constructs and proposes transactions; your wallet signs them locally. Aomi never has access to your private keys.
+Wallet connection runs through [Para](https://www.getpara.com) and wagmi-compatible connectors. Aomi proposes transactions; your wallet signs locally.
 
-Supported actions:
+### Install Dependencies
 
-- Connect via WalletConnect
-- View balances and portfolio
-- Approve transactions with full context
-- Sign typed data (EIP-712)
-- Switch networks
-- Manage multiple wallets
+```bash
+npm install @getpara/react-sdk @getpara/evm-wallet-connectors wagmi viem @tanstack/react-query
+```
+
+### Configure Para
+
+```tsx
+"use client";
+import "@getpara/react-sdk/styles.css";
+import { ParaProvider, Environment } from "@getpara/react-sdk";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { defineChain, http } from "viem";
+import { mainnet, polygon, arbitrum, base } from "wagmi/chains";
+
+const queryClient = new QueryClient();
+const walletConnectProjectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID;
+
+const localhost = defineChain({
+  id: 31337,
+  name: "Localhost",
+  nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
+  rpcUrls: { default: { http: ["http://127.0.0.1:8545"] } },
+});
+
+const useAnvilForWallet = process.env.NEXT_PUBLIC_ANVIL_FOR_WALLET === "true";
+const networks = useAnvilForWallet
+  ? [localhost, mainnet, polygon, arbitrum, base]
+  : [mainnet, polygon, arbitrum, base];
+
+const transports = Object.fromEntries(
+  networks.map((chain) => [chain.id, http(chain.rpcUrls.default.http[0])]),
+);
+
+export function Providers({ children }: { children: React.ReactNode }) {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <ParaProvider
+        paraClientConfig={{
+          apiKey: process.env.NEXT_PUBLIC_PARA_API_KEY!,
+          env: (process.env.NEXT_PUBLIC_PARA_ENVIRONMENT as Environment) ?? Environment.BETA,
+        }}
+        config={{ appName: "Your App" }}
+        paraModalConfig={{ disableEmailLogin: true, oAuthMethods: ["GOOGLE"] }}
+        externalWalletConfig={{
+          appDescription: "Your app description",
+          appUrl: "https://your-app.com",
+          wallets: ["WALLETCONNECT", "METAMASK", "COINBASE", "RAINBOW", "RABBY"],
+          walletConnect: { projectId: walletConnectProjectId! },
+          evmConnector: {
+            config: { chains: networks, transports, ssr: true },
+          },
+        }}
+      >
+        {children}
+      </ParaProvider>
+    </QueryClientProvider>
+  );
+}
+```
+
+### Supported Chains
+
+```tsx
+import { mainnet, polygon, arbitrum, base, optimism } from "wagmi/chains";
+
+externalWalletConfig={{
+  evmConnector: {
+    config: {
+      chains: [mainnet, polygon, arbitrum, base, optimism],
+      transports: {
+        [mainnet.id]: http(),
+        [polygon.id]: http(),
+        [arbitrum.id]: http(),
+        [base.id]: http(),
+        [optimism.id]: http(),
+      },
+    },
+  },
+}}
+```
+
+## Transaction Signing Flow
+
+```
+1. LLM emits wallet_tx_request tool call
+2. Backend sends wallet_tx_request event via SSE
+3. Frontend receives event via useWalletHandler
+4. UI prompts user to review and sign
+5. User signs with their wallet (wagmi)
+6. Frontend sends wallet:tx_complete event back to backend
+7. Backend injects transaction result into LLM context
+8. LLM continues the conversation
+```
+
+### In the Widget
+
+The widget includes `RuntimeTxHandler` automatically. When a transaction request arrives, it executes through wagmi and prompts the user to sign.
+
+### In the Headless Library
+
+```tsx
+import { useWalletHandler, useAomiRuntime } from "@aomi-labs/react";
+import { useSendTransaction, useSignTypedData } from "wagmi";
+
+function WalletRequestHandler() {
+  const { currentThreadId } = useAomiRuntime();
+  const { pendingRequests, startProcessing, resolveRequest, rejectRequest } =
+    useWalletHandler({ sessionId: currentThreadId });
+
+  const { sendTransactionAsync } = useSendTransaction();
+  const { signTypedDataAsync } = useSignTypedData();
+
+  const handleRequest = async (request: WalletRequest) => {
+    startProcessing(request.id);
+    try {
+      if (request.kind === "transaction") {
+        const payload = request.payload as WalletTxPayload;
+        const hash = await sendTransactionAsync({
+          to: payload.to, value: BigInt(payload.value ?? "0"), data: payload.data,
+        });
+        resolveRequest(request.id, { txHash: hash });
+      }
+      if (request.kind === "eip712_sign") {
+        const payload = request.payload as WalletEip712Payload;
+        const signature = await signTypedDataAsync(payload.typedData);
+        resolveRequest(request.id, { signature });
+      }
+    } catch (error) {
+      rejectRequest(request.id, error.message);
+    }
+  };
+
+  return (
+    <div>
+      {pendingRequests.map((req) => (
+        <div key={req.id}>
+          <p>Transaction request: {req.kind}</p>
+          <button onClick={() => handleRequest(req)}>Approve</button>
+          <button onClick={() => rejectRequest(req.id, "User rejected")}>Reject</button>
+        </div>
+      ))}
+    </div>
+  );
+}
+```
+
+## Network Switching
+
+```tsx
+import { useSwitchChain } from "wagmi";
+import { useUser } from "@aomi-labs/react";
+
+function NetworkSwitcher() {
+  const { switchChain } = useSwitchChain();
+  const { setUser } = useUser();
+
+  const handleSwitch = async (chainId: number) => {
+    await switchChain({ chainId });
+    setUser({ chainId });
+  };
+}
+```
+
+## ConnectButton Component
+
+In the widget, the `ConnectButton` handles the full lifecycle: connect → opens Para auth modal → syncs address/chainId → manage account modal when already connected.
+
+```tsx
+import { ConnectButton } from "@/components/control-bar";
+
+<ConnectButton
+  connectLabel="Connect Wallet"
+  onConnectionChange={(isConnected) => {
+    console.log("Wallet connected:", isConnected);
+  }}
+/>;
+```
+
+## Utilities
+
+```tsx
+import { formatAddress, getNetworkName, getChainInfo, SUPPORTED_CHAINS } from "@aomi-labs/react";
+
+formatAddress("0x1234567890abcdef1234567890abcdef12345678"); // "0x1234...5678"
+getNetworkName(1);   // "Ethereum"
+getChainInfo(137);   // { name: "Polygon", ticker: "POL", ... }
+SUPPORTED_CHAINS;    // [{ chainId: 1, name: "Ethereum", ... }, ...]
+```
 
 ## Simulation Details
 
-Simulation runs on a forked network state using [Anvil](https://book.getfoundry.sh/anvil/). This means:
+Simulation runs on a forked network using [Anvil](https://book.getfoundry.sh/anvil/):
 
 - No gas costs for simulation
 - No state changes on the real network
@@ -53,11 +233,11 @@ Simulation runs on a forked network state using [Anvil](https://book.getfoundry.
 
 ## Account Abstraction
 
-Account abstraction is supported for session keys, gas sponsorship, and batched operations — providing a smoother UX without compromising custody.
+Account abstraction is supported for session keys, gas sponsorship, and batched operations.
 
 ## Supported Chains
 
-Aomi supports EVM-compatible chains including Ethereum mainnet, Arbitrum, Optimism, Base, Polygon, and more.
+EVM-compatible chains including Ethereum mainnet, Arbitrum, Optimism, Base, Polygon, and more.
 
 ## Next Steps
 

@@ -29,6 +29,32 @@ The control bar at the top lets you:
 
 The sidebar manages your conversation threads. Create new threads, switch between them, rename, or delete. Each thread maintains its own conversation history.
 
+### Creating a new thread
+
+Click the **New Thread** button at the top of the sidebar.
+
+### Switching between threads
+
+Click any thread in the sidebar. Previous conversations are preserved exactly as you left them.
+
+### Renaming threads
+
+Threads are auto-named based on your first message. Right-click (or use the three-dot menu) and select **Rename**.
+
+### Deleting threads
+
+Right-click and select **Delete**. Deleted threads cannot be recovered.
+
+## Tool Calls
+
+When the agent needs to fetch data or take an action, it calls a **tool**. Tool calls are visible inline:
+
+- An indicator shows what's in progress (e.g., *Fetching token price...*)
+- The result displays inline once the tool returns
+- The agent continues its response using that data
+
+A single request can trigger multiple sequential tool calls.
+
 <iframe
   className="aspect-video w-full rounded-lg border"
   src="https://www.youtube.com/embed/aZv1zHtQXb4"
@@ -38,12 +64,15 @@ The sidebar manages your conversation threads. Create new threads, switch betwee
   allowFullScreen
 />
 
-## Best Practices
+## Tips for Best Results
 
-- Be specific about what you want the assistant to do
-- Verify the active App matches the task you want to perform
-- Connect a wallet before attempting on-chain transactions
-- Review simulation results before signing any transaction
+- **Be specific.** "What's the price of ETH in USDC?" works better than "price."
+- **Provide context.** "I want to swap 500 USDC for ETH on Ethereum mainnet" gives the assistant everything it needs.
+- **Verify the active App** matches the task you want to perform.
+- **Connect a wallet** before attempting on-chain transactions.
+- **Review simulation results** before signing any transaction.
+- **Use threads for different topics.** Keep swaps in one thread, portfolio analysis in another.
+- **Check tool results.** The assistant shows raw data. If something looks off, ask it to re-check.
 
 ## Next Steps
 

@@ -3,7 +3,7 @@ title: Headless Library
 description: Build custom chat UIs with @aomi-labs/react.
 ---
 
-The headless library provides all the runtime logic for Aomi without any UI opinions. Build your own components while keeping full access to session management, streaming, wallet integration, and tool calling.
+`@aomi-labs/react` provides runtime logic, state management, hooks, and an API client with zero UI opinions. Use it to build completely custom interfaces or integrate Aomi logic into existing applications.
 
 ## Installation
 
@@ -15,10 +15,47 @@ Peer dependencies: React 18+, `@assistant-ui/react`.
 
 ## What's Included
 
-- **Providers** — `AomiRuntimeProvider` for context
-- **Hooks** — `useAomiRuntime`, `useControl`, `useUser`, `useThreadContext`, `useNotification`, `useEventContext`, `useWalletHandler`
-- **API Client** — `BackendApi` for non-React environments
-- **Utilities** — type definitions, helpers
+### Providers
+
+| Export | Description |
+| --- | --- |
+| `AomiRuntimeProvider` | Top-level provider that connects to the Aomi backend and sets up all contexts |
+| `ThreadContextProvider` | Thread state management (messages, metadata, thread switching) |
+| `ExtUserProvider` | Wallet/user state (address, chain, connection status) |
+| `NotificationContextProvider` | Toast notification state |
+| `EventContextProvider` | SSE subscription and system event dispatch |
+| `ControlContextProvider` | Model/app/API key selection state |
+
+### Hooks
+
+| Hook | Description |
+| --- | --- |
+| `useAomiRuntime` | Unified API combining all sub-contexts |
+| `useUser` | Wallet/user state and setters |
+| `useThreadContext` | Current thread ID, messages map, metadata map |
+| `useCurrentThreadMessages` | Messages for the active thread |
+| `useCurrentThreadMetadata` | Metadata for the active thread |
+| `useControl` | Model/app/API key state |
+| `useNotification` | Show, dismiss, and list notifications |
+| `useEventContext` | SSE subscription and outbound event dispatch |
+| `useWalletHandler` | Handle wallet transaction and signing requests |
+| `useNotificationHandler` | Process notification events from the backend |
+
+### API Client
+
+| Export | Description |
+| --- | --- |
+| `BackendApi` | Direct HTTP client for the Aomi backend (usable outside React) |
+
+### Utilities
+
+| Export | Description |
+| --- | --- |
+| `cn` | Class name merger (clsx + tailwind-merge) |
+| `formatAddress` | Truncates wallet addresses for display (`0xABC...12`) |
+| `getNetworkName` | Resolves chain ID to human-readable network name |
+| `getChainInfo` | Returns chain metadata (name, ticker, explorer URL) |
+| `SUPPORTED_CHAINS` | Array of supported chain configurations |
 
 ## Basic Setup
 
@@ -27,38 +64,84 @@ import { AomiRuntimeProvider } from "@aomi-labs/react";
 
 function App() {
   return (
-    <AomiRuntimeProvider
-      backendUrl={process.env.NEXT_PUBLIC_BACKEND_URL!}
-    >
+    <AomiRuntimeProvider backendUrl={process.env.NEXT_PUBLIC_BACKEND_URL!}>
       <YourChatUI />
     </AomiRuntimeProvider>
   );
 }
 ```
 
-## Provider Hierarchy
+### Provider Hierarchy
 
-For full wallet support, wrap with Para provider and wagmi:
+`AomiRuntimeProvider` wraps your app with a hierarchy of context providers:
 
-```tsx
-<AomiRuntimeProvider backendUrl={...}>
-  <ParaProvider paraApiKey={...}>
-    <WagmiProvider config={...}>
-      <YourChatUI />
-    </WagmiProvider>
-  </ParaProvider>
-</AomiRuntimeProvider>
+```
+AomiRuntimeProvider
+├── ThreadContextProvider
+│   └── NotificationContextProvider
+│       └── ExtUserProvider
+│           └── ControlContextProvider
+│               └── EventContextProvider
+│                   └── AomiRuntimeCore
+│                       └── {children}
 ```
 
-## Key Hooks
+### With Wallet Support
 
-| Hook | Returns | Purpose |
-|------|---------|---------|
-| `useAomiRuntime` | Runtime instance | Control chat, send messages, manage threads |
-| `useControl` | Control state | Manage API key, app, model, wallet |
-| `useUser` | User state | Current user information |
-| `useThreadContext` | Thread state | Active thread messages and status |
-| `useWalletHandler` | Wallet functions | Connect, disconnect, sign transactions |
+In a Next.js App Router project, place `AomiRuntimeProvider` inside your wagmi and query providers:
+
+```tsx
+"use client";
+
+import { WagmiProvider } from "wagmi";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { AomiRuntimeProvider } from "@aomi-labs/react";
+import { wagmiConfig } from "./wagmi-config";
+
+const queryClient = new QueryClient();
+
+export function Providers({ children }: { children: React.ReactNode }) {
+  return (
+    <WagmiProvider config={wagmiConfig}>
+      <QueryClientProvider client={queryClient}>
+        <AomiRuntimeProvider
+          backendUrl={process.env.NEXT_PUBLIC_BACKEND_URL}
+        >
+          {children}
+        </AomiRuntimeProvider>
+      </QueryClientProvider>
+    </WagmiProvider>
+  );
+}
+```
+
+### Without Wallet Support
+
+If your app doesn't need wallet functionality, skip wagmi entirely:
+
+```tsx
+import { AomiRuntimeProvider } from "@aomi-labs/react";
+
+export function Providers({ children }) {
+  return (
+    <AomiRuntimeProvider backendUrl="https://api.aomi.dev">
+      {children}
+    </AomiRuntimeProvider>
+  );
+}
+```
+
+## Using BackendApi Directly
+
+For non-React code or server-side use:
+
+```ts
+import { BackendApi } from "@aomi-labs/react";
+
+const api = new BackendApi("https://api.aomi.dev");
+const threads = await api.getThreads(sessionId, publicKey);
+const models = await api.getModels(sessionId);
+```
 
 ## Custom UI Tutorial
 
@@ -73,6 +156,6 @@ The key design principle: state lives in the library, components are pure presen
 
 ## Next Steps
 
-- [Frontend Setup](/guides/frontend-setup) — choose widget vs headless
+- [Hooks Reference](/guides/headless/hooks) — complete hook API
+- [Build Custom UI](/guides/headless/build-custom-ui) — full example from scratch
 - [Custom Tools](/guides/custom-tools) — extend Aomi with your own tools
-- [API Reference](/reference/api-reference) — HTTP API documentation
