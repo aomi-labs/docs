@@ -1,0 +1,51 @@
+---
+title: Troubleshooting
+description: Common issues and solutions when integrating with Aomi.
+---
+
+## CLI Issues
+
+**`aomi: command not found`**
+Ensure `@aomi-labs/client` is installed globally or the npm global bin directory is in your PATH.
+
+**Stale session state**
+Clear `~/.aomi/` to reset all local session state.
+
+## Execution Issues
+
+**Simulation fails**
+- Verify the target chain is supported
+- Check RPC endpoint availability
+- Ensure the wallet has sufficient funds for gas (even on fork)
+
+**Transaction not executing**
+- Check that the wallet is connected and has the correct network selected
+- Verify the API key has permission for the requested App
+- Review simulation output for errors
+
+## UI Integration
+
+**Widget not rendering**
+- Confirm Next.js 15 with App Router
+- Verify shadcn/ui is initialized (`components.json` present)
+- Check `NEXT_PUBLIC_BACKEND_URL` is set correctly
+- Ensure the Para provider is configured if using wallet features
+
+**Widget vs Headless**
+- Use the widget for quick integration with standard chat UI
+- Use the headless library for fully custom designs
+- Both share the same backend — switch between them without server changes
+
+## API Issues
+
+**401 Unauthorized**
+No API key provided. Add an `X-API-Key` header or enter it in the control bar.
+
+**403 Forbidden**
+The API key does not authorize the requested App. Verify the key is scoped to the correct App.
+
+## Next Steps
+
+- [Integration Guide](/guides/integration) — full platform walkthrough
+- [API Reference](/reference/api-reference) — HTTP API documentation
+- [FAQ](/resources/faq) — frequently asked questions

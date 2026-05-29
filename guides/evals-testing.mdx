@@ -1,0 +1,74 @@
+---
+title: Evals & Testing
+description: Test and evaluate AI assistant behavior with Aomi's evaluation framework.
+---
+
+Aomi provides an evaluation framework for testing AI assistant behavior through automated assertions. Define test cases, run them against your Aomi App, and verify results.
+
+## Overview
+
+The evaluation framework lets you:
+
+- Define test cases with expected outcomes
+- Assert balance changes, state checks, and custom conditions
+- Run tests locally or in CI
+- Generate structured test reports
+
+## Test Cases
+
+An `EvalCase` defines a single test scenario:
+
+```rust
+EvalCase {
+    name: "swap_eth_for_usdc",
+    prompt: "Swap 1 ETH for USDC",
+    assertions: vec![
+        Assertion::BalanceChange {
+            token: ETH_ADDRESS,
+            change: -1_000_000_000_000_000_000, // -1 ETH
+        },
+        Assertion::BalanceAtLeast {
+            token: USDC_ADDRESS,
+            amount: 2_000_000_000, // 2000 USDC minimum
+        },
+    ],
+}
+```
+
+## Assertion Types
+
+| Assertion | Description |
+|-----------|-------------|
+| `BalanceChange` | Verify a specific token balance change |
+| `BalanceCheck` | Verify a token balance meets a condition |
+| `BalanceAtLeast` | Verify a balance is at least a minimum |
+
+## Running Tests
+
+```bash
+aomi eval --app myapp --cases ./tests/
+```
+
+Or in CI:
+
+```yaml
+- name: Run evals
+  run: aomi eval --app myapp --cases ./tests/ --report ./results.json
+```
+
+## Custom Assertions
+
+Define custom assertions by implementing the `Assertion` trait for domain-specific checks.
+
+## Test Patterns
+
+- **Basic query** — verify information retrieval
+- **Transaction** — verify on-chain execution
+- **Multi-step** — verify complex workflows
+- **Negative** — verify the assistant refuses invalid requests
+
+## Next Steps
+
+- [Custom Tools](/guides/custom-tools) — extend Aomi with your own tools
+- [SDK Reference](/reference/sdk-api) — full Rust SDK documentation
+- [CLI Reference](/reference/cli) — CLI command details

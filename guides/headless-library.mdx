@@ -1,0 +1,78 @@
+---
+title: Headless Library
+description: Build custom chat UIs with @aomi-labs/react.
+---
+
+The headless library provides all the runtime logic for Aomi without any UI opinions. Build your own components while keeping full access to session management, streaming, wallet integration, and tool calling.
+
+## Installation
+
+```bash
+npm install @aomi-labs/react
+```
+
+Peer dependencies: React 18+, `@assistant-ui/react`.
+
+## What's Included
+
+- **Providers** — `AomiRuntimeProvider` for context
+- **Hooks** — `useAomiRuntime`, `useControl`, `useUser`, `useThreadContext`, `useNotification`, `useEventContext`, `useWalletHandler`
+- **API Client** — `BackendApi` for non-React environments
+- **Utilities** — type definitions, helpers
+
+## Basic Setup
+
+```tsx
+import { AomiRuntimeProvider } from "@aomi-labs/react";
+
+function App() {
+  return (
+    <AomiRuntimeProvider
+      backendUrl={process.env.NEXT_PUBLIC_BACKEND_URL!}
+    >
+      <YourChatUI />
+    </AomiRuntimeProvider>
+  );
+}
+```
+
+## Provider Hierarchy
+
+For full wallet support, wrap with Para provider and wagmi:
+
+```tsx
+<AomiRuntimeProvider backendUrl={...}>
+  <ParaProvider paraApiKey={...}>
+    <WagmiProvider config={...}>
+      <YourChatUI />
+    </WagmiProvider>
+  </ParaProvider>
+</AomiRuntimeProvider>
+```
+
+## Key Hooks
+
+| Hook | Returns | Purpose |
+|------|---------|---------|
+| `useAomiRuntime` | Runtime instance | Control chat, send messages, manage threads |
+| `useControl` | Control state | Manage API key, app, model, wallet |
+| `useUser` | User state | Current user information |
+| `useThreadContext` | Thread state | Active thread messages and status |
+| `useWalletHandler` | Wallet functions | Connect, disconnect, sign transactions |
+
+## Custom UI Tutorial
+
+Build a complete chat interface from scratch:
+
+1. Create a `MessageList` component that renders messages using `useThreadContext`
+2. Create a `ChatInput` component that sends messages via `useAomiRuntime`
+3. Create a `ThreadSwitcher` to manage multiple conversations
+4. Compose them into your page layout
+
+The key design principle: state lives in the library, components are pure presentational.
+
+## Next Steps
+
+- [Frontend Setup](/guides/frontend-setup) — choose widget vs headless
+- [Custom Tools](/guides/custom-tools) — extend Aomi with your own tools
+- [API Reference](/reference/api-reference) — HTTP API documentation

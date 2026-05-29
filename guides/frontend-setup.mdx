@@ -1,0 +1,65 @@
+---
+title: Frontend Setup
+description: Choose your integration path — widget (shadcn) or headless library.
+---
+
+Aomi offers two frontend integration paths, both built on the same core `@aomi-labs/react` library.
+
+## Choose Your Path
+
+|                    | Widget (shadcn)                                               | Headless Library                                            |
+| ------------------ | ------------------------------------------------------------- | ----------------------------------------------------------- |
+| **Setup time**     | Minutes                                                       | Hours                                                       |
+| **Install method** | `npx shadcn add`                                              | `npm install`                                               |
+| **UI included**    | Full chat interface, sidebar, controls                        | None — build your own                                       |
+| **Customization**  | Edit copied source files                                      | Build from scratch                                          |
+| **Best for**       | Quick integration, standard chat UI, projects using shadcn/ui | Fully custom designs, non-standard layouts, maximum control |
+
+Both paths use the same core. `@aomi-labs/react` provides all runtime logic — `AomiRuntimeProvider`, `useAomiRuntime`, `useControl`, `useUser`, and the `BackendApi` client. They share the same backend API endpoints for chat, threads, models, apps, and wallet operations, and the same authentication via API keys and wallet addresses.
+
+The widget is built on top of the headless library. Installing the widget pulls in `@aomi-labs/react` as a dependency automatically.
+
+## Widget (shadcn)
+
+Pre-built UI components installed via the shadcn CLI. Complete chat interface out of the box, with every line of source code editable.
+
+```bash
+npx shadcn add https://aomi.dev/r/aomi-frame.json
+```
+
+Components are pulled from three registries:
+
+| Source | What | Why |
+|--------|------|-----|
+| **aomi.dev/r** | Customized components (AomiFrame, Thread) | Aomi-specific features like wallet integration |
+| **r.assistant-ui.com** | Unchanged upstream components | Maintained by assistant-ui, receives upstream fixes |
+| **ui.shadcn.com** | Primitives (Button, Sidebar, Dialog) | Standard UI building blocks |
+
+Since components are copied into your project, you own the source code and can edit anything.
+
+## Headless Library
+
+Pure logic distributed as an npm package. Hooks, providers, API client, and utilities — zero UI opinions.
+
+```bash
+npm install @aomi-labs/react
+```
+
+Includes:
+- `AomiRuntimeProvider` — context provider for runtime state
+- Hooks: `useAomiRuntime`, `useControl`, `useUser`, `useThreadContext`, `useNotification`, `useEventContext`, `useWalletHandler`
+- Backend API client for non-React environments
+- Type definitions
+
+## Shared Foundation
+
+Both paths require:
+- React 18 / 19
+- A configured `NEXT_PUBLIC_BACKEND_URL` pointing to the Aomi backend
+- Optional: Para + wagmi setup for wallet support
+
+## Next Steps
+
+- [Widget Installation](/guides/widget-installation) — detailed widget setup
+- [Headless Library](/guides/headless-library) — headless library deep-dive
+- [Quickstart](/getting-started/quickstart) — get a working widget in minutes

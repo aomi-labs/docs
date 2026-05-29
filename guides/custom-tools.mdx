@@ -1,0 +1,61 @@
+---
+title: Custom Tools
+description: Extend Aomi with your own tools using the Rust SDK.
+---
+
+Custom tools are how you extend Aomi with your own APIs, data sources, and on-chain actions. Tools are defined using the Rust SDK and registered with an Aomi App.
+
+## Defining a Tool
+
+Tools are created using the `#[tool]` macro from the Aomi SDK:
+
+```rust
+use aomi_sdk::prelude::*;
+
+#[tool(
+    name = "get_token_price",
+    description = "Get the current price of a token by symbol"
+)]
+pub async fn get_token_price(
+    symbol: String,
+) -> Result<TokenPrice, ToolError> {
+    let price = fetch_price_from_api(&symbol).await?;
+    Ok(TokenPrice { symbol, price })
+}
+```
+
+Each tool has:
+- A **name** — used by the LLM to invoke the tool
+- A **description** — tells the LLM when to use the tool
+- **Typed parameters** — the LLM generates these from natural language
+- A **return type** — the result sent back to the LLM
+
+## Multi-Step Tools
+
+Tools can return intermediate results and request follow-up actions from the LLM, enabling complex multi-step workflows.
+
+## Registering Tools
+
+Tools are added to an AomiApp using the builder pattern:
+
+```rust
+let app = CoreAppBuilder::new("myapp")
+    .add_tool(get_token_price)
+    .add_tool(execute_trade)
+    .add_tool(get_portfolio)
+    .build();
+```
+
+## Tool Scheduler
+
+The runtime includes a `ToolScheduler` that manages tool execution — parallel execution for independent tools, sequential execution for dependent ones, and automatic retry on transient failures.
+
+## Instrumented Tools
+
+Tools can be wrapping with instrumentation for monitoring, logging, and tracing — useful for debugging and performance analysis.
+
+## Next Steps
+
+- [SDK Reference](/reference/sdk-api) — full Rust SDK documentation
+- [Building Apps](/reference/building-apps) — complete app deployment guide
+- [Integration Guide](/guides/integration) — full platform walkthrough

@@ -1,0 +1,52 @@
+---
+title: CLI Usage
+description: Use the Aomi CLI for development — validate prompts, inspect sessions, and simulate execution.
+---
+
+The Aomi CLI helps you validate prompts, inspect sessions, and simulate execution during integration development.
+
+## Installation
+
+```bash
+npm install -g @aomi-labs/client
+```
+
+## Quick Start
+
+Verify the installation:
+
+```bash
+aomi --help
+```
+
+Start an interactive chat session:
+
+```bash
+aomi chat
+```
+
+## Core Commands
+
+| Command | Description |
+|---------|-------------|
+| `chat` | Start an interactive chat session |
+| `app` | Manage Aomi Apps |
+| `model` | Switch AI models |
+| `chain` | Select blockchain network |
+| `secret` | Manage secrets and API keys |
+| `session` | View and manage sessions |
+| `sign` | Sign transactions |
+
+## Secrets Ingestion
+
+The CLI supports loading secrets from environment variables or config files for secure API key management.
+
+## Transaction Flow
+
+The CLI follows the same simulation-first flow as the widget: construct, simulate, review, sign, execute. Session state is stored under `~/.aomi/`.
+
+## Next Steps
+
+- [CLI Reference](/reference/cli) — full CLI command reference
+- [Integration Guide](/guides/integration) — full platform walkthrough
+- [Evals & Testing](/guides/evals-testing) — test assistant behavior
