@@ -1,6 +1,6 @@
 ---
-title: Simulation Reference
-description: Technical deep-dive into Aomi's simulation-first transaction pipeline — Anvil fork lifecycle, state diffing, token change previews, and safety guarantees.
+title: "Simulation Reference"
+description: "Technical deep-dive into Aomi's simulation-first transaction pipeline — Anvil fork lifecycle, state diffing, token change previews, and safety guarantees."
 ---
 
 The simulation pipeline is the core safety mechanism of the Aomi platform. Every transaction is simulated on a forked network before it reaches the user's wallet.
@@ -68,7 +68,7 @@ flowchart TB
 ### Provider Types
 
 | Provider | Description |
-|----------|-------------|
+| --- | --- |
 | `ForkProvider::Latest` | Fork from the latest block |
 | `ForkProvider::Block(number)` | Fork from a specific block |
 | `ForkProvider::Timestamp(ts)` | Fork from a block near the given timestamp |
@@ -93,7 +93,7 @@ let params = AnvilParams {
     port: Some(8545),
 };
 
-init_fork_provider(params).await?;
+init_fork_providers(vec![params]).await?;
 
 // Get the endpoint
 let rpc_url = fork_endpoint()?;
@@ -356,14 +356,12 @@ networks:
 ## Error Handling
 
 | Error | Cause | Recovery |
-|-------|-------|----------|
-| `SimulationFailed` | Contract reverted or invalid input | Fix parameters and retry |
+| --- | --- | --- |
+| `SimulationReverted` | Contract reverted or transaction would fail on-chain | Fix parameters or check calldata and retry |
 | `ForkCreationFailed` | RPC unavailable or rate limited | Retry with backoff |
-| `InsufficientBalance` | Not enough tokens for the operation | Notify user |
+| `InsufficientFunds` | Not enough ETH or tokens for the operation | Fund the account or notify user |
 | `Unauthorized` | Sender lacks permission | Verify wallet/approval |
-| `ForkNotInitialized` | `init_fork_provider` not called | Initialize before use |
-| `SimulationReverted` | Transaction would fail on-chain | Check calldata and state |
-| `InsufficientFunds` | Not enough ETH/tokens | Fund the account |
+| `ForkNotInitialized` | `init_fork_providers` not called | Initialize before use |
 | `GasEstimationFailed` | Complex transaction | Provide manual gas limit |
 | `RpcError` | Network issues | Retry or switch RPC |
 
@@ -380,7 +378,7 @@ flowchart LR
 ```
 
 | Practice | Description |
-| -------- | ----------- |
+| --- | --- |
 | **Always simulate** | Never skip the simulation step |
 | **Show state changes** | Display balance deltas clearly |
 | **Require confirmation** | Never auto-execute transactions |
@@ -392,5 +390,4 @@ flowchart LR
 
 - [Non-Custodial Automation](/concepts/non-custodial-wallets) — wallet security model
 - [Account Abstraction](/reference/account-abstraction) — session keys and gas sponsorship
-- [Execution](/concepts/architecture) — transaction pipeline overview
-{/* TODO: Restore "Wallet Integration" link once a dedicated wallet signing integration page exists. Previously pointed to /build/services/wallet-integration which does not exist in this docs structure. */}
+- [Execution](/guides/execution) — transaction lifecycle from simulation to settlement
