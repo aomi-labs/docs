@@ -1,6 +1,6 @@
 ---
 title: SDK
-description: Complete Rust SDK reference for building agentic applications on Aomi.
+description: Complete Rust SDK reference for building agentic applications on Aomi — ChatApp, ForgeApp, L2BeatApp, custom tools, streaming, and system events.
 ---
 
 The Rust SDK provides a builder-pattern API for creating AI-powered blockchain agents. Build custom agentic applications with just a few lines of code.
@@ -21,17 +21,31 @@ let app = ChatAppBuilder::new(&my_preamble).await?
 
 ## ChatAppBuilder
 
+The builder pattern provides flexible app configuration.
+
 ### Constructor Methods
 
 #### `new(preamble: &str)`
 
-Creates a builder with Anthropic connection and core tools:
+Create a builder with Anthropic connection and core tools:
 
 ```rust
 let builder = ChatAppBuilder::new("You are a helpful assistant.").await?;
 ```
 
-Automatically registers core tools: `SendTransactionToWallet`, `EncodeFunctionCall`, `GetCurrentTime`, `CallViewFunction`, `SimulateContractCall`, `GetAccountInfo`, `GetAccountTransactionHistory`, `BraveSearch`, `GetContractABI`, `GetContractSourceCode`, `GetContractFromEtherscan`.
+This automatically registers core tools:
+
+- `SendTransactionToWallet`
+- `EncodeFunctionCall`
+- `GetCurrentTime`
+- `CallViewFunction`
+- `SimulateContractCall`
+- `GetAccountInfo`
+- `GetAccountTransactionHistory`
+- `BraveSearch`
+- `GetContractABI`
+- `GetContractSourceCode`
+- `GetContractFromEtherscan`
 
 #### `new_with_model_connection(preamble, sender, no_tools, system_events)`
 
@@ -40,9 +54,9 @@ Full control over initialization:
 ```rust
 let builder = ChatAppBuilder::new_with_model_connection(
     &preamble,
-    Some(&sender_to_ui),
-    false,
-    Some(&system_events),
+    Some(&sender_to_ui),  // Optional UI channel
+    false,                 // Include tools
+    Some(&system_events), // Optional event queue
 ).await?;
 ```
 
@@ -58,13 +72,46 @@ let scheduler = builder.scheduler_for_tests();
 
 ### Builder Methods
 
-| Method | Description |
-|--------|-------------|
-| `add_tool(tool)` | Register a custom tool |
-| `add_docs_tool(loading_sender, sender_to_ui)` | Add RAG documentation search |
-| `build(skip_mcp, system_events, sender_to_ui)` | Finalize into a `ChatApp` |
+#### `add_tool<T>(tool: T)`
+
+Register a custom tool implementing `rig::tool::Tool`:
+
+```rust
+builder.add_tool(MyCustomTool)?;
+builder.add_tool(AnotherTool)?;
+```
+
+Tools are registered in both:
+
+1. The `ToolScheduler` (for execution)
+2. The `AgentBuilder` (for LLM awareness)
+
+#### `add_docs_tool(loading_sender, sender_to_ui)`
+
+Add RAG documentation search:
+
+```rust
+builder.add_docs_tool(
+    Some(loading_sender),  // Progress updates
+    Some(&sender_to_ui),   // Error notifications
+).await?;
+```
+
+#### `build(skip_mcp, system_events, sender_to_ui)`
+
+Finalize into a `ChatApp`:
+
+```rust
+let app = builder.build(
+    false,                 // Connect to MCP server
+    Some(&system_events), // Event queue
+    Some(&sender_to_ui),  // UI channel
+).await?;
+```
 
 ## ChatApp
+
+The main application interface:
 
 ```mermaid
 classDiagram
@@ -73,7 +120,10 @@ classDiagram
         -document_store: Option~DocumentStore~
         +new() Result~ChatApp~
         +new_headless() Result~ChatApp~
+        +new_with_options(skip_docs, skip_mcp) Result~ChatApp~
         +process_message(history, input, sender, events, interrupt)
+        +agent() Arc~Agent~
+        +document_store() Option~DocumentStore~
     }
 ```
 
@@ -87,60 +137,112 @@ let app = ChatApp::new().await?;
 let app = ChatApp::new_headless().await?;
 
 // Custom options
-let app = ChatApp::new_with_options(true, false).await?;
+let app = ChatApp::new_with_options(
+    true,   // skip_docs
+    false,  // skip_mcp
+).await?;
+
+// With UI integration
+let app = ChatApp::new_with_senders(
+    &sender_to_ui,
+    loading_sender,
+    &system_events,
+    false,  // skip_docs
+).await?;
 ```
 
 ### Processing Messages
 
 ```rust
 app.process_message(
-    &mut history,
-    user_input,
-    &sender_to_ui,
-    &system_events,
-    &mut interrupt_receiver,
+    &mut history,            // Conversation history
+    user_input,              // User message
+    &sender_to_ui,           // Response channel
+    &system_events,          // Event queue
+    &mut interrupt_receiver, // Interrupt signal
 ).await?;
 ```
 
 ## Streaming Response
 
+Use `stream_completion` for low-level streaming control:
+
 ```rust
 use aomi_runtime::{stream_completion, ChatCommand};
 use futures::StreamExt;
 
+let scheduler = ToolScheduler::get_or_init().await?;
+let handler = scheduler.get_handler();
+
 let mut stream = stream_completion(
-    agent, handler, &input, history.clone(), system_events.clone(),
+    agent,
+    handler,
+    &input,
+    history.clone(),
+    system_events.clone(),
 ).await;
 
 while let Some(result) = stream.next().await {
     match result {
         Ok(ChatCommand::StreamingText(text)) => {
+            // Append incremental text
             response.push_str(&text);
         }
         Ok(ChatCommand::ToolCall { topic, stream }) => {
+            // Handle tool invocation
             println!("Tool: {}", topic);
+            // stream contains results
         }
         Ok(ChatCommand::AsyncToolResult { call_id, tool_name, result }) => {
+            // Multi-step tool result
             println!("{}: {:?}", tool_name, result);
         }
-        Ok(ChatCommand::Complete) => break,
-        Ok(ChatCommand::Error(e)) => eprintln!("Error: {}", e),
-        Ok(ChatCommand::Interrupted) => break,
-        Err(e) => eprintln!("Stream error: {}", e),
+        Ok(ChatCommand::Complete) => {
+            break;
+        }
+        Ok(ChatCommand::Error(e)) => {
+            eprintln!("Error: {}", e);
+        }
+        Ok(ChatCommand::Interrupted) => {
+            println!("Interrupted by user");
+            break;
+        }
+        Err(e) => {
+            eprintln!("Stream error: {}", e);
+        }
     }
 }
 ```
 
-### ChatCommand Variants
+## ChatCommand Variants
 
-| Variant | Description |
-| ------- | ----------- |
-| `StreamingText(String)` | Incremental LLM output |
-| `ToolCall { topic, stream }` | Tool invocation |
-| `AsyncToolResult { call_id, tool_name, result }` | Multi-step tool result |
-| `Complete` | Response finished |
-| `Error(String)` | Processing error |
-| `Interrupted` | User cancelled |
+```mermaid
+flowchart TD
+    subgraph "ChatCommand&lt;S&gt;"
+        ST[StreamingText]
+        TC[ToolCall]
+        ATR[AsyncToolResult]
+        COMP[Complete]
+        ERR[Error]
+        INT[Interrupted]
+    end
+
+    ST -->|"Incremental LLM output"| UI[UI Display]
+    TC -->|"Tool invocation"| TOOL[Tool Execution]
+    ATR -->|"Multi-step result"| SYS[System Events]
+    COMP -->|"Response finished"| DONE[Done]
+    ERR -->|"Failure"| HANDLE[Error Handler]
+    INT -->|"User cancelled"| CANCEL[Cancellation]
+```
+
+| Variant | Description | Fields |
+| ------- | ----------- | ------ |
+| `StreamingText(String)` | Incremental LLM output | Text chunk |
+| `ToolCall { topic, stream }` | Tool invocation | Tool name, result stream |
+| `AsyncToolResult { call_id, tool_name, result }` | Multi-step tool result | Call ID, name, JSON result |
+| `Complete` | Response finished | - |
+| `Error(String)` | Processing error | Error message |
+| `Interrupted` | User cancelled | - |
 
 ## System Events
 
@@ -152,81 +254,207 @@ Thread-safe event buffer for out-of-band communication:
 use aomi_runtime::{SystemEventQueue, SystemEvent};
 
 let queue = SystemEventQueue::new();
+
+// Push events
 queue.push(SystemEvent::SystemNotice("Connected".into()));
 queue.push(SystemEvent::InlineDisplay(json!({"type": "progress", "value": 50})));
 
+// Read events (non-consuming)
 let events = queue.slice_from(0);
+
+// Check length
+let count = queue.len();
 ```
 
 ### SystemEvent Variants
 
-| Variant | Purpose |
-| ------- | ------- |
-| `InlineDisplay(Value)` | UI notifications (tool progress, wallet requests) |
-| `SystemNotice(String)` | Status messages (connection status) |
-| `SystemError(String)` | Error messages (API failures) |
-| `AsyncUpdate(Value)` | Background updates (title changes) |
+```mermaid
+flowchart LR
+    subgraph "SystemEvent"
+        INLINE[InlineDisplay]
+        NOTICE[SystemNotice]
+        ERROR[SystemError]
+        ASYNC[AsyncUpdate]
+    end
+
+    INLINE -->|"UI notification"| IMMEDIATE[Immediate Display]
+    NOTICE -->|"Status message"| IMMEDIATE
+    ERROR -->|"Error message"| IMMEDIATE
+    ASYNC -->|"Background update"| SSE[SSE Broadcast]
+```
+
+| Variant | Purpose | Usage |
+| ------- | ------- | ----- |
+| `InlineDisplay(Value)` | UI notifications | Tool progress, wallet requests |
+| `SystemNotice(String)` | Status messages | Connection status |
+| `SystemError(String)` | Error messages | API failures |
+| `AsyncUpdate(Value)` | Background updates | Title changes, task completion |
 
 ## Tool Scheduler
+
+Access the global tool scheduler:
 
 ```rust
 use aomi_tools::ToolScheduler;
 
+// Get or create the global scheduler
 let scheduler = ToolScheduler::get_or_init().await?;
+
+// Register a tool
 scheduler.register_tool(MyTool)?;
+
+// Get a handler for request processing
 let handler = scheduler.get_handler();
+
+// Check if a tool is multi-step
 let is_multi = handler.is_multi_step("my_tool");
 ```
 
 ## Custom Tools
 
-### Macro-based
+### Using `#[rig_tool]` Macro
+
+The simplest way to create tools:
 
 ```rust
 use rig::tool;
+use serde::{Deserialize, Serialize};
+use schemars::JsonSchema;
+
+#[derive(Debug, Deserialize, JsonSchema, Clone)]
+pub struct GetPriceParams {
+    /// The token symbol (e.g., "ETH", "BTC")
+    pub symbol: String,
+    /// Currency for price (default: USD)
+    #[serde(default = "default_currency")]
+    pub currency: String,
+}
+
+fn default_currency() -> String { "USD".into() }
+
+#[derive(Debug, Serialize, Clone)]
+pub struct PriceResult {
+    pub symbol: String,
+    pub price: f64,
+    pub currency: String,
+}
 
 #[tool(description = "Get the current price of a cryptocurrency")]
-pub async fn get_crypto_price(params: GetPriceParams) -> Result<PriceResult, ToolError> {
+pub async fn get_crypto_price(
+    params: GetPriceParams,
+) -> Result<PriceResult, ToolError> {
+    // Fetch price from API
     let price = fetch_price(&params.symbol, &params.currency).await?;
-    Ok(PriceResult { symbol: params.symbol, price, currency: params.currency })
+
+    Ok(PriceResult {
+        symbol: params.symbol,
+        price,
+        currency: params.currency,
+    })
 }
 ```
 
-### AomiApiTool Trait
+Register with the builder:
+
+```rust
+builder.add_tool(get_crypto_price)?;
+```
+
+### Implementing AomiApiTool
+
+For more control, implement the trait directly:
 
 ```rust
 use aomi_tools::{AomiApiTool, AnyApiTool};
 
+#[derive(Clone)]
+pub struct MyTool;
+
 impl AomiApiTool for MyTool {
     type ApiRequest = MyParams;
     type ApiResponse = MyResult;
-    type MultiStepResults = ();
+    type MultiStepResults = ();  // Single-result tool
     type Error = MyError;
 
-    fn name(&self) -> &'static str { "my_tool" }
-    fn description(&self) -> &'static str { "Does something useful" }
-    fn check_input(&self, request: Self::ApiRequest) -> bool { !request.value.is_empty() }
+    fn name(&self) -> &'static str {
+        "my_tool"
+    }
+
+    fn description(&self) -> &'static str {
+        "Does something useful"
+    }
+
+    fn check_input(&self, request: Self::ApiRequest) -> bool {
+        // Validate input
+        !request.value.is_empty()
+    }
+
     async fn call(&self, request: Self::ApiRequest) -> Result<Self::ApiResponse, Self::Error> {
-        Ok(MyResult { })
+        // Implementation
+        Ok(MyResult { /* ... */ })
     }
 }
 ```
 
 ### Multi-Step Tools
 
+For long-running tools that stream results:
+
 ```rust
 use aomi_tools::MultiStepApiTool;
+use tokio::sync::mpsc::Sender;
+use futures::future::BoxFuture;
+
+#[derive(Clone)]
+pub struct LongRunningTool;
 
 impl MultiStepApiTool for LongRunningTool {
-    fn call_stream(&self, request: Self::ApiRequest, sender: Sender<eyre::Result<Value>>) -> BoxFuture<'static, eyre::Result<()>> {
+    type ApiRequest = LongRunningParams;
+    type Error = anyhow::Error;
+
+    fn name(&self) -> &'static str {
+        "long_running_tool"
+    }
+
+    fn description(&self) -> &'static str {
+        "Performs a long-running operation with progress updates"
+    }
+
+    fn validate(&self, request: &Self::ApiRequest) -> eyre::Result<()> {
+        // Validate request
+        Ok(())
+    }
+
+    fn call_stream(
+        &self,
+        request: Self::ApiRequest,
+        sender: Sender<eyre::Result<Value>>,
+    ) -> BoxFuture<'static, eyre::Result<()>> {
         async move {
+            // Send progress updates
             sender.send(Ok(json!({"status": "starting"}))).await?;
+
+            // Do work...
+            tokio::time::sleep(Duration::from_secs(1)).await;
+            sender.send(Ok(json!({"status": "processing", "progress": 50}))).await?;
+
+            // More work...
             tokio::time::sleep(Duration::from_secs(1)).await;
             sender.send(Ok(json!({"status": "complete", "result": "done"}))).await?;
+
             Ok(())
         }.boxed()
     }
 }
+```
+
+Register multi-step tools:
+
+```rust
+use aomi_tools::MultiStepToolWrapper;
+
+let wrapper = MultiStepToolWrapper { inner: LongRunningTool };
+scheduler.register_any_tool(Arc::new(wrapper))?;
 ```
 
 ## Complete Example
@@ -238,24 +466,31 @@ use futures::StreamExt;
 
 #[tokio::main]
 async fn main() -> eyre::Result<()> {
+    // Create channels
     let (tx, mut rx) = mpsc::channel::<ChatCommand>(100);
     let system_events = SystemEventQueue::new();
 
+    // Build the app
     let preamble = "You are a DeFi assistant. Help users with token swaps and portfolio management.";
+
     let app = ChatAppBuilder::new(preamble).await?
         .add_tool(GetTokenPrice)?
         .add_tool(SwapTokens)?
         .build(true, Some(&system_events), Some(&tx)).await?;
 
+    // Process a message
     let mut history = vec![];
     let (interrupt_tx, mut interrupt_rx) = mpsc::channel(1);
 
     app.process_message(
         &mut history,
         "What's the current price of ETH?".into(),
-        &tx, &system_events, &mut interrupt_rx,
+        &tx,
+        &system_events,
+        &mut interrupt_rx,
     ).await?;
 
+    // Consume responses
     while let Some(cmd) = rx.recv().await {
         match cmd {
             ChatCommand::StreamingText(text) => print!("{}", text),
@@ -263,9 +498,192 @@ async fn main() -> eyre::Result<()> {
             _ => {}
         }
     }
+
     Ok(())
 }
 ```
+
+## ForgeApp
+
+`ForgeApp` is an agentic application specialized for smart contract development. It implements the `AomiBackend` trait and extends the core `ChatApp` patterns with Forge-specific capabilities — contract compilation, deployment scripting, fork testing, and dependency management.
+
+### ForgeAppBuilder
+
+```rust
+use aomi_forge::ForgeAppBuilder;
+
+let app = ForgeAppBuilder::new("You are a Solidity expert.").await?
+    .add_tool(DeployContract)?
+    .add_tool(RunForgeScript)?
+    .add_tool(VerifyContract)?
+    .build(false, Some(&system_events), Some(&tx)).await?;
+```
+
+### Custom Tools
+
+ForgeApp registers a set of specialized tools for smart contract workflows:
+
+| Tool | Description |
+| ---- | ----------- |
+| `DeployContract` | Compile and deploy Solidity contracts to anvil forks |
+| `RunForgeScript` | Execute Foundry forge scripts with dependency resolution |
+| `VerifyContract` | Verify contract source code on Etherscan |
+| `CompileProject` | Run `forge build` and parse compilation output |
+
+### Document Store
+
+ForgeApp includes a document store indexed on Solidity reference material and OpenZeppelin contracts, enabling RAG queries during development:
+
+```rust
+app.document_store()  // Option<DocumentStore>
+    .unwrap()
+    .search("ERC-721 mint function signature");
+```
+
+### Testing
+
+ForgeApp supports the same `new_headless()` pattern for evaluation:
+
+```rust
+#[cfg(test)]
+mod tests {
+    use aomi_forge::ForgeApp;
+
+    #[tokio::test]
+    async fn test_forge_app_headless() {
+        let app = ForgeApp::new_headless().await.unwrap();
+        // Run evaluation cases with no docs, no MCP, no tools
+    }
+}
+```
+
+Uses `aomi-eval` with the `EvalHarness` for balance and state assertions:
+
+```rust
+use aomi_eval::{EvalHarness, EvalCase, Assertion};
+
+let harness = EvalHarness::new(app);
+harness.run(EvalCase {
+    name: "deploys ERC-20",
+    instruction: "Deploy a simple ERC-20 token",
+    assertions: vec![Assertion::Balance { address, min: 1_000_000 }],
+}).await?;
+```
+
+## L2BeatApp
+
+`L2BeatApp` is an agentic application specialized for Layer-2 protocol analysis. It implements the `AomiBackend` trait and provides tools for querying L2Beat data, analyzing rollup configurations, and comparing protocol risk parameters.
+
+### L2BeatApp Builder
+
+```rust
+use aomi_l2beat::L2BeatAppBuilder;
+
+let app = L2BeatAppBuilder::new("You are a protocol analysis expert.").await?
+    .add_tool(QueryL2BeatProjects)?
+    .add_tool(CompareRiskFactors)?
+    .add_tool(AnalyzeTvlTrends)?
+    .build(false, Some(&system_events), Some(&tx)).await?;
+```
+
+The builder follows the same patterns as `ChatAppBuilder` and `ForgeAppBuilder`, inheriting core tool registration and MCP support.
+
+### Custom Config
+
+L2BeatApp accepts a configurable set of tracked projects and risk categories:
+
+```rust
+use aomi_l2beat::{L2BeatAppBuilder, L2BeatConfig};
+
+let config = L2BeatConfig {
+    tracked_projects: vec!["arbitrum", "optimism", "base", "zksync-era"],
+    risk_categories: vec!["state-validation", "data-availability", "sequencer-failure"],
+    refresh_interval_secs: 3600,
+};
+
+let app = L2BeatAppBuilder::new_with_config(
+    "Analyze L2 protocol security.",
+    config,
+).await?
+    .build(false, None, None).await?;
+```
+
+## Headless Mode for Evaluation
+
+Every application type supports headless mode — a stripped-down runtime used for automated evaluation:
+
+```rust
+// ChatApp
+let app = ChatApp::new_headless().await?;
+
+// ForgeApp
+let app = ForgeApp::new_headless().await?;
+
+// L2BeatApp
+let app = L2BeatApp::new_headless().await?;
+```
+
+Headless mode skips:
+- Document store loading
+- MCP server connection
+- Tool registration (no blockchain RPC, no external APIs)
+- UI channel creation
+
+This gives a deterministic, fast runtime suitable for CI/CD and evaluation harnesses.
+
+## Architecture
+
+### AomiBackend Trait
+
+All agentic applications implement the `AomiBackend` trait:
+
+```mermaid
+classDiagram
+    class AomiBackend {
+        <<trait>>
+        +system_events() SystemEventQueue
+        +process_message()
+    }
+
+    class AomiApiTool {
+        <<trait>>
+        +call(request) Response
+        +name() str
+        +description() str
+    }
+
+    class MultiStepApiTool {
+        <<trait>>
+        +call_stream(request, sender)
+        +validate(request)
+    }
+
+    class HistoryBackend {
+        <<trait>>
+        +load_history(public_key)
+        +save_history(messages)
+    }
+
+    ChatApp ..|> AomiBackend
+    ForgeApp ..|> AomiBackend
+    L2BeatApp ..|> AomiBackend
+
+    GetContractABI ..|> AomiApiTool
+    BraveSearch ..|> AomiApiTool
+
+    ForgeExecutor ..|> MultiStepApiTool
+```
+
+### Trait-Based Abstractions
+
+Core components use traits for testability and extensibility:
+
+| Trait | Purpose | Implementors |
+| ----- | ------- | ------------ |
+| `AomiBackend` | Application runtime | ChatApp, ForgeApp, L2BeatApp |
+| `AomiApiTool` | Single-result tools | GetContractABI, BraveSearch, custom tools |
+| `MultiStepApiTool` | Streaming tools | ForgeExecutor, long-running operations |
+| `HistoryBackend` | Pluggable persistence | SQLite, PostgreSQL backends |
 
 ## Next Steps
 

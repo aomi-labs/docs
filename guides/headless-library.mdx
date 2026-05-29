@@ -1,9 +1,11 @@
 ---
 title: Headless Library
-description: Build custom chat UIs with @aomi-labs/react.
+description: Build custom chat UIs with @aomi-labs/react — runtime logic, state management, and hooks with zero UI opinions.
 ---
 
 `@aomi-labs/react` provides runtime logic, state management, hooks, and an API client with zero UI opinions. Use it to build completely custom interfaces or integrate Aomi logic into existing applications.
+
+Use the headless React library when you need a custom layout, branded components, or a non-chat interaction model.
 
 ## Installation
 
@@ -11,7 +13,21 @@ description: Build custom chat UIs with @aomi-labs/react.
 npm install @aomi-labs/react
 ```
 
-Peer dependencies: React 18+, `@assistant-ui/react`.
+Or using pnpm:
+
+```bash
+pnpm install @aomi-labs/react
+```
+
+### Peer Dependencies
+
+```json
+{
+  "@assistant-ui/react": "^0.11.0",
+  "react": "^18.0.0 || ^19.0.0",
+  "react-dom": "^18.0.0 || ^19.0.0"
+}
+```
 
 ## What's Included
 
@@ -30,12 +46,12 @@ Peer dependencies: React 18+, `@assistant-ui/react`.
 
 | Hook | Description |
 | --- | --- |
-| `useAomiRuntime` | Unified API combining all sub-contexts |
+| `useAomiRuntime` | Unified API combining all sub-contexts (threads, messages, user, events, notifications, wallet) |
 | `useUser` | Wallet/user state and setters |
 | `useThreadContext` | Current thread ID, messages map, metadata map |
 | `useCurrentThreadMessages` | Messages for the active thread |
-| `useCurrentThreadMetadata` | Metadata for the active thread |
-| `useControl` | Model/app/API key state |
+| `useCurrentThreadMetadata` | Metadata (title, status) for the active thread |
+| `useControl` | Model/app/API key state and selection |
 | `useNotification` | Show, dismiss, and list notifications |
 | `useEventContext` | SSE subscription and outbound event dispatch |
 | `useWalletHandler` | Handle wallet transaction and signing requests |
@@ -57,19 +73,44 @@ Peer dependencies: React 18+, `@assistant-ui/react`.
 | `getChainInfo` | Returns chain metadata (name, ticker, explorer URL) |
 | `SUPPORTED_CHAINS` | Array of supported chain configurations |
 
+### Types
+
+```ts
+import type {
+  AomiRuntimeApi,
+  AomiMessage,
+  ThreadMetadata,
+  ThreadControlState,
+  UserState,
+  ControlState,
+  Notification,
+  NotificationType,
+  WalletRequest,
+  WalletTxPayload,
+  WalletEip712Payload,
+  InboundEvent,
+  OutboundEvent,
+  SSEStatus,
+} from "@aomi-labs/react";
+```
+
 ## Basic Setup
+
+Wrap your app with `AomiRuntimeProvider`:
 
 ```tsx
 import { AomiRuntimeProvider } from "@aomi-labs/react";
 
 function App() {
   return (
-    <AomiRuntimeProvider backendUrl={process.env.NEXT_PUBLIC_BACKEND_URL!}>
-      <YourChatUI />
+    <AomiRuntimeProvider backendUrl="https://api.aomi.dev">
+      <YourCustomUI />
     </AomiRuntimeProvider>
   );
 }
 ```
+
+`AomiRuntimeProvider` internally sets up all nested providers (ThreadContext, UserContext, NotificationContext, EventContext, ControlContext), so you get the full runtime with a single wrapper.
 
 ### Provider Hierarchy
 
@@ -77,20 +118,43 @@ function App() {
 
 ```
 AomiRuntimeProvider
-├── ThreadContextProvider
-│   └── NotificationContextProvider
-│       └── ExtUserProvider
-│           └── ControlContextProvider
-│               └── EventContextProvider
-│                   └── AomiRuntimeCore
+├── ThreadContextProvider         ← Thread state (messages, metadata, switching)
+│   └── NotificationContextProvider    ← Toast notifications
+│       └── ExtUserProvider           ← Wallet/user state
+│           └── ControlContextProvider     ← Model/app/API key
+│               └── EventContextProvider     ← SSE + system events
+│                   └── AomiRuntimeCore     ← Orchestration + unified API
 │                       └── {children}
 ```
 
-### With Wallet Support
+Each layer provides specific functionality through its own hook:
+
+| Context | Hook | Provides |
+| --- | --- | --- |
+| Thread | `useThreadContext` | Thread ID, messages, metadata, thread operations |
+| User | `useUser` | Wallet address, chain ID, connection status |
+| Notification | `useNotification` | Show/dismiss notifications |
+| Control | `useControl` | Model selection, app, API key |
+| Event | `useEventContext` | SSE subscription, outbound events |
+| **Unified** | `useAomiRuntime` | **All of the above in one hook** |
+
+## Runtime Provider
+
+`AomiRuntimeProvider` is the top-level provider that connects your React app to the Aomi backend. It sets up all contexts needed for chat, threads, user state, notifications, and events.
+
+### Props
+
+| Prop | Type | Default | Description |
+| --- | --- | --- | --- |
+| `backendUrl` | `string` | `"http://localhost:8080"` | URL of the Aomi backend API |
+| `children` | `ReactNode` | -- | Your application components |
+
+### Typical Provider Hierarchy
 
 In a Next.js App Router project, place `AomiRuntimeProvider` inside your wagmi and query providers:
 
 ```tsx
+// app/providers.tsx
 "use client";
 
 import { WagmiProvider } from "wagmi";
@@ -115,9 +179,24 @@ export function Providers({ children }: { children: React.ReactNode }) {
 }
 ```
 
+```tsx
+// app/layout.tsx
+import { Providers } from "./providers";
+
+export default function RootLayout({ children }) {
+  return (
+    <html lang="en">
+      <body>
+        <Providers>{children}</Providers>
+      </body>
+    </html>
+  );
+}
+```
+
 ### Without Wallet Support
 
-If your app doesn't need wallet functionality, skip wagmi entirely:
+If your application does not need wallet functionality, skip the wagmi providers entirely:
 
 ```tsx
 import { AomiRuntimeProvider } from "@aomi-labs/react";
@@ -131,17 +210,37 @@ export function Providers({ children }) {
 }
 ```
 
-## Using BackendApi Directly
+The `ConnectButton` control and runtime transaction handler will simply be inactive.
 
-For non-React code or server-side use:
+### Using BackendApi Directly
+
+For non-React code or server-side use, you can use the `BackendApi` class without any providers:
 
 ```ts
 import { BackendApi } from "@aomi-labs/react";
 
 const api = new BackendApi("https://api.aomi.dev");
+
+// List threads
 const threads = await api.getThreads(sessionId, publicKey);
+
+// Send a message
+await api.chat(sessionId, message, app, apiKey);
+
+// Get available models
 const models = await api.getModels(sessionId);
 ```
+
+## When to Use Headless vs Widget
+
+| Scenario | Recommendation |
+| --- | --- |
+| Standard chat interface needed quickly | Widget |
+| Existing design system, custom look | Headless |
+| Non-Next.js React app | Headless |
+| Server-side API calls (no React) | Headless (`BackendApi` class directly) |
+| Want to start fast, customize later | Widget (edit source files) |
+| Embedding in an existing complex layout | Headless |
 
 ## Custom UI Tutorial
 
@@ -153,6 +252,92 @@ Build a complete chat interface from scratch:
 4. Compose them into your page layout
 
 The key design principle: state lives in the library, components are pure presentational.
+
+## Handler Utilities
+
+### Wallet Handler
+
+The `useWalletHandler` hook processes wallet transaction and signing requests from the backend:
+
+```tsx
+import { useWalletHandler } from "@aomi-labs/react";
+
+function WalletHandler() {
+  const { handleRequest, currentRequest, isProcessing } = useWalletHandler();
+
+  // currentRequest contains payload, type (tx / eip712), and status
+  // Call handleRequest(response) to approve or reject
+
+  return null; // Renders nothing — call handleRequest programmatically
+}
+```
+
+### Notification Handler
+
+The `useNotificationHandler` hook processes notification events from the backend:
+
+```tsx
+import { useNotificationHandler } from "@aomi-labs/react";
+
+function NotificationListener() {
+  const { lastEvent, clearEvent } = useNotificationHandler();
+
+  // lastEvent contains type, title, message, and metadata
+  // Trigger your own toast or banner UI based on the event
+
+  return null;
+}
+```
+
+## Event System Details
+
+### Event Types
+
+The event context supports both inbound events (SSE from backend) and outbound events (dispatched to backend):
+
+| Event | Direction | Description |
+| --- | --- | --- |
+| `InboundEvent` | Server → Client | System notifications, wallet requests, status updates |
+| `OutboundEvent` | Client → Server | User actions, UI state, interrupt signals |
+
+### Subscription
+
+```tsx
+import { useEventContext } from "@aomi-labs/react";
+
+function EventSubscriber() {
+  const { subscribe, unsubscribe, sseStatus } = useEventContext();
+
+  // subscribe(eventType, handler) — listen for specific events
+  // unsubscribe(eventType, handler) — remove listener
+  // sseStatus — 'connected' | 'disconnected' | 'reconnecting'
+
+  return (
+    <div className="text-xs text-white/40">
+      SSE: {sseStatus}
+    </div>
+  );
+}
+```
+
+### Dispatch
+
+```tsx
+import { useEventContext } from "@aomi-labs/react";
+
+function useInterrupt() {
+  const { dispatch } = useEventContext();
+
+  const interrupt = () => {
+    dispatch({
+      type: "interrupt",
+      payload: { reason: "user_cancelled" },
+    });
+  };
+
+  return { interrupt };
+}
+```
 
 ## Next Steps
 
