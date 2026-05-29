@@ -1,93 +1,60 @@
 ---
-title: Frontend Setup
-description: Set up the Aomi chat widget in a Next.js 15 app as a product surface — prerequisites, shadcn install, environment configuration, and widget mounting steps.
+title: "Frontend Setup"
+description: "Set up the Aomi chat widget in a Next.js 15 app as a product surface — prerequisites, shadcn install, environment configuration, and widget mounting steps."
 ---
 
-This guide covers setting up the web chat widget as a product surface for your Aomi App. The widget gives you a complete chat interface out of the box, built on shadcn components that you own and can edit freely.
+<Info>
+  Looking for install steps? See the [Quickstart](/getting-started/quickstart) for the one-command shadcn install.
+</Info>
 
-## Prerequisites
+This page covers what the Aomi widget gives you, how it slots into a Next.js app, and how to decide between the widget and the headless library.
 
-- **Next.js 15** app with the App Router
-- **Tailwind CSS** configured
-- **shadcn/ui** initialized (`npx shadcn init` already run, `components.json` present)
+## When to use the widget
 
-Starting from scratch:
+| Use the widget when | Use the headless library when |
+| --- | --- |
+| You want a production-ready chat UI in minutes | You need a fully custom UI |
+| You're already on shadcn / Tailwind | You're not using shadcn |
+| Standard layout (sidebar \+ thread \+ composer) works for you | You need a non-standard layout |
+| You want to edit source files when needed | You want to compose from primitives |
 
-```bash
-npx create-next-app@latest my-app --typescript --tailwind --app
-cd my-app
-npx shadcn init
-```
+→ [Headless Library](/guides/headless-library) covers the alternative path.
 
-## Install the Widget
+## What the widget gives you
 
-```bash
-npx shadcn add https://aomi.dev/r/aomi-frame.json
-```
+- **Full chat surface** — sidebar with threads, message composer, streaming thread view.
+- **ControlBar** — model selector, app selector, API key input, wallet connect, network select.
+- **Wallet pipeline** — Para-backed connect, wagmi-compatible signing, simulation-first transaction handling.
+- **Compound component API** — drop in only the pieces you want.
+- **Owned source** — components are copied into your repo via shadcn; edit anything.
 
-This installs the `AomiFrame` component, all sub-components, and every dependency in one step.
+## Anatomy
 
-### What Gets Installed
-
-**npm packages:**
-- `@aomi-labs/react` — headless runtime, hooks, API client
-- `@assistant-ui/react` — chat primitives
-
-**Component files:**
-```
-your-project/
+```text
+your-app/
 ├── components/
-│   ├── aomi-frame.tsx                    ← Main shell
-│   ├── control-bar/
-│   │   ├── index.tsx                     ← ControlBar
-│   │   ├── model-select.tsx              ← Model dropdown
-│   │   ├── app-select.tsx                ← App/agent dropdown
-│   │   ├── api-key-input.tsx             ← API key dialog
-│   │   ├── wallet-connect.tsx            ← Wallet button
-│   │   └── network-select.tsx            ← Network dropdown
-│   ├── assistant-ui/
-│   │   ├── thread.tsx                    ← Chat thread
-│   │   ├── thread-list.tsx               ← Thread list
-│   │   ├── threadlist-sidebar.tsx        ← Sidebar wrapper
-│   │   ├── tool-fallback.tsx             ← Tool display
-│   │   ├── markdown-text.tsx             ← Markdown renderer
-│   │   ├── tooltip-icon-button.tsx       ← Icon buttons
-│   │   └── attachment.tsx                ← File attachments
-│   ├── ui/                               ← shadcn primitives (button, sidebar, popover, etc.)
-│   └── wallet-tx-handler.tsx             ← Wallet transaction handler
-├── lib/
-│   └── utils.ts                          ← cn() utility
-└── package.json
+│   ├── aomi-frame.tsx          ← Main shell (Root, Header, Composer)
+│   ├── control-bar/            ← Model, App, API key, Wallet, Network
+│   ├── assistant-ui/           ← Thread, ThreadList, markdown, tools
+│   ├── ui/                     ← shadcn primitives
+│   └── wallet-tx-handler.tsx   ← Wallet transaction handler
+└── lib/utils.ts
 ```
 
-### Registry Architecture
-
-Components are pulled from three registries:
+Three registries feed the install:
 
 | Source | What | Why |
 | --- | --- | --- |
-| **aomi.dev/r** | Customized components (AomiFrame, Thread, ThreadList) | Aomi-specific features like wallet integration |
-| **r.assistant-ui.com** | Unchanged upstream components (markdown, tooltips) | Receives upstream fixes |
-| **ui.shadcn.com** | Primitives (Button, Sidebar, Dialog) | Standard UI building blocks |
+| `aomi.dev/r` | Customized components (AomiFrame, Thread, ThreadList) | Aomi-specific features like wallet integration |
+| `r.assistant-ui.com` | Upstream primitives (markdown, tooltips) | Receives upstream fixes |
+| `ui.shadcn.com` | Primitives (Button, Sidebar, Dialog) | Standard UI building blocks |
 
-Since components are copied into your project, you own the source code and can edit anything.
+## Where it lives in your app
 
-## Set Environment Variables
-
-Create `.env.local`:
-
-```bash
-# Required: URL of the Aomi backend
-NEXT_PUBLIC_BACKEND_URL=https://api.aomi.dev
-
-# Required for wallet connect / social auth
-NEXT_PUBLIC_PARA_API_KEY=your_para_api_key
-NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID=your_walletconnect_project_id
-```
-
-## Add AomiFrame to a Page
+A typical setup mounts `AomiFrame` on a dedicated route:
 
 ```tsx
+// app/chat/page.tsx
 import { AomiFrame } from "@/components/aomi-frame";
 
 export default function ChatPage() {
@@ -103,85 +70,11 @@ export default function ChatPage() {
 }
 ```
 
-## Configure Your API Key
+For embedded layouts (sidebars, modals, panels), use the [compound API](/guides/widget-installation#compound-component-api).
 
-### Via the ControlBar UI
+## Next steps
 
-The widget includes a ControlBar with an API key input. Click the key icon, paste your API key, and select your app. The key is stored in `localStorage`.
-
-### Programmatically
-
-```tsx
-import { useControl } from "@aomi-labs/react";
-import { useEffect } from "react";
-
-function ConfigureOnMount() {
-  const { setState } = useControl();
-
-  useEffect(() => {
-    setState({ apiKey: "sk-your-api-key", app: "mycoindex" });
-  }, []);
-
-  return null;
-}
-```
-
-## Run Your App
-
-```bash
-npm run dev
-```
-
-Open `http://localhost:3000`. You should see:
-
-- A sidebar for thread management
-- A message composer at the bottom
-- A ControlBar with model and app selectors
-- Streaming AI responses when you send a message
-
-## Customizing the Layout
-
-Hide controls you do not need:
-
-```tsx
-<AomiFrame.Root height="100%" backendUrl={process.env.NEXT_PUBLIC_BACKEND_URL!}>
-  <AomiFrame.Header
-    withControl={true}
-    controlBarProps={{
-      hideWallet: true,
-      hideApiKey: true,
-    }}
-  />
-  <AomiFrame.Composer />
-</AomiFrame.Root>
-```
-
-## Namespace Configuration
-
-Add a registry namespace to `components.json`:
-
-```json
-{
-  "registries": {
-    "aomi": "https://r.aomi.dev"
-  }
-}
-```
-
-Then install with `npx shadcn add @aomi/aomi-frame`.
-
-## Updating Components
-
-```bash
-npx shadcn add https://aomi.dev/r/aomi-frame.json --overwrite
-git diff components/
-```
-
-## Next Steps
-
-- [Widget / AomiFrame](/guides/widget/aomi-frame) — component API reference.
-- [Component Catalog](/guides/widget/components) — all available components.
-- [Theming](/guides/widget/theming) — customize colors and styling.
-- [Configuration](/guides/widget/configuration) — env vars and runtime options.
+- [Quickstart](/getting-started/quickstart) — install with one command.
+- [Widget Installation](/guides/widget-installation) — props, compound API, and customization.
+- [Headless Library](/guides/headless-library) — build your own UI.
 - [Apps & Auth](/reference/apps-auth) — how API keys and apps work.
-- [API Reference](/reference/api-reference) — full HTTP API documentation.

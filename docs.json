@@ -26,22 +26,47 @@
         "group": "Platform Guides",
         "pages": [
           "guides/integration",
-          "guides/frontend-setup",
-          "guides/widget-installation",
-          "guides/headless-library",
-          "guides/headless/hooks",
-          "guides/headless/build-custom-ui",
+          {
+            "group": "Widget",
+            "icon": "window",
+            "pages": [
+              "guides/frontend-setup",
+              "guides/widget-installation"
+            ]
+          },
+          {
+            "group": "Headless",
+            "icon": "code",
+            "pages": [
+              "guides/headless-library",
+              "guides/headless/hooks",
+              "guides/headless/build-custom-ui"
+            ]
+          },
+          {
+            "group": "Backend",
+            "icon": "server",
+            "pages": [
+              "guides/custom-tools",
+              "guides/evals-testing"
+            ]
+          },
           "guides/cli-usage",
-          "guides/custom-tools",
-          "guides/evals-testing",
-          "guides/execution",
-          "guides/script-generation",
-          "guides/troubleshooting"
+          "guides/troubleshooting",
+          {
+            "group": "Transactions",
+            "icon": "arrow-right-arrow-left",
+            "pages": [
+              "guides/execution",
+              "guides/script-generation"
+            ]
+          }
         ]
       },
       {
         "group": "Concepts",
         "pages": [
+          "concepts/index",
           "concepts/what-is-aomi",
           "concepts/how-it-works",
           "concepts/architecture",
@@ -62,6 +87,7 @@
       {
         "group": "Reference",
         "pages": [
+          "reference/index",
           "reference/sdk-api",
           "reference/cli",
           "reference/simulation",

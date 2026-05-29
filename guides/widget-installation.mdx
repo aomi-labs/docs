@@ -1,19 +1,16 @@
 ---
-title: Widget Installation
-description: Install and configure the Aomi chat widget via the shadcn registry — components.json setup, package install, environment variables, and embedding AomiFrame.
+title: "Widget API"
+description: "AomiFrame component reference — props, compound API, ControlBar, and theming."
+sidebarTitle: "Widget API"
 ---
 
-The Aomi widget provides a complete chat interface that you can embed in any Next.js page.
+<Info>
+  New here? Start with the [Quickstart](/getting-started/quickstart) for install steps, then return here for the component API.
+</Info>
 
-## Install
+This page documents the `AomiFrame` component surface — props, the compound API for custom layouts, and ControlBar options.
 
-```bash
-npx shadcn add https://aomi.dev/r/aomi-frame.json
-```
-
-This installs the `AomiFrame` component, all sub-components, and every dependency in one step.
-
-## Basic Usage
+## Basic usage
 
 ```tsx
 import { AomiFrame } from "@/components/aomi-frame";
@@ -51,7 +48,7 @@ Customize the layout using individual components:
 ## AomiFrame Props
 
 | Prop | Type | Description |
-|------|------|-------------|
+| --- | --- | --- |
 | `backendUrl` | string | Aomi backend URL |
 | `height` | string | Container height (e.g., "100%", "600px") |
 | `width` | string | Container width (e.g., "100%", "400px") |
@@ -59,6 +56,7 @@ Customize the layout using individual components:
 ## Control Bar
 
 The ControlBar provides built-in controls for:
+
 - **ModelSelect** — switch AI models at runtime
 - **AppSelect** — switch between Aomi Apps
 - **ApiKeyInput** — enter scoped API keys
