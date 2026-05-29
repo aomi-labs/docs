@@ -29,6 +29,8 @@
           "guides/frontend-setup",
           "guides/widget-installation",
           "guides/headless-library",
+          "guides/headless/hooks",
+          "guides/headless/build-custom-ui",
           "guides/cli-usage",
           "guides/custom-tools",
           "guides/evals-testing",
@@ -54,7 +56,8 @@
           "reference/runtime",
           "reference/api-reference",
           "reference/sessions",
-          "reference/building-apps"
+          "reference/building-apps",
+          "reference/apps-auth"
         ]
       },
       {

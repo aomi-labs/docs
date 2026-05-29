@@ -1,0 +1,115 @@
+---
+title: AomiFrame
+description: The pre-built chat shell with sidebar, thread management, and controls.
+---
+
+`AomiFrame` is the main widget component — a complete chat interface with sidebar, thread list, control bar, and message composer.
+
+## Usage
+
+```tsx
+import { AomiFrame } from "@/components/aomi-frame";
+
+export default function ChatPage() {
+  return <AomiFrame height="600px" />;
+}
+```
+
+## Props
+
+| Prop | Type | Default | Description |
+| --- | --- | --- | --- |
+| `width` | `CSSProperties["width"]` | `"100%"` | Container width |
+| `height` | `CSSProperties["height"]` | `"80vh"` | Container height |
+| `className` | `string` | -- | Additional CSS classes |
+| `style` | `CSSProperties` | -- | Inline styles |
+| `walletPosition` | `"header" \| "footer" \| null` | `"footer"` | Wallet button placement |
+| `backendUrl` | `string` | env or `localhost:8080` | Backend API URL |
+
+## Compound Components
+
+For advanced layouts, use the compound component pattern:
+
+```tsx
+import { AomiFrame } from "@/components/aomi-frame";
+
+export default function CustomLayout() {
+  return (
+    <AomiFrame.Root height="600px" backendUrl="https://api.example.com">
+      <AomiFrame.Header
+        withControl={true}
+        controlBarProps={{
+          hideModel: false,
+          hideApp: false,
+          hideApiKey: true,
+          hideWallet: true,
+        }}
+      />
+      <AomiFrame.Composer />
+    </AomiFrame.Root>
+  );
+}
+```
+
+### AomiFrame.Root
+
+Root container providing runtime context, sidebar, and theme.
+
+| Prop | Type | Default | Description |
+| --- | --- | --- | --- |
+| `width` | `CSSProperties["width"]` | `"100%"` | Container width |
+| `height` | `CSSProperties["height"]` | `"80vh"` | Container height |
+| `backendUrl` | `string` | env or `localhost:8080` | Backend URL |
+| `walletPosition` | `"header" \| "footer" \| null` | `"footer"` | Wallet placement |
+
+### AomiFrame.Header
+
+Header bar with sidebar trigger, thread title, and optional control bar.
+
+| Prop | Type | Default | Description |
+| --- | --- | --- | --- |
+| `withControl` | `boolean` | `false` | Show control bar in header |
+| `controlBarProps` | `ControlBarProps` | -- | Props passed to ControlBar |
+| `className` | `string` | -- | Additional CSS classes |
+| `children` | `ReactNode` | -- | Extra header content |
+
+### AomiFrame.Composer
+
+Main content area with message list and input composer.
+
+| Prop | Type | Default | Description |
+| --- | --- | --- | --- |
+| `withControl` | `boolean` | `false` | Show inline controls |
+| `controlBarProps` | `ControlBarProps` | -- | Props passed to ControlBar |
+| `className` | `string` | -- | Additional CSS classes |
+| `children` | `ReactNode` | -- | Content below the thread |
+
+## Layout
+
+```
++------------------------------------------------------------------+
+|  AomiFrame                                                        |
+|  +----------------+  +----------------------------------------+  |
+|  | ThreadList     |  | Header                                 |  |
+|  | Sidebar        |  | [=] Title | Model | Agent | [Key]      |  |
+|  |                |  +----------------------------------------+  |
+|  | - Thread 1     |  |                                        |  |
+|  | - Thread 2     |  |           Message List                 |  |
+|  | - Thread 3     |  |                                        |  |
+|  |                |  |   User: Hello                          |  |
+|  |                |  |   Assistant: Hi there!                 |  |
+|  | [Wallet]       |  +----------------------------------------+  |
+|  +----------------+  | [Type a message...            ] [Send] |  |
+|                      +----------------------------------------+  |
++------------------------------------------------------------------+
+```
+
+## Customization
+
+Since `aomi-frame.tsx` is copied into your project as source, you can edit it directly:
+- Remove the sidebar by deleting the `ThreadListSidebar` component
+- Add custom header content via the `Header` compound component
+- Change layout by modifying the flex container structure
+- Add new providers by wrapping inside `Root`
+
+See [Theming](/guides/widget/theming) for styling and [Configuration](/guides/widget/configuration) for runtime options.

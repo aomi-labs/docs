@@ -13,7 +13,7 @@ Open Telegram, search for `@aomi_sendit_bot`, and start a chat. The bot responds
 
 | Command | Description |
 |---------|-------------|
-| `/start` | Start the bot and see the welcome menu |
+| `/start` | Initialize the bot and see the welcome menu |
 | `/app` | Switch between Aomi Apps |
 | `/wallet` | Connect or manage your wallet |
 | `/model` | Switch AI models |
@@ -23,15 +23,79 @@ Open Telegram, search for `@aomi_sendit_bot`, and start a chat. The bot responds
 | `/network` | Select blockchain network |
 | `/help` | Show available commands |
 
+## Panel System
+
+Panels are interactive inline keyboard menus. Instead of typing commands repeatedly, tap buttons to navigate between features. The message updates in place so the conversation stays clean.
+
+### Start Panel
+
+The main navigation hub. Displayed on `/start`:
+
+- **Wallet Status** — view connection, open wallet panel
+- **App** — switch Aomi App
+- **Model** — change LLM provider
+- **Transactions** — view pending and completed transactions
+- **Sessions** — browse conversation history
+- **Network** — switch blockchain network
+- **Settings** — user preferences
+
+### App Panel
+
+Displays all authorized Apps as buttons. The active App is highlighted. Tapping one switches the AI context immediately.
+
+### Model Panel
+
+Displays available models (Claude, GPT-4, etc.). The selected model is marked. Switching takes effect on the next message.
+
+### Sessions Panel
+
+Shows recent sessions with titles and timestamps. Tap to switch, rename, or delete threads.
+
+### Transaction Panel
+
+When the AI requests a transaction, this panel shows the details (recipient, amount, data) with approve/reject buttons that link to the mini-app for signing.
+
+### Navigation Flow
+
+Tapping a button either:
+1. **Navigates** to another panel (updates the message)
+2. **Performs an action** (switches a model, shows confirmation)
+3. **Opens the mini-app** (wallet connection, transaction signing)
+
 ## Wallet
 
-Connect a wallet through the Telegram mini-app at `/wallet`. You can:
+Connect a wallet through the Telegram mini-app at `/wallet`. Once connected, your wallet address is linked to your Telegram user ID across all conversations.
 
-- View wallet status and balances
-- Approve transactions from within Telegram
-- Sign typed data (EIP-712)
-- Switch networks
-- Disconnect when done
+### Connecting
+
+1. Send `/wallet` (or tap **Wallet** from the start panel)
+2. Tap **Connect Wallet**
+3. A mini-app opens with the WalletConnect interface
+4. Scan the QR code or choose your wallet from the list
+5. Approve the connection in your wallet app
+6. The bot confirms and displays your address
+
+### Approving Transactions
+
+When the AI determines a transaction is needed:
+
+1. The AI describes what it wants to do (swap, transfer, etc.)
+2. A transaction panel appears with the details
+3. Tap **Sign** to open the mini-app
+4. Review and approve in your wallet
+5. The result is sent back to the AI, which continues the conversation
+
+### Signing Typed Data (EIP-712)
+
+Gasless transactions, permit approvals, and similar operations use typed data signatures. The flow is identical — review the data in the mini-app and sign.
+
+### Disconnecting
+
+Send `/wallet` and tap **Disconnect** to unlink your wallet.
+
+### Mini-App Details
+
+The wallet mini-app is a lightweight WebApp embedded within Telegram. It provides WalletConnect integration, transaction review, EIP-712 signing, and network information. It communicates with the bot through Telegram's WebApp API.
 
 ## DM vs Group Chat
 
@@ -40,6 +104,18 @@ The bot works in both direct messages and group chats. In groups, the bot respon
 ## Chat Sessions
 
 The bot supports multiple sessions. Switch between them with `/sessions` or start fresh conversations without losing history.
+
+## Conversational Usage
+
+Beyond slash commands, type natural language messages. The AI has access to all tools configured for the active App and can execute multi-step operations, including wallet transactions (with your approval).
+
+```
+What's the best yield for staking ETH right now?
+```
+
+```
+Swap 0.5 ETH for USDC on the cheapest DEX
+```
 
 ## Next Steps
 
