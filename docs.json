@@ -15,7 +15,7 @@
         "group": "Getting Started",
         "pages": [
         "getting-started/quickstart",
-        "playground",
+        "getting-started/playground",
         "getting-started/web-app",
         "getting-started/telegram",
         "getting-started/discord",
