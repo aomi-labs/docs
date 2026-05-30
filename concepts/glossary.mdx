@@ -1,0 +1,400 @@
+---
+title: Glossary
+description: A-Z reference of Aomi platform terms — agentic applications, simulation, tools, wallet model, frontend libraries, SDK traits, and protocols.
+---
+
+## A
+
+### Agentic Application
+
+An isolated agent environment that defines what the AI can do and access. Each App has its own tools, preamble, model, and API key. Switching Apps changes the agent entirely.
+
+See: [Key Concepts](/concepts/key-concepts), [Building Apps](/reference/building-apps), [Apps & Auth](/reference/apps-auth)
+
+### Anvil Fork
+
+An ephemeral copy of a blockchain network state created using [Foundry's Anvil](https://book.getfoundry.sh/anvil/). Aomi simulates transactions against forks before sending them to the real chain.
+
+See: [Simulation Reference](/reference/simulation)
+
+### AomiApiTool
+
+A Rust trait for single-result tools. Tools implement `call()`, `name()`, and `description()` and are registered with the Tool Scheduler.
+
+See: [SDK Reference](/reference/sdk-api)
+
+### AomiBackend
+
+A Rust trait implemented by all agentic applications (ChatApp, ForgeApp, L2BeatApp). Provides `process_message()` and `system_events()` as a common interface.
+
+See: [SDK Reference](/reference/sdk-api)
+
+### AomiRuntimeProvider
+
+The top-level React provider from `@aomi-labs/react`. Sets up all contexts — thread state, user state, notifications, events, and control — with a single wrapper.
+
+See: [Headless Library](/guides/headless-library)
+
+### API Key
+
+Scoped credentials used to authenticate requests to an App. Keys are isolated per App — a key for one App cannot access another.
+
+See: [Apps & Auth](/reference/apps-auth), [Security](/concepts/security)
+
+### App
+
+Short for Agentic Application. The unit of deployment on Aomi — a configured agent with a specific tool set, preamble, model, and API key.
+
+See: [Agentic Application](/concepts/key-concepts)
+
+### App Isolation
+
+Each App runs independently with its own tool registry, model configuration, and API key scope. No cross-App data sharing.
+
+See: [Architecture](/concepts/architecture), [Runtime](/reference/runtime)
+
+### Assertion
+
+A check used in evaluation harnesses to verify agent behavior. Examples: balance assertions, state assertions, event assertions.
+
+See: [Evals & Testing](/guides/evals-testing)
+
+### aomi-build
+
+A skill bundle for building and deploying custom Aomi Apps. Provides CLI patterns for scaffolding, tool registration, and deployment.
+
+See: [Skills](/concepts/skills)
+
+### aomi-transact
+
+A skill bundle for executing on-chain transactions through Aomi. Provides CLI patterns for swaps, transfers, contract interactions, and simulation.
+
+See: [Skills](/concepts/skills)
+
+---
+
+## B
+
+### BackendApi
+
+A direct HTTP client class from `@aomi-labs/react` usable outside React. Provides methods for chat, thread management, model queries, and tool calls.
+
+See: [Headless Library](/guides/headless-library)
+
+---
+
+## C
+
+### ChatApp
+
+The default agentic application type. A general-purpose assistant that can be configured with custom tools, preamble, and document store.
+
+See: [SDK Reference](/reference/sdk-api)
+
+### ChatAppBuilder
+
+A builder-pattern API for constructing ChatApp instances. Supports adding tools, configuring docs, and finalizing builds with MCP and event channel options.
+
+See: [SDK Reference](/reference/sdk-api)
+
+### ChatCommand
+
+An enum representing streaming response variants from the Aomi runtime: `StreamingText`, `ToolCall`, `AsyncToolResult`, `Complete`, `Error`, `Interrupted`.
+
+See: [SDK Reference](/reference/sdk-api)
+
+### CLI
+
+The command-line interface for interacting with Aomi. Supports chat, app management, model selection, session inspection, transaction simulation, and secret management.
+
+See: [CLI Usage Guide](/guides/cli-usage), [CLI Reference](/reference/cli)
+
+---
+
+## E
+
+### ERC-4337
+
+The Ethereum account abstraction standard. Aomi supports ERC-4337 for session keys, gas sponsorship, and batched user operations.
+
+See: [Account Abstraction](/reference/account-abstraction)
+
+### ERC-6900
+
+The modular account standard. Extends ERC-4337 with pluggable modules for custom validation, execution, and payment logic.
+
+See: [Account Abstraction](/reference/account-abstraction)
+
+### EIP-1271
+
+The signature validation standard for smart contract wallets. Aomi supports EIP-1271 for contract-based account signing.
+
+See: [Account Abstraction](/reference/account-abstraction)
+
+### EvalCase
+
+A single test case in the Aomi evaluation framework. Defines a name, instruction, and set of assertions to verify agent behavior.
+
+See: [Evals & Testing](/guides/evals-testing)
+
+### EvalHarness
+
+The test runner for evaluating agent behavior. Takes an AomiBackend instance and runs EvalCases against it, reporting pass/fail for each assertion.
+
+See: [Evals & Testing](/guides/evals-testing)
+
+### Execution Plan
+
+A grouped set of operations produced by the ForgeExecutor. Groups related script steps into a single execution unit for dependency-aware ordering.
+
+See: [Script Generation](/guides/script-generation)
+
+---
+
+## F
+
+### ForgeApp
+
+An agentic application specialized for smart contract development. Extends ChatApp with Forge-specific tools — compilation, deployment, fork testing, and dependency management.
+
+See: [SDK Reference](/reference/sdk-api)
+
+### ForgeExecutor
+
+A dependency-aware executor for Forge scripts. Handles compilation, dependency resolution, and script execution against Anvil forks.
+
+See: [Script Generation](/guides/script-generation)
+
+### Fork Provider
+
+Manages the lifecycle of Anvil fork instances. Supports managed forks (created on demand) and external forks (connected to existing instances).
+
+See: [Simulation Reference](/reference/simulation)
+
+### Fork Snapshot
+
+A captured state of an Anvil fork at a point in time. Enables reverting to a known state after simulation, allowing multiple simulations without recreating the fork.
+
+See: [Simulation Reference](/reference/simulation)
+
+---
+
+## G
+
+### Gas Sponsorship
+
+A feature of account abstraction where transaction gas costs are paid by a sponsoring account (paymaster) instead of the end user. Useful for onboarding users who don't hold ETH.
+
+See: [Account Abstraction](/reference/account-abstraction)
+
+---
+
+## H
+
+### Headless Library
+
+The `@aomi-labs/react` npm package. Provides runtime logic, state management, hooks, and an API client with zero UI opinions for building completely custom interfaces.
+
+See: [Headless Library](/guides/headless-library)
+
+### HistoryBackend
+
+A pluggable persistence trait for session history. Supports in-memory (development), SQLite, PostgreSQL, and custom backends.
+
+See: [Runtime Reference](/reference/runtime), [SDK Reference](/reference/sdk-api)
+
+---
+
+## I
+
+### Integration Paths
+
+The three ways to deploy an Aomi-powered assistant: Widget (shadcn component), Headless Library (React hooks), and Telegram Bot (managed by Aomi).
+
+See: [Integration Guide](/guides/integration)
+
+---
+
+## L
+
+### L2BeatApp
+
+An agentic application specialized for Layer-2 protocol analysis. Provides tools for querying L2Beat data, analyzing rollup configurations, and comparing risk parameters.
+
+See: [SDK Reference](/reference/sdk-api)
+
+---
+
+## M
+
+### MCP
+
+Model Context Protocol. A protocol for connecting LLMs to external tools and data sources. Aomi supports MCP for extended tool registrations beyond built-in tools.
+
+See: [Architecture](/concepts/architecture)
+
+### MultiStepApiTool
+
+A Rust trait for tools that produce streaming results over time. Implements `call_stream()` with a sender channel for progress updates and final results.
+
+See: [SDK Reference](/reference/sdk-api)
+
+---
+
+## N
+
+### Non-Custodial
+
+A security model where Aomi never holds private keys or signing material. All transactions are signed locally in the user's wallet after simulation review.
+
+See: [Non-Custodial Wallets](/concepts/non-custodial-wallets), [Security](/concepts/security)
+
+---
+
+## O
+
+### OWASP AST03
+
+The OWASP AI Security framework. Aomi's skill repository runs four AST03-compliant scanners on every pull request: behavioral audit, offline analysis, static analysis, and dependency scanning.
+
+See: [Security](/concepts/security), [Skills](/concepts/skills)
+
+---
+
+## P
+
+### Para Wallet
+
+The wallet infrastructure provider backing Aomi's non-custodial wallet integration. Handles wallet creation, key management, and blockchain connections through wagmi-compatible connectors.
+
+See: [Non-Custodial Wallets](/concepts/non-custodial-wallets)
+
+### Preamble
+
+The system prompt that defines an agent's personality, constraints, and behavior rules. Every App has a preamble that shapes how the AI responds and when it calls tools.
+
+See: [Integration Guide](/guides/integration), [How It Works](/concepts/how-it-works)
+
+---
+
+## R
+
+### RAG
+
+Retrieval-Augmented Generation. Aomi can ingest documentation, FAQs, and knowledge base articles into a vector store. The AI searches these documents when answering questions beyond what tools provide.
+
+See: [Integration Guide](/guides/integration)
+
+### Runtime
+
+The hosted execution environment that manages sessions, processes messages, coordinates tool execution, and streams responses via SSE.
+
+See: [Runtime Reference](/reference/runtime)
+
+---
+
+## S
+
+### Script Generation
+
+The process of constructing and executing Foundry forge scripts through Aomi's ScriptAssembler and ForgeExecutor. Supports dependency resolution, source fetching, and execution planning.
+
+See: [Script Generation](/guides/script-generation)
+
+### Server-Sent Events
+
+SSE is the streaming protocol used by Aomi to deliver real-time responses. Events include text chunks, tool calls, tool results, and completion signals.
+
+See: [How It Works](/concepts/how-it-works), [Runtime Reference](/reference/runtime)
+
+### Session
+
+A conversation thread identified by a UUID. Sessions maintain their own message history, tool execution state, and event queue. Sessions expire after a configurable TTL.
+
+See: [Sessions Reference](/reference/sessions)
+
+### Session Key
+
+An ephemeral, limited-permission key used in account abstraction. Session keys allow the AI to execute approved operations without requiring user interaction for every transaction.
+
+See: [Account Abstraction](/reference/account-abstraction)
+
+### Simulation-First
+
+The core safety principle of Aomi: every on-chain transaction is simulated on a forked network before it reaches the user's wallet. Users review exact outcomes before signing.
+
+See: [Simulation Reference](/reference/simulation), [Non-Custodial Wallets](/concepts/non-custodial-wallets)
+
+### Skill
+
+A markdown-based instruction file that teaches AI coding agents (Claude Code, Cursor, Copilot) how to use Aomi's CLI and tool surface. Skills are OWASP-scanned in CI.
+
+See: [Skills](/concepts/skills)
+
+### State Diffing
+
+The process of computing the difference between pre-simulation and post-simulation network state. Shows exact token changes, gas costs, and contract calls made during simulation.
+
+See: [Simulation Reference](/reference/simulation)
+
+### SystemEvent
+
+An event emitted by the Aomi runtime for out-of-band communication. Variants: `InlineDisplay` (UI notifications), `SystemNotice` (status messages), `SystemError` (errors), `AsyncUpdate` (background updates).
+
+See: [SDK Reference](/reference/sdk-api)
+
+### SystemEventQueue
+
+A thread-safe event buffer used by the runtime to collect and dispatch system events. Consumers can read events without consuming them.
+
+See: [SDK Reference](/reference/sdk-api)
+
+---
+
+## T
+
+### Tool
+
+A typed function that an LLM can invoke during a conversation. Tools wrap APIs, on-chain actions, or data sources. Each tool has a name, description, and typed input parameters.
+
+See: [Integration Guide](/guides/integration), [Custom Tools](/guides/custom-tools)
+
+### Tool Scheduler
+
+The global registry and executor for all registered tools. Manages tool registration, concurrent execution, and result streaming back to the LLM.
+
+See: [SDK Reference](/reference/sdk-api)
+
+### ToolResultStream
+
+A streaming abstraction for tool results. Supports single-result tools (shared future) and multi-step tools (mpsc channel) for progressive result delivery.
+
+See: [SDK Reference](/reference/sdk-api)
+
+---
+
+## U
+
+### User Operation
+
+An ERC-4337 user operation (UserOp). Bundles transaction intent, signature, and metadata into a single object that can be sent to an entry point contract for execution.
+
+See: [Account Abstraction](/reference/account-abstraction)
+
+---
+
+## W
+
+### Widget
+
+The AomiFrame shadcn/ui component. Provides a ready-made chat interface with compound components (Root, Header, Composer, Messages) installed directly into your project.
+
+See: [Widget Installation](/guides/widget-installation), [Frontend Setup](/guides/frontend-setup)
+
+---
+
+## Next Steps
+
+- [Key Concepts](/concepts/key-concepts) — the core ideas in brief
+- [Architecture](/concepts/architecture) — how everything fits together
+- [Security](/concepts/security) — platform security model and threat model
