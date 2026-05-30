@@ -1,0 +1,227 @@
+---
+title: Use Cases
+description: What teams are building with Aomi — prediction market trading terminals, DeFi yield allocators, GameFi asset trading, and more.
+---
+
+## Prediction Market Trading Terminal — Kuroko
+
+Most tools calling themselves AI trading assistants are just chatbots with a search bar. You ask about a certain market, it searches the web, comes back with outdated data, and then tells you it can't do anything with it.
+
+[Kuroko](https://kuroko.pm) is different. It is an AI-native hybrid trading platform for prediction markets on Polymarket — built with the Aomi SDK in days instead of weeks.
+
+### How It Works
+
+The system follows a three-layer architecture:
+
+```
+User message
+  → AomiFrame (React widget)
+  → /api/aomi proxy (Next.js)
+    → injects live Polymarket data into system prompt
+    → forwards to api.aomi.dev
+  → AI response with trade_card JSON
+  → TradeCard component renders inline
+  → User confirms → Aomi Session → EIP-712 → Para signing → Polymarket CLOB
+```
+
+### Live Data Injection
+
+Every message is enriched with live market data before the model sees it. No web search, no stale cache:
+
+```ts
+async function fetchLiveMarketContext(requestUrl: string): Promise<string> {
+  const origin = new URL(requestUrl).origin;
+  const res = await fetch(`${origin}/api/markets`, {
+    signal: AbortSignal.timeout(2000), cache: "no-store",
+  });
+  const data = await res.json();
+  const top10 = [...data].sort((a, b) => Number(b.volume) - Number(a.volume)).slice(0, 10);
+  const lines = top10.map((m) => {
+    const prob = parseYesProb(m);
+    const vol = `${(Number(m.volume) / 1000).toFixed(0)}K`;
+    const change1d = m.oneDayPriceChange != null ? ` | 24h: ${(Number(m.oneDayPriceChange) * 100).toFixed(1)}pp` : "";
+    return `- ${m.question} | YES: ${prob}%${change1d} | ${vol} vol`;
+  });
+  return `\n### Live Polymarket Data (${new Date().toUTCString()})\n\n**Top markets by volume:**\n${lines.join("\n")}\n`;
+}
+```
+
+The proxy injects this into the system prompt on every request, so the AI already knows current odds, volume, and 24-hour movements before the user finishes typing.
+
+### Trade Cards
+
+Instead of describing trades in plain text, the AI returns structured JSON that renders as interactive confirmation cards:
+
+```ts
+{
+  "action": "trade_card",
+  "market": "Will the Fed cut rates in June 2026?",
+  "side": "YES",
+  "shares": 50,
+  "price": 44,
+  "reasoning": "Fed futures pricing 68% cut probability vs 44% on Polymarket"
+}
+```
+
+A custom component parses this and renders a card with the market name, trade direction, share count, price, and reasoning. One click confirms. No copy-pasting, no navigating away.
+
+### Position Guards — Autonomous Risk Management
+
+The most powerful feature is continuous position monitoring:
+
+```ts
+export type PositionGuard = {
+  marketId: string;
+  question: string;
+  side: 'YES' | 'NO';
+  stopLoss?: number;
+  takeProfit?: number;
+  shares: number;
+  active: boolean;
+};
+```
+
+A background poller checks all active guards every 60 seconds and executes exit orders automatically when thresholds are met. Users configure them by typing: *"Set a stop-loss at 30% on my Fed rate cut position."*
+
+### What Aomi Made Possible
+
+Without Aomi this would have taken weeks or months. The components that accelerated development:
+
+- **Session class** — a single `session.send()` call abstracts the full lifecycle: wallet resolution, message routing, SSE streaming, request deduplication
+- **EIP-712 routing** — Aomi knows Polymarket uses typed data signing and handles all order schema, domain separator, and nonce complexity
+- **Multi-chain support** — same Session pattern works across Ethereum, Arbitrum, Base, Optimism, Polygon
+- **Widget** — `<AomiFrame />` provides a production-quality chat interface with custom rendering and trade card injection in one component
+
+---
+
+## Trading and DeFi
+
+### Portfolio Risk Manager
+
+Build a system that continuously monitors user positions across markets and automatically reacts to risk. Users define rules in plain language — "reduce exposure if probability drops below 40%" — and the agent tracks, suggests, or executes on confirmation.
+
+Uses the same [Session](/reference/session) class and proxy pattern as Kuroko. See [Polymarket app](/concepts/skills#polymarket) for market querying tools.
+
+### Automated Trading Strategies
+
+Let users define trading logic without writing scripts: "buy when odds fall below 30% and sell at 55%." The agent watches continuously and executes when conditions are met. Position guards (like Kuroko's) handle the monitoring loop; the [Aomi CLI](/reference/cli) handles execution.
+
+### Alert and Execution Bot
+
+Instead of simple notifications, build agents that act. A user sets "alert me and buy $50 if this crosses 60%" — the agent both notifies and prepares the transaction, cutting the delay between signal and action. Uses [SSE streaming](/reference/runtime#streaming--events) for real-time triggers.
+
+### DeFi Yield Allocator
+
+A user says "move my funds to the highest safe APY" and the agent evaluates options across [Yearn](/concepts/skills#yearn), [Morpho](/concepts/skills#morpho), and other protocols, explains trade-offs, and executes the allocation. See the [DeFiLlama app](/concepts/skills#defillama) for yield data tools.
+
+### Cross-Platform Arbitrage
+
+The same agent layer across Polymarket and [Kalshi](/concepts/skills#kalshi) surfaces arbitrage automatically when the same event is priced differently on both platforms. Aomi's native Kalshi plugin handles the regulated market side. See the [apps catalog](/concepts/skills#app-catalog) for available integrations.
+
+### Research and Signal Agent
+
+Connect the agent to multiple data sources and build a system that explains market movements. A user asks "why did this market move?" and gets signals, a summary, and an optional trade recommendation. Combine [DeFiLlama](/concepts/skills#defillama), [Kaito](/concepts/skills#kaito), and [Dune](/concepts/skills#dune) apps for multi-source analysis.
+
+---
+
+## Creator Economy
+
+### Newsletter Platforms
+
+Readers pay to unlock a post through Aomi. Micropayment, instant settlement, no Stripe, no platform cut beyond gas. The [widget](/guides/widget-installation) handles the payment flow; the [Session](/reference/session) class routes the transaction.
+
+### Music Platforms
+
+Artists release tracks, fans mint limited edition ownership certificates. The artist gets paid instantly onchain — no label, no distributor. Use the [headless library](/guides/headless-library) for custom minting UI.
+
+### Video Platforms
+
+Viewers pay per view through Aomi. Payment routing and content unlock happen in one transaction. The [Session.send()](/reference/sdk-api#chatapp) flow handles the atomic payment+access pattern.
+
+### Ticketing Platforms
+
+Buy a conference ticket through Aomi. The ticket is an onchain asset. Transfer it to a friend by saying "send my ticket to 0x7c1...b2." Resell it without a marketplace. See [EIP-712 signing](/concepts/non-custodial-wallets#eip-712-typed-data-signing) for the transfer flow.
+
+### Social Trading Layer
+
+Build a system where strategies are shared and executed through agents. A user says "copy this trader with $100" and the agent mirrors actions in real time. Combines [position guards](/concepts/use-cases#position-guards--autonomous-risk-management) with multi-user session management.
+
+---
+
+## GameFi
+
+### In-Game Asset Trading
+
+Embed the widget into your game client and let players trade in-game assets using natural language. "Sell my sword for the best price" — the agent routes through the right marketplace and executes on confirmation. Adding new marketplaces is additive, not a rewrite. See the Mochi example below.
+
+**Mochi** — an AI companion in a Roblox-style world where players make things by talking. Integrated with Aomi SDK so users transact onchain without ever knowing they're on a blockchain. Built by Matt Molinar and Cecilia Z.
+
+### NFT and Asset Trading Agent
+
+Users define conditions like "buy this NFT if the floor drops 10%" and the agent monitors and executes when the condition is met. Uses the same guard pattern as Kuroko's [position guards](/concepts/use-cases#position-guards--autonomous-risk-management), but for NFT collections instead of prediction markets.
+
+---
+
+## Developer Tools and Infrastructure
+
+### CI/CD Onchain Attestation
+
+When a build passes, Aomi triggers an onchain attestation — proof that code was audited, tested, and deployed at a specific commit hash. Immutable, verifiable, trustless. See the [execution guide](/guides/execution) for the simulation and signing pipeline.
+
+### Contributor Badges
+
+Every merged PR that meets quality standards mints a contributor badge onchain. Developers build a verifiable reputation that lives in their wallet, not on a centralized platform. Uses [account abstraction](/reference/account-abstraction) for gasless minting.
+
+### Code Bounty Automation
+
+A developer completes a bounty, Aomi routes the payment automatically when the PR is merged. No manual review, no PayPal, no delays. See [session management](/reference/sessions) for the request lifecycle.
+
+---
+
+## Enterprise and DAO
+
+### DAO Treasury Operator
+
+The agent monitors allocations, suggests rebalancing, or executes predefined strategies like "allocate 5% to hedge positions." Structured decision-making for treasury management. Combines [DeFiLlama](/concepts/skills#defillama) for TVL data with [Yearn](/concepts/skills#yearn) for yield strategies.
+
+### DAO Tooling
+
+Members vote on proposals through Aomi. Votes are onchain. Execution is automatic when the threshold is met — no multisig coordination, no manual execution. See [account abstraction](/reference/account-abstraction) for batched operations.
+
+### Onchain Role Management
+
+Earn roles by completing onchain tasks. Aomi verifies completion and upgrades your role automatically — no admin needed. Uses the [apps-auth](/reference/apps-auth) model for scoped permissions.
+
+### Compliance and Risk Guardrails
+
+Enforce constraints through the agent: "block trades above this risk threshold" or "require confirmation for high-value transactions" — applied automatically as a safety layer. Built on top of Aomi's [simulation-first](/reference/simulation) security model.
+
+---
+
+## Wallet and dApp Integration
+
+### Onchain Execution Copilot
+
+Embed the widget into any dApp to help users execute complex onchain actions. The agent breaks down steps, simulates outcomes, and handles staking, swapping, or bridging flows. See [widget installation](/guides/widget-installation) for the embed pattern.
+
+### Wallet AI Assistant
+
+Embed AomiFrame inside any crypto wallet. Users ask "what does this contract do?" before signing. The agent simulates the transaction, shows exact token changes and gas costs, and lets the user approve or reject with full context — no more blind signing. See the [simulation reference](/reference/simulation) for the safety pipeline.
+
+---
+
+## Get Started Building
+
+All use cases above use the same stack:
+
+- [`aomi-labs/aomi`](https://github.com/aomi-labs/aomi) — core widget library and backend
+- [`aomi-labs/aomi-sdk`](https://github.com/aomi-labs/aomi-sdk) — Rust SDK for custom plugins
+- [`aomi-labs/aomi-client-example`](https://github.com/aomi-labs/aomi-client-example) — working example proxy bot
+- [`aomi-labs/skills`](https://github.com/aomi-labs/skills) — protocol skill definitions
+
+```bash
+npm i -g @aomi-labs/client
+npx skills add aomi-labs/skills
+```
+
+Start with the [Quickstart](/getting-started/quickstart), point your agent at the repos, and build something. The ecosystem is early — nobody has claimed the obvious ideas yet.
