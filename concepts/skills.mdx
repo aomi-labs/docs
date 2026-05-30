@@ -44,19 +44,37 @@ This downloads both skill definitions into the AI tool's skills directory. The a
 
 ## Protocol Catalog
 
-The `aomi-transact` skill references 25+ protocol integrations that the Aomi runtime loads dynamically. These include major DeFi, prediction market, and trading platforms:
+The `aomi-transact` skill references 25+ protocol integrations that the Aomi runtime loads dynamically. Each app has its own tool set and credential requirements:
 
-- **Polymarket** — prediction markets on Polygon
-- **Kalshi** — regulated event contracts
-- **Hyperliquid** — high-performance perps DEX
-- **Uniswap** — automated market making
-- **Aave** — lending and borrowing
-- **Compound** — money markets
-- **Curve** — stablecoin swaps
-- **Binance** — centralized exchange integration
-- And many more across EVM and non-EVM chains
+| App | Description | App-Specific Tools | Credentials |
+|-----|-------------|-------------------|-------------|
+| `default` | General-purpose on-chain agent with web search | `brave_search` | None |
+| `binance` | Binance CEX — prices, order book, klines | `binance_get_price`, `binance_get_depth`, `binance_get_klines` | Exchange credentials |
+| `bybit` | Bybit CEX — orders, positions, leverage | (No Bybit-specific tools yet) | Exchange credentials |
+| `cow` | CoW Protocol — MEV-protected swaps via batch auctions | `get_cow_swap_quote`, `place_cow_order`, `get_cow_order_status` | None |
+| `defillama` | DefiLlama — TVL, yields, volumes, stablecoins | `get_token_price`, `get_yield_opportunities`, `get_defi_protocols`, `get_chain_tvl`, `get_dex_volumes` | None |
+| `dune` | Dune Analytics — execute and fetch SQL queries | `execute_query`, `get_execution_status`, `get_execution_results` | Provider token |
+| `dydx` | dYdX perpetuals — markets, orderbook, candles, trades | `dydx_get_markets`, `dydx_get_orderbook`, `dydx_get_candles`, `dydx_get_trades`, `dydx_get_account` | None |
+| `gmx` | GMX perpetuals — markets, positions, orders, prices | `get_gmx_prices`, `get_gmx_markets`, `get_gmx_positions`, `get_gmx_orders` | None |
+| `hyperliquid` | Hyperliquid perps — mid prices, orderbook | `get_meta`, `get_all_mids` | None |
+| `kaito` | Kaito — crypto social search, trending, mindshare | `kaito_search`, `kaito_get_trending`, `kaito_get_mindshare` | Provider token |
+| `kalshi` | Kalshi prediction markets via Simmer SDK | `simmer_register`, `simmer_status`, `simmer_briefing` | SDK token |
+| `khalani` | Khalani cross-chain intents — quote, build, submit | `get_khalani_quote`, `build_khalani_order`, `submit_khalani_order`, `get_khalani_order_status` | None |
+| `lifi` | LI.FI aggregator — cross-chain swaps and bridges | `get_lifi_swap_quote`, `place_lifi_order`, `get_lifi_bridge_quote`, `get_lifi_transfer_status` | Optional provider token |
+| `manifold` | Manifold prediction markets — search, bet, create | `list_markets`, `get_market`, `search_markets`, `place_bet`, `create_market` | Provider token |
+| `molinar` | Molinar on-chain world — move, explore, chat | `molinar_get_state`, `molinar_move`, `molinar_jump`, `molinar_chat`, `molinar_collect_coins` | None |
+| `morpho` | Morpho lending — markets, vaults, positions | `get_markets`, `get_vaults`, `get_user_positions` | None |
+| `neynar` | Farcaster social — users, search | `get_user_by_username`, `search_users` | Provider token |
+| `okx` | OKX CEX — tickers, order book, candles | `okx_get_tickers`, `okx_get_order_book`, `okx_get_candles` | Exchange credentials |
+| `oneinch` | 1inch DEX aggregator — quotes, swaps, allowances | `get_oneinch_quote`, `get_oneinch_swap`, `get_oneinch_approve_transaction` | Provider token |
+| `para` | Para — MPC wallet management across EVM, Solana, Cosmos | (Para wallet tools) | Provider token |
+| `polymarket` | Polymarket prediction markets — search, trade, CLOB | `search_polymarket`, `get_polymarket_details`, `get_polymarket_trades`, `build_polymarket_order_preview` | None |
+| `polymarket-rewards` | Polymarket LP — liquidity provisioning into reward markets | (LP scoring and position tools) | Provider token |
+| `x` | X/Twitter — users, posts, search, trends | `get_x_user`, `get_x_user_posts`, `search_x`, `get_x_trends` | Provider token |
+| `yearn` | Yearn Finance — vault discovery, details | `get_all_vaults`, `get_vault_detail`, `get_blacklisted_vaults` | None |
+| `zerox` | 0x DEX aggregator — swaps, quotes, liquidity | `get_zerox_swap_quote`, `place_zerox_order`, `get_zerox_swap_chains` | Provider token |
 
-Each protocol has its own tool definitions, credential requirements, and usage examples documented in the skill's reference files.
+Each protocol has its own tool definitions, credential requirements, and usage examples documented in the skill's reference files. Pass `--app <name>` to select an app for a chat turn, or set `AOMI_APP=<name>` for a multi-command shell.
 
 ## Security
 
@@ -68,6 +86,48 @@ Skills are security-audited against the [OWASP AST03](https://owasp.org/www-proj
 | Cisco AI Defense | Offline behavioral analysis |
 | NMitchem/SkillScan | Static skill analysis |
 | Snyk agent-scan | Dependency and configuration scanning |
+
+## FAQ
+
+### What AI tools support Aomi Skills?
+
+Claude Code, Cursor, VS Code Copilot, Gemini CLI, and any tool that implements the [Agent Skills](https://agentskills.io) specification. Install once and your agent knows the full Aomi command surface.
+
+### How are skills different from MCP servers?
+
+Skills are markdown instruction files — the agent reads them at runtime to learn procedures and tool patterns. MCP servers are live endpoints that expose tools via the Model Context Protocol. Skills tell the agent *how* to use Aomi; MCP servers execute *live actions* like querying a database. They're complementary — skills can reference MCP-connected tools.
+
+### Do skills execute code on my machine?
+
+No. Skills are read-only markdown files. The agent reads them and executes the shell commands described within (e.g., `aomi chat`, `aomi tx sign`). The actual execution happens through the Aomi CLI, which runs in your terminal with your permissions.
+
+### What are the prerequisites for using a skill?
+
+You need `@aomi-labs/client` v0.1.30+ and `viem` for wallet signing. For building custom apps, you also need the Rust `aomi-sdk`. No other dependencies — the skill definitions are self-contained markdown.
+
+### How do I switch between protocols?
+
+Use `--app <name>` in any `aomi chat` command, or set `AOMI_APP=<name>` in your shell for a multi-command session. Run `aomi app list` to see all available apps from the backend.
+
+### What happens when an app needs credentials?
+
+The CLI reports at runtime what credentials are missing. Configure them on your end or run `aomi secret add` with the value you supply. The skill never invents or pastes credentials on your behalf.
+
+### Can I build my own app and add it to the catalog?
+
+Yes. Use the `aomi-build` skill and the [`aomi-sdk`](https://github.com/aomi-labs/aomi-sdk) Rust SDK to scaffold a new app from an API spec. The SDK provides the `CoreAppBuilder` pattern — define your tools, preamble, and model, then deploy it as a loadable app in the Aomi runtime.
+
+### Are skills kept up to date?
+
+The `aomi-labs/skills` repo is actively maintained. Each PR runs four security scanners, and the skill definitions are updated alongside CLI releases. Run `npx skills update` to pull the latest versions.
+
+### Which chains does Aomi support?
+
+Aomi supports all EVM chains accessible through the configured RPC endpoints, plus Solana and Cosmos via the Para wallet integration. Individual apps may have chain-specific requirements — the app catalog and CLI output indicate supported networks.
+
+### Do I need to install both skill bundles?
+
+No. Install both with `npx skills add aomi-labs/skills` and your agent picks the right one based on context. `aomi-transact` activates on transaction-related prompts; `aomi-build` activates on app-building prompts.
 
 ## SDK for Custom Skills
 
