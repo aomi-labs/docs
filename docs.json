@@ -158,6 +158,9 @@
       "telegram": "https://t.me/aomi_sendit_bot"
     }
   },
+  "metadata": {
+    "timestamp": true
+  },
   "seo": {
     "metatags": {
       "og:site_name": "Aomi",
