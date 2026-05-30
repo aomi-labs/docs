@@ -4,8 +4,8 @@
   "name": "Aomi",
   "colors": {
     "primary": "#000000",
-    "light": "#333333",
-    "dark": "#000000"
+    "light": "#e0e0e0",
+    "dark": "#ffffff"
   },
   "favicon": "/favicon.svg",
   "navigation": {
