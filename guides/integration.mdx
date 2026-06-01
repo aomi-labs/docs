@@ -1,6 +1,6 @@
 ---
-title: Integration Guide
-description: Full-stack Aomi integration walkthrough — wrapping APIs as tools, configuring an App with preamble and model, and deploying across web and Telegram channels.
+title: "Overview"
+description: "Full-stack Aomi integration walkthrough — wrapping APIs as tools, configuring an App with preamble and model, and deploying across web and Telegram channels."
 ---
 
 This guide walks through the full-stack integration process — from your existing APIs to a deployed Aomi App that your users can interact with across web, Telegram, and other channels.
@@ -67,7 +67,7 @@ Each tool wraps one or more of your API endpoints. A one-to-one mapping is not r
 Aomi does not modify your APIs. The only requirement is that they are reachable over HTTP. Your backend owns all user state — the Aomi App retains conversation history but nothing about your users, balances, or sessions.
 
 | Endpoint | Method | Description |
-|----------|--------|-------------|
+| --- | --- | --- |
 | `/prices/{symbol}` | GET | Current token price |
 | `/trades` | POST | Execute a trade |
 | `/portfolio/{userId}` | GET | User portfolio and P&L |
@@ -84,7 +84,7 @@ Three settings define the App's behavior:
 
 **Preamble** — the system prompt that shapes the AI's personality, constraints, and rules. A well-written preamble keeps the AI on-task and prevents overstepping.
 
-```
+```text
 You are the MyCoinDex trading agent. You help users check
 prices, manage portfolios, and execute trades.
 
@@ -96,10 +96,10 @@ Never provide financial advice or price predictions.
 **Model Selection** — different models for different needs:
 
 | Provider | Models |
-|----------|--------|
+| --- | --- |
 | Anthropic | Claude Sonnet, Claude Haiku |
 | OpenAI | GPT-4o, GPT-4o Mini |
-| OpenRouter | Access to 100+ models |
+| OpenRouter | Access to 100\+ models |
 
 **RAG Document Store** — if you have documentation, FAQs, or knowledge base articles, Aomi sets up RAG ingestion. The AI searches these documents when answering questions beyond what tools provide.
 
@@ -107,7 +107,7 @@ Never provide financial advice or price predictions.
 
 Aomi compiles and deploys the configured App as an isolated app on the hosted platform. Each app gets a scoped API key and a dedicated chat endpoint.
 
-```
+```text
 App:        "mycoindex"
 Endpoint:   POST /api/chat?app=mycoindex
 Tools:      GetTokenPrice, ExecuteTrade, GetPortfolio, ListMarkets
@@ -118,7 +118,7 @@ Model:      Claude Sonnet (default, switchable)
 ### 5. Client Integration
 
 | Path | Install | Best For |
-|------|---------|----------|
+| --- | --- | --- |
 | Widget (shadcn) | `npx shadcn add https://aomi.dev/r/aomi-frame.json` | Quick integration, standard chat UI |
 | Headless Library | `npm install @aomi-labs/react` | Custom designs, maximum control |
 | Telegram Bot | Managed by Aomi | Reaching users without frontend deployment |

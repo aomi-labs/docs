@@ -1,6 +1,6 @@
 ---
-title: Telegram Bot
-description: Use Aomi through the SendIt Telegram bot at @aomi_sendit_bot — non-custodial wallet support, slash commands, interactive menus, and cross-device history.
+title: "Telegram Bot"
+description: "Use Aomi through the SendIt Telegram bot at @aomi_sendit_bot — non-custodial wallet support, slash commands, interactive menus, and cross-device history."
 ---
 
 The Aomi Telegram bot connects to the same Aomi backend as the web app. Messages sent to the bot are processed by the same Aomi App, using the same tools, models, and configuration. If you connect a wallet, your conversation history is linked across both platforms.
@@ -9,13 +9,13 @@ Integration partners can deploy this implementation as their own distribution ch
 
 ## Getting Started
 
-1. **Open SendIt.** Go to [t.me/aomi_sendit_bot](https://t.me/aomi_sendit_bot) in Telegram.
+1. **Open SendIt.** Go to [t.me/aomi\_sendit\_bot](https://t.me/aomi_sendit_bot) in Telegram.
 2. **Start the conversation.** Tap **Start** or send `/start`.
 3. **Start chatting.** Type your questions or requests in plain language.
 
 That's it. No installation, no sign-up, no configuration needed.
 
-<iframe width="100%" style={{aspectRatio: "16/9"}} src="https://www.youtube.com/embed/im4FhzYEMU0" title="Aomi Telegram Bot" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen></iframe>
+<iframe width="100%" style={{aspectRatio: "16/9"}} src="https://www.youtube.com/embed/im4FhzYEMU0" title="Aomi Telegram Bot" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen />
 
 ## Features
 
@@ -23,9 +23,7 @@ That's it. No installation, no sign-up, no configuration needed.
 - **Interactive menus** -- The bot uses Telegram's inline keyboards to provide interactive panels for managing settings, switching configurations, and navigating features. Tap buttons instead of typing commands.
 - **Slash commands** -- Quick commands like `/start`, `/wallet`, `/model`, and `/app` for accessing specific features including App switching.
 - **Wallet connectivity** -- Connect a crypto wallet through a Telegram mini-app for transaction signing and on-chain operations.
-
 - **Tool calls** -- The bot calls the product's APIs just like in the Web App, with results displayed inline in the conversation.
-
 
 ## Direct Messages vs Group Chats
 
@@ -57,11 +55,51 @@ The bot supports slash commands for managing settings, switching configurations,
 | `/network` | Select blockchain network |
 | `/help` | Show available commands |
 
+## Panel System
+
+Panels are interactive inline keyboard menus. Instead of typing commands repeatedly, tap buttons to navigate between features. The message updates in place so the conversation stays clean.
+
+### Start Panel
+
+The main navigation hub. Displayed on `/start`:
+
+- **Wallet Status** — view connection, open wallet panel
+- **App** — switch Aomi App
+- **Model** — change LLM provider
+- **Transactions** — view pending and completed transactions
+- **Sessions** — browse conversation history
+- **Network** — switch blockchain network
+- **Settings** — user preferences
+
+### App Panel
+
+Displays all authorized Apps as buttons. The active App is highlighted. Tapping one switches the AI context immediately.
+
+### Model Panel
+
+Displays available models (Claude, GPT-4, etc.). The selected model is marked. Switching takes effect on the next message.
+
+### Sessions Panel
+
+Shows recent sessions with titles and timestamps. Tap to switch, rename, or delete threads.
+
+### Transaction Panel
+
+When the AI requests a transaction, this panel shows the details (recipient, amount, data) with approve/reject buttons that link to the mini-app for signing.
+
+### Navigation Flow
+
+Tapping a button either:
+
+1. **Navigates** to another panel (updates the message)
+2. **Performs an action** (switches a model, shows confirmation)
+3. **Opens the mini-app** (wallet connection, transaction signing)
+
 ### /start
 
 Initialize the bot and display the welcome message with the main navigation panel.
 
-```
+```text
 /start
 ```
 
@@ -71,7 +109,7 @@ Shows a greeting message with quick-action buttons for Wallet, App, Model, Trans
 
 Switch between Aomi Apps. Each App configures the AI with different tools, preambles, and capabilities.
 
-```
+```text
 /app
 ```
 
@@ -81,7 +119,7 @@ Displays an inline keyboard with all authorized Apps (e.g., Default, DeFi, Predi
 
 Open the wallet connection panel. Launches the Telegram mini-app for connecting or disconnecting a wallet via WalletConnect.
 
-```
+```text
 /wallet
 ```
 
@@ -91,7 +129,7 @@ Shows wallet status (connected address or disconnected) and a button to open the
 
 Select which LLM provider and model the AI should use.
 
-```
+```text
 /model
 ```
 
@@ -101,7 +139,7 @@ Displays available models as inline keyboard buttons. Tap to switch.
 
 Enter or manage your API key for authenticated access.
 
-```
+```text
 /apikey
 ```
 
@@ -111,7 +149,7 @@ Prompts for your API key via a reply message. The key is stored securely for you
 
 View and manage user preferences.
 
-```
+```text
 /settings
 ```
 
@@ -121,7 +159,7 @@ Shows the settings panel with options for streaming mode and other configuration
 
 View and manage your conversation history.
 
-```
+```text
 /sessions
 ```
 
@@ -131,7 +169,7 @@ Lists recent conversation threads with options to switch between them, rename, o
 
 Switch the active blockchain network for wallet operations.
 
-```
+```text
 /network
 ```
 
@@ -141,16 +179,15 @@ Displays supported networks (Ethereum, Polygon, Arbitrum, Base, etc.) as inline 
 
 Display a list of available commands and their descriptions.
 
-```
+```text
 /help
 ```
-
 
 ### Using Commands in Groups
 
 In group chats, slash commands work the same way. The bot will respond to commands directed at it. Regular messages require mentioning the bot by name (when using the `mention` group policy):
 
-```
+```text
 @aomi_bot /app
 @aomi_bot What is the price of ETH?
 ```
@@ -159,16 +196,15 @@ In group chats, slash commands work the same way. The bot will respond to comman
 
 Beyond slash commands, you can simply type natural language messages. The bot will process them through the AI assistant:
 
-```
+```text
 What's the best yield for staking ETH right now?
 ```
 
-```
+```text
 Swap 0.5 ETH for USDC on the cheapest DEX
 ```
 
 The AI has access to all tools configured for the active App and can execute multi-step operations, including wallet transactions (with your approval).
-
 
 ## Panel System
 
@@ -185,6 +221,7 @@ When you send a slash command like `/start` or `/app`, the bot responds with a m
 The main navigation hub. Displayed when you send `/start`.
 
 Buttons:
+
 - **Wallet Status** -- View wallet connection, open wallet panel
 - **App** -- Switch Aomi App
 - **Model** -- Change LLM provider
@@ -206,6 +243,7 @@ Choose the LLM model. Displays available models (Claude, GPT-4, etc.) as buttons
 #### Wallet Panel
 
 Shows current wallet status:
+
 - If connected: displays the wallet address and a disconnect button
 - If disconnected: shows a button that opens the Telegram mini-app for WalletConnect
 
@@ -229,7 +267,6 @@ View and manage wallet transaction requests. When the AI requests a transaction,
 
 Enter and manage your API key. The bot prompts for text input via a reply message. Once set, the key is used for authenticated requests to the backend.
 
-
 ### Navigation
 
 Panels link to each other through transitions. When you tap a button, the bot either:
@@ -251,8 +288,121 @@ When the AI needs a transaction signed:
 5. The signed transaction is sent back to the bot
 6. The bot forwards the result to the AI, which continues the conversation
 
-
 ## Wallet
+
+Connect a wallet through the Telegram mini-app at `/wallet`. Once connected, your wallet address is linked to your Telegram user ID across all conversations.
+
+### Connecting
+
+1. Send `/wallet` (or tap **Wallet** from the start panel)
+2. Tap **Connect Wallet**
+3. A mini-app opens with the WalletConnect interface
+4. Scan the QR code or choose your wallet from the list
+5. Approve the connection in your wallet app
+6. The bot confirms and displays your address
+
+### Approving Transactions
+
+When the AI determines a transaction is needed:
+
+1. The AI describes what it wants to do (swap, transfer, etc.)
+2. A transaction panel appears with the details
+3. Tap **Sign** to open the mini-app
+4. Review and approve in your wallet
+5. The result is sent back to the AI, which continues the conversation
+
+### Signing Typed Data (EIP-712)
+
+Gasless transactions, permit approvals, and similar operations use typed data signatures. The flow is identical — review the data in the mini-app and sign.
+
+### Disconnecting
+
+Send `/wallet` and tap **Disconnect** to unlink your wallet.
+
+### Mini-App Details
+
+The wallet mini-app is a lightweight WebApp embedded within Telegram. It provides WalletConnect integration, transaction review, EIP-712 signing, and network information. It communicates with the bot through Telegram's WebApp API.
+
+## Conversational Usage
+
+Beyond slash commands, type natural language messages. The AI has access to all tools configured for the active App and can execute multi-step operations, including wallet transactions (with your approval).
+
+```text
+What's the best yield for staking ETH right now?
+```
+
+```text
+Swap 0.5 ETH for USDC on the cheapest DEX
+```
+
+## Deploying Your Own Bot
+
+The Telegram bot connects to the same Aomi backend as the web app. Configure everything in a single TOML file.
+
+### Configuration File
+
+Create a `bot.toml` in your project root:
+
+```toml
+enabled = true
+bot_token = "YOUR_BOT_TOKEN"
+dm_policy = "open"
+group_policy = "mention"
+mini_app_url = "https://your-app.com/telegram-wallet"
+streaming = true
+```
+
+### Configuration Options
+
+| Option | Type | Description |
+| --- | --- | --- |
+| `enabled` | `bool` | Enable or disable the bot |
+| `bot_token` | `string` | Bot token from [BotFather](https://t.me/BotFather) |
+| `dm_policy` | `string` | `"open"`, `"allowlist"`, or `"disabled"` |
+| `group_policy` | `string` | `"mention"`, `"always"`, or `"disabled"` |
+| `allow_from` | `int[]` | Allowed Telegram user IDs |
+| `mini_app_url` | `string` | HTTPS URL for the wallet mini-app |
+| `streaming` | `bool` | Stream responses or send single message |
+| `server_wc_enabled` | `bool` | Server-side WalletConnect alternative |
+
+### Transport Modes
+
+**Long polling** (default) — simpler, works without a public URL.
+
+**Webhook** — for production:
+
+```toml
+[webhook]
+url = "https://bot.example.com/webhook"
+addr = "0.0.0.0:8443"
+```
+
+### Development Config
+
+```toml
+enabled = true
+bot_token = "YOUR_TOKEN"
+dm_policy = "open"
+group_policy = "mention"
+mini_app_url = "http://localhost:3000"
+streaming = true
+```
+
+### Production Config
+
+```toml
+enabled = true
+bot_token = "YOUR_TOKEN"
+dm_policy = "allowlist"
+group_policy = "mention"
+mini_app_url = "https://app.yourcompany.com/wallet"
+streaming = true
+allow_from = [111111111, 222222222]
+
+[webhook]
+url = "https://bot.yourcompany.com/webhook"
+addr = "0.0.0.0:8443"
+```
 
 The bot supports wallet connectivity through a Telegram WebApp (mini-app). This allows you to connect your wallet, approve transactions, and sign messages directly from within Telegram.
 
@@ -272,6 +422,7 @@ Once connected, your wallet address is linked to your Telegram user ID. This mea
 #### View Wallet Status
 
 Send `/wallet` at any time to see:
+
 - Whether a wallet is connected
 - The connected address
 - The active network
@@ -297,10 +448,9 @@ For operations that require typed data signatures (permit approvals, gasless tra
 4. Sign or reject in your wallet
 5. The signature is returned to the AI
 
-
 ### Transaction Flow Diagram
 
-```
+```text
 User: "Swap 1 ETH for USDC"
     │
     ▼
@@ -354,12 +504,11 @@ The wallet mini-app is a lightweight web application embedded within Telegram. I
 
 The mini-app URL is configured by the bot administrator and must use HTTPS. It communicates with the bot through Telegram's WebApp API.
 
-
 ## Deploying Your Own Bot
 
 The Telegram bot connects to the same Aomi backend as the web app. Messages are processed by the same AI, with the same tools and capabilities. No frontend deployment needed -- configure everything in a single TOML file.
 
-<iframe width="100%" style={{aspectRatio: "16/9"}} src="https://www.youtube.com/embed/im4FhzYEMU0" title="Aomi Telegram Bot" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen></iframe>
+<iframe width="100%" style={{aspectRatio: "16/9"}} src="https://www.youtube.com/embed/im4FhzYEMU0" title="Aomi Telegram Bot" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen />
 
 ### Configuration File
 
@@ -389,7 +538,7 @@ server_wc_enabled = false
 | `streaming` | `bool` | Stream responses in real time or send a single message when complete. |
 | `server_wc_enabled` | `bool` | Enable server-side WalletConnect as an alternative to the mini-app. |
 
-#### dm_policy
+#### dm\_policy
 
 | Value | Behavior |
 | --- | --- |
@@ -397,7 +546,7 @@ server_wc_enabled = false
 | `"allowlist"` | Only users in `allow_from` can DM. |
 | `"disabled"` | Bot ignores all DMs. |
 
-#### group_policy
+#### group\_policy
 
 | Value | Behavior |
 | --- | --- |
@@ -435,7 +584,6 @@ addr = "0.0.0.0:8443"
 | `addr` | Local bind address for the webhook HTTP server. |
 
 The `url` must be publicly accessible and use HTTPS. Use a reverse proxy (nginx, Cloudflare Tunnel, ngrok) to terminate TLS if needed.
-
 
 ### Example Configurations
 
@@ -477,11 +625,11 @@ mini_app_url = "https://app.yourcompany.com/wallet"
 streaming = true
 ```
 
-
 ## Next Steps
 
 - [Web App](/getting-started/web-app) -- use Aomi in your browser
 - [Discord Bot](/getting-started/discord) -- use Aomi on Discord
+- [Building Apps](/reference/building-apps) — define tools and preambles
 - [Building Apps](/reference/building-apps) -- define tools, preambles, and model selection for your bot's backend
 - [Wallet Integration](/concepts/non-custodial-wallets) -- connect wallet features to the Telegram mini-app
 - [Apps](/reference/building-apps) -- route bot traffic to the correct backend app
