@@ -1,692 +1,380 @@
 ---
-title: SDK
-description: Rust SDK reference for building agentic applications on Aomi — ChatApp, ForgeApp, L2BeatApp, the builder pattern, custom tools, streaming, and system events.
+title: SDK reference
+description: Rust reference for the Aomi plugin SDK. Build an App as a cdylib plugin with typed tools, the DynAomiTool trait, the dyn_aomi_app! macro, secrets, host namespaces, and the runtime hot load model.
 ---
 
-The Rust SDK provides a builder-pattern API for creating AI-powered blockchain agents. Build custom agentic applications with just a few lines of code.
+The Aomi SDK is a Rust crate for building **Apps**. An App is a dynamic plugin that the Aomi runtime hot loads at runtime as a shared library (`cdylib`) over a stable C ABI. You write typed tools in Rust, compile to a `.so` (Linux) or `.dylib` (macOS), and the runtime loads it without a restart.
 
-## Quick Start
+<Note>
+This is the public plugin surface. You build against the `aomi-sdk` crate, and your tools cross the FFI boundary as JSON. The runtime and loader are not part of this crate, so you never link against host internals. The compatibility gate is the SDK version: the host and your plugin must build against the same `aomi-sdk` version.
+</Note>
 
-```rust
-use aomi_runtime::{ChatApp, ChatAppBuilder};
+## The four pieces
 
-// Minimal setup
-let app = ChatApp::new().await?;
+A minimal App needs four things:
 
-// Or with custom configuration
-let app = ChatAppBuilder::new(&my_preamble).await?
-    .add_tool(MyCustomTool)?
-    .build(false, None, None).await?;
-```
-
-## ChatAppBuilder
-
-The builder pattern provides flexible app configuration.
-
-### Constructor Methods
-
-#### `new(preamble: &str)`
-
-Create a builder with Anthropic connection and core tools:
+<Steps>
+<Step title="An app struct">
+A marker type that ties everything together. It must be `Clone + Default + Send + Sync + 'static`. A unit struct works well.
 
 ```rust
-let builder = ChatAppBuilder::new("You are a helpful assistant.").await?;
+#[derive(Clone, Default)]
+struct MyApp;
 ```
+</Step>
 
-This automatically registers core tools:
-
-- `SendTransactionToWallet`
-- `EncodeFunctionCall`
-- `GetCurrentTime`
-- `CallViewFunction`
-- `SimulateContractCall`
-- `GetAccountInfo`
-- `GetAccountTransactionHistory`
-- `BraveSearch`
-- `GetContractABI`
-- `GetContractSourceCode`
-- `GetContractFromEtherscan`
-
-#### `new_with_model_connection(preamble, sender, no_tools, system_events)`
-
-Full control over initialization:
+<Step title="A typed args struct">
+Deserialized from the incoming JSON. Derive `Deserialize` and `JsonSchema`. The doc comments on each field are model facing: they become the parameter schema the LLM reads when it picks your tool.
 
 ```rust
-let builder = ChatAppBuilder::new_with_model_connection(
-    &preamble,
-    Some(&sender_to_ui),  // Optional UI channel
-    false,                 // Include tools
-    Some(&system_events), // Optional event queue
-).await?;
+use aomi_sdk::schemars::JsonSchema;
+use serde::Deserialize;
+
+#[derive(Debug, Deserialize, JsonSchema)]
+struct GreetArgs {
+    /// The name of the person to greet
+    name: String,
+}
 ```
+</Step>
 
-#### `new_for_tests(system_events)`
-
-Lightweight test mode without Anthropic connection:
+<Step title="A tool implementation">
+A struct that implements `DynAomiTool`. This is your actual logic.
 
 ```rust
-#[cfg(test)]
-let builder = ChatAppBuilder::new_for_tests(Some(&events)).await?;
-let scheduler = builder.scheduler_for_tests();
-```
+use aomi_sdk::{DynAomiTool, DynToolCallCtx};
+use serde_json::Value;
 
-### Builder Methods
+struct Greet;
 
-#### `add_tool<T>(tool: T)`
+impl DynAomiTool for Greet {
+    type App = MyApp;
+    type Args = GreetArgs;
+    const NAME: &'static str = "greet";
+    const DESCRIPTION: &'static str = "Greet someone by name.";
 
-Register a custom tool implementing `rig::tool::Tool`:
-
-```rust
-builder.add_tool(MyCustomTool)?;
-builder.add_tool(AnotherTool)?;
-```
-
-Tools are registered in both:
-
-1. The `ToolScheduler` (for execution)
-2. The `AgentBuilder` (for LLM awareness)
-
-#### `add_docs_tool(loading_sender, sender_to_ui)`
-
-Add RAG documentation search:
-
-```rust
-builder.add_docs_tool(
-    Some(loading_sender),  // Progress updates
-    Some(&sender_to_ui),   // Error notifications
-).await?;
-```
-
-#### `build(skip_mcp, system_events, sender_to_ui)`
-
-Finalize into a `ChatApp`:
-
-```rust
-let app = builder.build(
-    false,                 // Connect to MCP server
-    Some(&system_events), // Event queue
-    Some(&sender_to_ui),  // UI channel
-).await?;
-```
-
-## ChatApp
-
-The main application interface:
-
-```mermaid
-classDiagram
-    class ChatApp {
-        -agent: Arc~Agent~
-        -document_store: Option~DocumentStore~
-        +new() Result~ChatApp~
-        +new_headless() Result~ChatApp~
-        +new_with_options(skip_docs, skip_mcp) Result~ChatApp~
-        +process_message(history, input, sender, events, interrupt)
-        +agent() Arc~Agent~
-        +document_store() Option~DocumentStore~
-    }
-```
-
-### Factory Methods
-
-```rust
-// Full-featured app
-let app = ChatApp::new().await?;
-
-// For evaluation (no docs, no MCP, no tools)
-let app = ChatApp::new_headless().await?;
-
-// Custom options
-let app = ChatApp::new_with_options(
-    true,   // skip_docs
-    false,  // skip_mcp
-).await?;
-
-// With UI integration
-let app = ChatApp::new_with_senders(
-    &sender_to_ui,
-    loading_sender,
-    &system_events,
-    false,  // skip_docs
-).await?;
-```
-
-### Processing Messages
-
-```rust
-app.process_message(
-    &mut history,            // Conversation history
-    user_input,              // User message
-    &sender_to_ui,           // Response channel
-    &system_events,          // Event queue
-    &mut interrupt_receiver, // Interrupt signal
-).await?;
-```
-
-## Streaming Response
-
-Use `stream_completion` for low-level streaming control:
-
-```rust
-use aomi_runtime::{stream_completion, ChatCommand};
-use futures::StreamExt;
-
-let scheduler = ToolScheduler::get_or_init().await?;
-let handler = scheduler.get_handler();
-
-let mut stream = stream_completion(
-    agent,
-    handler,
-    &input,
-    history.clone(),
-    system_events.clone(),
-).await;
-
-while let Some(result) = stream.next().await {
-    match result {
-        Ok(ChatCommand::StreamingText(text)) => {
-            // Append incremental text
-            response.push_str(&text);
-        }
-        Ok(ChatCommand::ToolCall { topic, stream }) => {
-            // Handle tool invocation
-            println!("Tool: {}", topic);
-            // stream contains results
-        }
-        Ok(ChatCommand::AsyncToolResult { call_id, tool_name, result }) => {
-            // Multi-step tool result
-            println!("{}: {:?}", tool_name, result);
-        }
-        Ok(ChatCommand::Complete) => {
-            break;
-        }
-        Ok(ChatCommand::Error(e)) => {
-            eprintln!("Error: {}", e);
-        }
-        Ok(ChatCommand::Interrupted) => {
-            println!("Interrupted by user");
-            break;
-        }
-        Err(e) => {
-            eprintln!("Stream error: {}", e);
-        }
+    fn run(_app: &MyApp, args: GreetArgs, _ctx: DynToolCallCtx) -> Result<Value, String> {
+        Ok(serde_json::json!({ "message": format!("Hello, {}!", args.name) }))
     }
 }
 ```
+</Step>
 
-## ChatCommand Variants
-
-```mermaid
-flowchart TD
-    subgraph "ChatCommand&lt;S&gt;"
-        ST[StreamingText]
-        TC[ToolCall]
-        ATR[AsyncToolResult]
-        COMP[Complete]
-        ERR[Error]
-        INT[Interrupted]
-    end
-
-    ST -->|"Incremental LLM output"| UI[UI Display]
-    TC -->|"Tool invocation"| TOOL[Tool Execution]
-    ATR -->|"Multi-step result"| SYS[System Events]
-    COMP -->|"Response finished"| DONE[Done]
-    ERR -->|"Failure"| HANDLE[Error Handler]
-    INT -->|"User cancelled"| CANCEL[Cancellation]
-```
-
-| Variant | Description | Fields |
-| ------- | ----------- | ------ |
-| `StreamingText(String)` | Incremental LLM output | Text chunk |
-| `ToolCall { topic, stream }` | Tool invocation | Tool name, result stream |
-| `AsyncToolResult { call_id, tool_name, result }` | Multi-step tool result | Call ID, name, JSON result |
-| `Complete` | Response finished | - |
-| `Error(String)` | Processing error | Error message |
-| `Interrupted` | User cancelled | - |
-
-## System Events
-
-### SystemEventQueue
-
-Thread-safe event buffer for out-of-band communication:
+<Step title="The dyn_aomi_app! macro">
+This generates the manifest, the dispatch router, and the FFI exports the host calls. You never write the C ABI by hand.
 
 ```rust
-use aomi_runtime::{SystemEventQueue, SystemEvent};
+aomi_sdk::dyn_aomi_app!(
+    app = MyApp,
+    name = "greeter",
+    version = "0.1.0",
+    preamble = "You are a friendly greeter.",
+    tools = [Greet],
+    namespaces = ["evm-core"],
+);
+```
+</Step>
+</Steps>
 
-let queue = SystemEventQueue::new();
+## Cargo.toml
 
-// Push events
-queue.push(SystemEvent::SystemNotice("Connected".into()));
-queue.push(SystemEvent::InlineDisplay(json!({"type": "progress", "value": 50})));
+The crate must build as a `cdylib`, and it depends on `aomi-sdk`.
 
-// Read events (non-consuming)
-let events = queue.slice_from(0);
+```toml
+[lib]
+crate-type = ["cdylib"]
 
-// Check length
-let count = queue.len();
+[dependencies]
+aomi-sdk = "=0.1.20"
+schemars = "1"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
 ```
 
-### SystemEvent Variants
+<Note>
+Pin `aomi-sdk` exactly (`=0.1.20`), not with a caret range. The runtime gates plugin loading on an exact SDK version match, so the pin must equal the platform's `required_sdk_version` (see `platform.json` in the platform repo). A mismatch fails CI before your App ever loads.
+</Note>
 
-```mermaid
-flowchart LR
-    subgraph "SystemEvent"
-        INLINE[InlineDisplay]
-        NOTICE[SystemNotice]
-        ERROR[SystemError]
-        ASYNC[AsyncUpdate]
-    end
+<Note>
+`aomi-sdk` exports `schemars` and `serde_json` again from inside itself, so your tool code can reach them through the crate (for example `aomi_sdk::schemars::JsonSchema`) without managing version alignment yourself.
+</Note>
 
-    INLINE -->|"UI notification"| IMMEDIATE[Immediate Display]
-    NOTICE -->|"Status message"| IMMEDIATE
-    ERROR -->|"Error message"| IMMEDIATE
-    ASYNC -->|"Background update"| SSE[SSE Broadcast]
-```
+## The `DynAomiTool` trait
 
-| Variant | Purpose | Usage |
-| ------- | ------- | ----- |
-| `InlineDisplay(Value)` | UI notifications | Tool progress, wallet requests |
-| `SystemNotice(String)` | Status messages | Connection status |
-| `SystemError(String)` | Error messages | API failures |
-| `AsyncUpdate(Value)` | Background updates | Title changes, task completion |
-
-## Tool Scheduler
-
-Access the global tool scheduler:
+Every tool is one struct that implements `DynAomiTool`. The trait carries two associated types, three consts, and the run methods.
 
 ```rust
-use aomi_tools::ToolScheduler;
+pub trait DynAomiTool: Send + Sync + 'static {
+    type App: DynAomiApp;
+    type Args: DeserializeOwned + JsonSchema + Send + 'static;
 
-// Get or create the global scheduler
-let scheduler = ToolScheduler::get_or_init().await?;
+    const NAME: &'static str;
+    const DESCRIPTION: &'static str;
+    const IS_ASYNC: bool = false;
 
-// Register a tool
-scheduler.register_tool(MyTool)?;
+    fn run(_app: &Self::App, _args: Self::Args, _ctx: DynToolCallCtx)
+        -> Result<Value, String>;
 
-// Get a handler for request processing
-let handler = scheduler.get_handler();
-
-// Check if a tool is multi-step
-let is_multi = handler.is_multi_step("my_tool");
-```
-
-## Custom Tools
-
-### Using `#[rig_tool]` Macro
-
-The simplest way to create tools:
-
-```rust
-use rig::tool;
-use serde::{Deserialize, Serialize};
-use schemars::JsonSchema;
-
-#[derive(Debug, Deserialize, JsonSchema, Clone)]
-pub struct GetPriceParams {
-    /// The token symbol (e.g., "ETH", "BTC")
-    pub symbol: String,
-    /// Currency for price (default: USD)
-    #[serde(default = "default_currency")]
-    pub currency: String,
-}
-
-fn default_currency() -> String { "USD".into() }
-
-#[derive(Debug, Serialize, Clone)]
-pub struct PriceResult {
-    pub symbol: String,
-    pub price: f64,
-    pub currency: String,
-}
-
-#[tool(description = "Get the current price of a cryptocurrency")]
-pub async fn get_crypto_price(
-    params: GetPriceParams,
-) -> Result<PriceResult, ToolError> {
-    // Fetch price from API
-    let price = fetch_price(&params.symbol, &params.currency).await?;
-
-    Ok(PriceResult {
-        symbol: params.symbol,
-        price,
-        currency: params.currency,
-    })
+    fn run_async(_app: &Self::App, _args: Self::Args, _ctx: DynToolCallCtx, _sink: DynAsyncSink)
+        -> Result<(), String>;
 }
 ```
 
-Register with the builder:
+| Member | What it is |
+| --- | --- |
+| `type App` | The app struct this tool belongs to. Ties the tool to one App. |
+| `type Args` | Your typed args struct. Must derive `Deserialize` and `JsonSchema`. |
+| `NAME` | The unique tool name the LLM calls, such as `get_token_price`. |
+| `DESCRIPTION` | One line shown to the LLM for tool selection. Write it for the model. |
+| `IS_ASYNC` | `false` by default. Set `true` to stream results over time. |
+| `run` | Synchronous logic. Override this for normal tools. |
+| `run_async` | Streaming logic. Override this when `IS_ASYNC = true`. |
+
+The runtime auto generates each tool's parameter schema from `Args` using `JsonSchema`. You do not write JSON Schema by hand.
+
+<Tip>
+Prefer intent shaped names like `search_*`, `get_*`, `build_*`, and `submit_*` over raw endpoint wraps. Keep the set small. Three to eight tools per App is typical for a clean workflow.
+</Tip>
+
+### The tool context
+
+Every `run` call receives a `DynToolCallCtx`. It is a small projection of the host context with only what your tool needs.
 
 ```rust
-builder.add_tool(get_crypto_price)?;
-```
-
-### Implementing AomiApiTool
-
-For more control, implement the trait directly:
-
-```rust
-use aomi_tools::{AomiApiTool, AnyApiTool};
-
-#[derive(Clone)]
-pub struct MyTool;
-
-impl AomiApiTool for MyTool {
-    type ApiRequest = MyParams;
-    type ApiResponse = MyResult;
-    type MultiStepResults = ();  // Single-result tool
-    type Error = MyError;
-
-    fn name(&self) -> &'static str {
-        "my_tool"
-    }
-
-    fn description(&self) -> &'static str {
-        "Does something useful"
-    }
-
-    fn check_input(&self, request: Self::ApiRequest) -> bool {
-        // Validate input
-        !request.value.is_empty()
-    }
-
-    async fn call(&self, request: Self::ApiRequest) -> Result<Self::ApiResponse, Self::Error> {
-        // Implementation
-        Ok(MyResult { /* ... */ })
-    }
+pub struct DynToolCallCtx {
+    pub session_id: String,
+    pub tool_name: String,
+    pub call_id: String,
+    pub state_attributes: Map<String, Value>,
+    pub secrets: HashMap<String, String>,
 }
 ```
 
-### Multi-Step Tools
-
-For long-running tools that stream results:
+You can read nested host attributes by path with helper methods:
 
 ```rust
-use aomi_tools::MultiStepApiTool;
-use tokio::sync::mpsc::Sender;
-use futures::future::BoxFuture;
+fn run(_app: &MyApp, _args: Args, ctx: DynToolCallCtx) -> Result<Value, String> {
+    let org_id = ctx.attribute_u64(&["user", "org_id"]).ok_or("missing org_id")?;
+    let name = ctx.attribute_string(&["user", "name"]).unwrap_or_default();
+    Ok(serde_json::json!({ "org_id": org_id, "name": name }))
+}
+```
 
-#[derive(Clone)]
-pub struct LongRunningTool;
+## Async tools
 
-impl MultiStepApiTool for LongRunningTool {
-    type ApiRequest = LongRunningParams;
-    type Error = anyhow::Error;
+For long running or streaming work, set `IS_ASYNC = true` and implement `run_async` instead of `run`. The host polls for updates through the `DynAsyncSink`. You push intermediate values with `emit`, signal the terminal result with `complete`, report a failure with `fail`, and check for host cancellation with `is_canceled`.
 
-    fn name(&self) -> &'static str {
-        "long_running_tool"
-    }
+```rust
+impl DynAomiTool for StreamingTool {
+    type App = MyApp;
+    type Args = StreamArgs;
+    const NAME: &'static str = "stream";
+    const DESCRIPTION: &'static str = "Stream results over time.";
+    const IS_ASYNC: bool = true;
 
-    fn description(&self) -> &'static str {
-        "Performs a long-running operation with progress updates"
-    }
-
-    fn validate(&self, request: &Self::ApiRequest) -> eyre::Result<()> {
-        // Validate request
+    fn run_async(
+        _app: &MyApp,
+        args: StreamArgs,
+        _ctx: DynToolCallCtx,
+        sink: DynAsyncSink,
+    ) -> Result<(), String> {
+        sink.emit(serde_json::json!({ "step": 1 })).map_err(|e| e.to_string())?;
+        sink.complete(serde_json::json!({ "done": true })).map_err(|e| e.to_string())?;
         Ok(())
     }
-
-    fn call_stream(
-        &self,
-        request: Self::ApiRequest,
-        sender: Sender<eyre::Result<Value>>,
-    ) -> BoxFuture<'static, eyre::Result<()>> {
-        async move {
-            // Send progress updates
-            sender.send(Ok(json!({"status": "starting"}))).await?;
-
-            // Do work...
-            tokio::time::sleep(Duration::from_secs(1)).await;
-            sender.send(Ok(json!({"status": "processing", "progress": 50}))).await?;
-
-            // More work...
-            tokio::time::sleep(Duration::from_secs(1)).await;
-            sender.send(Ok(json!({"status": "complete", "result": "done"}))).await?;
-
-            Ok(())
-        }.boxed()
-    }
 }
 ```
 
-Register multi-step tools:
+<Warning>
+Intermediate `emit` updates must be bare values. The terminal `complete` call is the only place that accepts a routed return. There is no terminal anchor for routing mid stream, so the SDK rejects routed envelopes passed to `emit`.
+</Warning>
+
+## The `dyn_aomi_app!` macro
+
+`dyn_aomi_app!` is the one macro you call per App. It wires your tools into a dispatch router, builds the plugin manifest the host reads, and generates the FFI exports the runtime calls across the C ABI. You do not implement `DynAomiApp` or any C function by hand.
 
 ```rust
-use aomi_tools::MultiStepToolWrapper;
-
-let wrapper = MultiStepToolWrapper { inner: LongRunningTool };
-scheduler.register_any_tool(Arc::new(wrapper))?;
+aomi_sdk::dyn_aomi_app!(
+    app = MyApp,
+    name = "greeter",
+    version = "0.1.0",
+    preamble = PREAMBLE,
+    tools = [Greet, GetPrice],
+    secrets = [API_KEY],
+    namespaces = ["evm-core"],
+);
 ```
 
-## Complete Example
+| Field | Meaning |
+| --- | --- |
+| `app` | Your app struct. |
+| `name` | The App key the runtime uses, such as `"defi"`. |
+| `version` | Semver string for this App, such as `"0.1.0"`. |
+| `preamble` | The system prompt injected into the LLM context for this App. |
+| `tools` | The list of tool structs to register. |
+| `secrets` | Optional. The named credentials this App declares. See below. |
+| `namespaces` | Host namespaces this App needs. Defaults to `["evm-core"]`. |
+
+## Secrets
+
+If your App needs external credentials, declare them as `Secret` slots. Each slot has a canonical name in `SCREAMING_SNAKE_CASE`, a one sentence description shown in the settings UI, and a `required` flag.
 
 ```rust
-use aomi_runtime::{ChatApp, ChatAppBuilder, SystemEventQueue, ChatCommand};
-use tokio::sync::mpsc;
-use futures::StreamExt;
+use aomi_sdk::Secret;
 
-#[tokio::main]
-async fn main() -> eyre::Result<()> {
-    // Create channels
-    let (tx, mut rx) = mpsc::channel::<ChatCommand>(100);
-    let system_events = SystemEventQueue::new();
+const API_KEY: Secret = Secret::new(
+    "EXCHANGE_API_KEY",
+    "Exchange API key id from the dashboard.",
+    true,
+);
 
-    // Build the app
-    let preamble = "You are a DeFi assistant. Help users with token swaps and portfolio management.";
-
-    let app = ChatAppBuilder::new(preamble).await?
-        .add_tool(GetTokenPrice)?
-        .add_tool(SwapTokens)?
-        .build(true, Some(&system_events), Some(&tx)).await?;
-
-    // Process a message
-    let mut history = vec![];
-    let (interrupt_tx, mut interrupt_rx) = mpsc::channel(1);
-
-    app.process_message(
-        &mut history,
-        "What's the current price of ETH?".into(),
-        &tx,
-        &system_events,
-        &mut interrupt_rx,
-    ).await?;
-
-    // Consume responses
-    while let Some(cmd) = rx.recv().await {
-        match cmd {
-            ChatCommand::StreamingText(text) => print!("{}", text),
-            ChatCommand::Complete => break,
-            _ => {}
-        }
-    }
-
-    Ok(())
-}
+aomi_sdk::dyn_aomi_app!(
+    app = MyApp,
+    name = "exchange",
+    version = "0.1.0",
+    preamble = PREAMBLE,
+    tools = [PlaceOrder],
+    secrets = [API_KEY],
+    namespaces = ["evm-core"],
+);
 ```
 
-## ForgeApp
+The host reads the declared slots from your manifest. When a slot is `required: true`, the host gates App load on the user having filled that slot in the runtime secret vault. At tool call time the host pre resolves the slots and injects the raw values into `ctx.secrets`. Your tool reads them with `resolve_secret_value`, which never logs, persists, or echoes the value to the model.
 
-`ForgeApp` is an agentic application specialized for smart contract development. It implements the `AomiBackend` trait and extends the core `ChatApp` patterns with Forge-specific capabilities — contract compilation, deployment scripting, fork testing, and dependency management.
+`resolve_secret_value` checks three sources in order and returns your `missing_message` if none resolve:
 
-### ForgeAppBuilder
+<Steps>
+<Step title="Explicit argument">
+The value the caller passed in, if any.
+</Step>
+<Step title="Injected vault secret">
+`ctx.secrets[name]`, injected by the host from the per App vault.
+</Step>
+<Step title="Environment variable">
+A fallback `name` env var, used by the CLI and tests where no vault is in scope.
+</Step>
+</Steps>
 
 ```rust
-use aomi_forge::ForgeAppBuilder;
-
-let app = ForgeAppBuilder::new("You are a Solidity expert.").await?
-    .add_tool(DeployContract)?
-    .add_tool(RunForgeScript)?
-    .add_tool(VerifyContract)?
-    .build(false, Some(&system_events), Some(&tx)).await?;
+let key = aomi_sdk::resolve_secret_value(
+    &ctx,
+    args.api_key.as_deref(),
+    "EXCHANGE_API_KEY",
+    "Set EXCHANGE_API_KEY in your Aomi settings to use this tool.",
+)?;
 ```
 
-### Custom Tools
+## Host namespaces
 
-ForgeApp registers a set of specialized tools for smart contract workflows:
+The `namespaces` field lists host side capability sets the runtime injects alongside your own tools. The default is `["evm-core"]`, which most Apps want for EVM wallet flows.
 
-| Tool | Description |
-| ---- | ----------- |
-| `DeployContract` | Compile and deploy Solidity contracts to anvil forks |
-| `RunForgeScript` | Execute Foundry forge scripts with dependency resolution |
-| `VerifyContract` | Verify contract source code on Etherscan |
-| `CompileProject` | Run `forge build` and parse compilation output |
+| You want to… | Set namespaces to |
+| --- | --- |
+| Use the default EVM wallet flow | omit the field, or `["evm-core"]` |
+| Add Solana wallet flows alongside EVM | `["evm-core", "solana-core"]` |
+| Ship a namespace only App (no wallet flow) | `["database"]` or similar |
+| Opt out of host namespaces entirely | `[]` |
 
-### Document Store
+## How the runtime hot loads your plugin
 
-ForgeApp includes a document store indexed on Solidity reference material and OpenZeppelin contracts, enabling RAG queries during development:
-
-```rust
-app.document_store()  // Option<DocumentStore>
-    .unwrap()
-    .search("ERC-721 mint function signature");
-```
-
-### Testing
-
-ForgeApp supports the same `new_headless()` pattern for evaluation:
-
-```rust
-#[cfg(test)]
-mod tests {
-    use aomi_forge::ForgeApp;
-
-    #[tokio::test]
-    async fn test_forge_app_headless() {
-        let app = ForgeApp::new_headless().await.unwrap();
-        // Run evaluation cases with no docs, no MCP, no tools
-    }
-}
-```
-
-Uses `aomi-eval` with the `EvalHarness` for balance and state assertions:
-
-```rust
-use aomi_eval::{EvalHarness, EvalCase, Assertion};
-
-let harness = EvalHarness::new(app);
-harness.run(EvalCase {
-    name: "deploys ERC-20",
-    instruction: "Deploy a simple ERC-20 token",
-    assertions: vec![Assertion::Balance { address, min: 1_000_000 }],
-}).await?;
-```
-
-## L2BeatApp
-
-`L2BeatApp` is an agentic application specialized for Layer-2 protocol analysis. It implements the `AomiBackend` trait and provides tools for querying L2Beat data, analyzing rollup configurations, and comparing protocol risk parameters.
-
-### L2BeatApp Builder
-
-```rust
-use aomi_l2beat::L2BeatAppBuilder;
-
-let app = L2BeatAppBuilder::new("You are a protocol analysis expert.").await?
-    .add_tool(QueryL2BeatProjects)?
-    .add_tool(CompareRiskFactors)?
-    .add_tool(AnalyzeTvlTrends)?
-    .build(false, Some(&system_events), Some(&tx)).await?;
-```
-
-The builder follows the same patterns as `ChatAppBuilder` and `ForgeAppBuilder`, inheriting core tool registration and MCP support.
-
-### Custom Config
-
-L2BeatApp accepts a configurable set of tracked projects and risk categories:
-
-```rust
-use aomi_l2beat::{L2BeatAppBuilder, L2BeatConfig};
-
-let config = L2BeatConfig {
-    tracked_projects: vec!["arbitrum", "optimism", "base", "zksync-era"],
-    risk_categories: vec!["state-validation", "data-availability", "sequencer-failure"],
-    refresh_interval_secs: 3600,
-};
-
-let app = L2BeatAppBuilder::new_with_config(
-    "Analyze L2 protocol security.",
-    config,
-).await?
-    .build(false, None, None).await?;
-```
-
-## Headless Mode for Evaluation
-
-Every application type supports headless mode — a stripped-down runtime used for automated evaluation:
-
-```rust
-// ChatApp
-let app = ChatApp::new_headless().await?;
-
-// ForgeApp
-let app = ForgeApp::new_headless().await?;
-
-// L2BeatApp
-let app = L2BeatApp::new_headless().await?;
-```
-
-Headless mode skips:
-- Document store loading
-- MCP server connection
-- Tool registration (no blockchain RPC, no external APIs)
-- UI channel creation
-
-This gives a deterministic, fast runtime suitable for CI/CD and evaluation harnesses.
-
-## Architecture
-
-### AomiBackend Trait
-
-All agentic applications implement the `AomiBackend` trait:
+You ship a compiled `.so` or `.dylib`. The runtime does the rest. It calls the generated FFI exports across the C ABI, reads your manifest, validates the SDK version, and serves tool calls. When a new build arrives, the runtime swaps it in atomically.
 
 ```mermaid
-classDiagram
-    class AomiBackend {
-        <<trait>>
-        +system_events() SystemEventQueue
-        +process_message()
-    }
-
-    class AomiApiTool {
-        <<trait>>
-        +call(request) Response
-        +name() str
-        +description() str
-    }
-
-    class MultiStepApiTool {
-        <<trait>>
-        +call_stream(request, sender)
-        +validate(request)
-    }
-
-    class HistoryBackend {
-        <<trait>>
-        +load_history(public_key)
-        +save_history(messages)
-    }
-
-    ChatApp ..|> AomiBackend
-    ForgeApp ..|> AomiBackend
-    L2BeatApp ..|> AomiBackend
-
-    GetContractABI ..|> AomiApiTool
-    BraveSearch ..|> AomiApiTool
-
-    ForgeExecutor ..|> MultiStepApiTool
+graph LR
+    subgraph "your plugin (.so / .dylib)"
+        MACRO["dyn_aomi_app!"]
+        TOOLS["DynAomiTool impls"]
+    end
+    subgraph "Aomi runtime"
+        LOADER["loader: dlopen<br/>+ SDK version check"]
+        MANIFEST["read manifest"]
+        REGISTRY["registry: atomic swap"]
+    end
+    MACRO -->|FFI exports| LOADER
+    LOADER --> MANIFEST --> REGISTRY
+    TOOLS -->|JSON over C ABI| REGISTRY
 ```
 
-### Trait-Based Abstractions
+All data crosses the boundary as JSON serialized C strings. Active chat sessions keep the old plugin while new sessions pick up the new one, so a reload needs no restart.
 
-Core components use traits for testability and extensibility:
+## Testing your tools
 
-| Trait | Purpose | Implementors |
-| ----- | ------- | ------------ |
-| `AomiBackend` | Application runtime | ChatApp, ForgeApp, L2BeatApp |
-| `AomiApiTool` | Single-result tools | GetContractABI, BraveSearch, custom tools |
-| `MultiStepApiTool` | Streaming tools | ForgeExecutor, long-running operations |
-| `HistoryBackend` | Pluggable persistence | SQLite, PostgreSQL backends |
+The `aomi_sdk::testing` module lets you unit test tools without loading the full FFI plugin. Build a context with `TestCtxBuilder`, then call `run_tool` for sync tools or `run_async_tool` for streaming tools.
 
-## Next Steps
+```rust
+use aomi_sdk::testing::{TestCtxBuilder, run_tool};
+use serde_json::json;
 
-- [Building Apps](/reference/building-apps) — complete app deployment guide
-- [Custom Tools](/guides/custom-tools) — detailed tool development
-- [API Reference](/reference/api-reference) — HTTP API documentation
+#[test]
+fn greet_returns_message() {
+    let ctx = TestCtxBuilder::new("greet").build();
+    let result = run_tool::<Greet>(&MyApp, json!({ "name": "Ada" }), ctx);
+    assert!(result.is_ok());
+}
+```
+
+`TestCtxBuilder` also lets you seed state attributes with `.attribute(...)` and inject a resolved secret with `.secret(...)`, so you can simulate exactly what the host would pass.
+
+```rust
+let ctx = TestCtxBuilder::new("place_order")
+    .secret("EXCHANGE_API_KEY", "test-key")
+    .attribute("user", json!({ "org_id": 42 }))
+    .build();
+```
+
+`run_async_tool` returns `(updates, terminal)`: every non terminal `emit` value in order, plus the terminal `complete` payload.
+
+## A full example, start to finish
+
+A minimal greeter App, straight from the crate docs:
+
+```rust
+use aomi_sdk::{DynAomiTool, DynToolCallCtx};
+use aomi_sdk::schemars::JsonSchema;
+use serde::Deserialize;
+use serde_json::Value;
+
+#[derive(Clone, Default)]
+struct MyApp;
+
+#[derive(Debug, Deserialize, JsonSchema)]
+struct GreetArgs {
+    /// The name of the person to greet
+    name: String,
+}
+
+struct Greet;
+
+impl DynAomiTool for Greet {
+    type App = MyApp;
+    type Args = GreetArgs;
+    const NAME: &'static str = "greet";
+    const DESCRIPTION: &'static str = "Greet someone by name.";
+
+    fn run(_app: &MyApp, args: GreetArgs, _ctx: DynToolCallCtx) -> Result<Value, String> {
+        Ok(serde_json::json!({ "message": format!("Hello, {}!", args.name) }))
+    }
+}
+
+aomi_sdk::dyn_aomi_app!(
+    app = MyApp,
+    name = "greeter",
+    version = "0.1.0",
+    preamble = "You are a friendly greeter.",
+    tools = [Greet],
+    namespaces = ["evm-core"],
+);
+```
+
+The reference template at `sdk/examples/app-template-http` in the `aomi-labs/aomi-sdk` repo shows the recommended file split for a real App: `src/lib.rs` for the manifest and preamble, `src/client.rs` for the HTTP client and typed args, and `src/tool.rs` for the tool implementations.
+
+## Next steps
+
+<CardGroup cols={2}>
+<Card title="Building an App" icon="hammer" href="/reference/building-apps">
+The full workflow for authoring, structuring, and publishing an App.
+</Card>
+<Card title="CLI toolchain" icon="terminal" href="/reference/cli-toolchain">
+`aomi-build` to scaffold and compile plugins, and `aomi-git` to deploy them.
+</Card>
+</CardGroup>

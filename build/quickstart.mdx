@@ -1,0 +1,383 @@
+---
+title: "Quickstart"
+description: "Go from an empty folder to a deployed Aomi App on the public community platform in about ten minutes."
+---
+
+By the end of this page you will have written a small Aomi App, run it locally against a real model with no backend, deployed it to the public community platform, and requested activation so the team can load it onto the live runtime.
+
+An App is a Rust library crate that the Aomi runtime loads as a plugin. You write one or more tools, the model calls them, and the runtime runs them. This page walks the happy path start to finish. No detours.
+
+<Note>
+This is the fast track. When you want to go deeper on how an App is built, read [Building an App](/reference/building-apps). When you want the full deploy and activate story with every flag, read [Deploy and activate](/build/deploy).
+</Note>
+
+## Before you start
+
+You need three things on your machine, then one install.
+
+<Steps>
+  <Step title="Check your Rust toolchain">
+    The SDK uses the `2024` edition, which needs Rust 1.85 or newer. A recent stable toolchain works.
+
+    ```bash
+    rustc --version
+    ```
+
+    Expected output (your version will differ):
+
+    ```text
+    rustc 1.95.0 (59807616e 2026-04-14)
+    ```
+
+    If you do not have Rust yet, install it from [rustup.rs](https://rustup.rs).
+  </Step>
+
+  <Step title="Check git and the GitHub CLI">
+    `aomi-git` shells out to `git` to push your App, and it borrows your `gh` login to clone the public platform repo.
+
+    ```bash
+    git --version
+    gh auth status
+    ```
+
+    Expected output:
+
+    ```text
+    git version 2.45.2
+    github.com
+      ✓ Logged in to github.com account your-username
+    ```
+
+    If `gh auth status` says you are not logged in, run `gh auth login` and follow the prompts.
+  </Step>
+
+  <Step title="Install the Aomi toolchain">
+    One command installs the Aomi command line tools you use below: `aomi-build`, `aomi-run`, and `aomi-git`. The `dev-runtime` feature is what gives you `aomi-run`.
+
+    ```bash
+    cargo install --git https://github.com/aomi-labs/aomi-sdk --features cli,dev-runtime aomi-sdk
+    ```
+
+    The binaries land in `~/.cargo/bin`, which is already on your `PATH` after a normal `rustup` setup. These tools have no `--version` flag, so confirm the install with `--help`:
+
+    ```bash
+    aomi-git --help
+    ```
+
+    Expected output:
+
+    ```text
+    Publish Aomi app source through platform Git policy.
+
+    Usage: aomi-git <COMMAND>
+
+    Commands:
+      deploy    Prepare and push an Aomi app source publication
+      activate  Activate a published Aomi app release in the backend
+      status    Check publication status (CI build + release availability) for a deploy
+      config    Edit a live app's registry config without re-deploying
+      help      Print this message or the help of the given subcommand(s)
+
+    Options:
+      -h, --help  Print help
+    ```
+  </Step>
+</Steps>
+
+## Build and ship your App
+
+<Steps>
+  <Step title="Create the App folder">
+    Make a new crate folder and move into it. The name you pick here is your slug. Use kebab-case.
+
+    ```bash
+    mkdir hello-aomi && cd hello-aomi
+    mkdir src
+    ```
+
+    You will create three files: `aomi.toml`, `Cargo.toml`, and `src/lib.rs`.
+  </Step>
+
+  <Step title="Write aomi.toml">
+    This file tells the platform who your App is and where it ships. Create `aomi.toml` with exactly this content.
+
+    ```toml aomi.toml
+    [app]
+    name         = "hello-aomi"
+    display_name = "Hello Aomi"
+    platform     = "community"
+    git          = "https://github.com/aomi-labs/community-apps"
+    public       = true
+    ```
+
+    The `name` is your slug and becomes part of the release tag. The `platform` must be `community` for the public platform. You do not set an `access_token` here, because the community platform repo is public and the backend fetches your release anonymously.
+  </Step>
+
+  <Step title="Write Cargo.toml">
+    Your App compiles to a `cdylib`, which is a shared library the runtime can load. Pin `aomi-sdk` to the exact version the platform requires, today `=0.1.20`. The runtime refuses to load a plugin built against any other version.
+
+    ```toml Cargo.toml
+    [package]
+    name = "hello-aomi"
+    version = "0.1.0"
+    edition = "2024"
+
+    [lib]
+    crate-type = ["cdylib"]
+
+    [dependencies]
+    aomi-sdk   = "=0.1.20"
+    schemars   = "1"
+    serde      = { version = "1", features = ["derive"] }
+    serde_json = "1"
+    ```
+
+    <Note>
+    The exact version to pin lives in the platform's `platform.json` under `required_sdk_version`. Today that value is `0.1.20`. If you ever see a version mismatch error at deploy time, check that file and update this pin.
+    </Note>
+  </Step>
+
+  <Step title="Write src/lib.rs">
+    This is your whole App: one tool plus the `dyn_aomi_app!` macro that registers it. The tool below takes a name and returns a greeting. No network, no setup. Paste this into `src/lib.rs`.
+
+    ```rust src/lib.rs
+    use aomi_sdk::schemars::JsonSchema;
+    use aomi_sdk::*;
+    use serde::Deserialize;
+    use serde_json::{Value, json};
+
+    #[derive(Clone, Default)]
+    pub struct HelloApp;
+
+    #[derive(Debug, Deserialize, JsonSchema)]
+    pub struct GreetArgs {
+        /// The name of the person to greet.
+        pub name: String,
+    }
+
+    pub struct Greet;
+
+    impl DynAomiTool for Greet {
+        type App = HelloApp;
+        type Args = GreetArgs;
+        const NAME: &'static str = "greet";
+        const DESCRIPTION: &'static str =
+            "Use when the user wants a friendly greeting. Takes a name and returns a hello message.";
+
+        fn run(_app: &HelloApp, args: GreetArgs, _ctx: DynToolCallCtx) -> Result<Value, String> {
+            Ok(json!({
+                "message": format!("Hello, {}! Welcome to Aomi.", args.name),
+            }))
+        }
+    }
+
+    const PREAMBLE: &str = r#"## Role
+    You are a friendly example app. When the user asks to be greeted, call the `greet` tool with their name.
+    "#;
+
+    dyn_aomi_app!(
+        app = HelloApp,
+        name = "hello-aomi",
+        version = "0.1.0",
+        preamble = PREAMBLE,
+        tools = [Greet,],
+        namespaces = []
+    );
+    ```
+
+    That is the full App. The `DESCRIPTION` is what the model reads to decide when to call your tool, so it is written as a trigger, not a feature list. The `namespaces = []` line means this App asks for no host powers like wallet signing.
+  </Step>
+
+  <Step title="Build it locally">
+    Compile your App into a loadable plugin with cargo.
+
+    ```bash
+    cargo build --release
+    ```
+
+    Expected output:
+
+    ```text
+    Compiling aomi-sdk v0.1.20
+    Compiling hello-aomi v0.1.0 (/path/to/hello-aomi)
+    Finished `release` profile [optimized] target(s) in 12.6s
+    ```
+
+    The plugin lands at `target/release/libhello_aomi.dylib`. On Linux the file ends in `.so`, on macOS `.dylib`, on Windows `.dll`. For a faster check that only confirms your code compiles, run `cargo check`.
+  </Step>
+
+  <Step title="Chat with it locally">
+    Now run your App against a real model with no backend. Set your provider key first, then start the local runtime by pointing it at the plugin you just built.
+
+    ```bash
+    export ANTHROPIC_API_KEY=sk-ant-...
+    aomi-run target/release/libhello_aomi.dylib
+    ```
+
+    Type a message, press enter, and watch the model call your `greet` tool:
+
+    ```text
+    ▶ hello-aomi v0.1.0  (aomi-sdk 0.1.20)
+      tools      : 1 (greet)
+      namespaces : (none)
+
+    ─────────────────────────────────────────
+     aomi-run REPL · app=hello-aomi · session=ba33a7cf-8208-4927-ab2e-bea8787a959e
+     max_turns=20 · /help for commands
+    ─────────────────────────────────────────
+    bot ▸
+      🔧 greet({"name":"Ada"})
+     ✓ Hello, Ada! Welcome to Aomi.
+      [tokens: in=1372 out=88 total=1460]
+    ```
+
+    This is the fastest loop for checking that a tool behaves the way you expect. Type `/help` for REPL commands, and press `Ctrl-D` to exit.
+
+    <Note>
+    `aomi-run` loads a plugin only when the plugin was built against the same `aomi-sdk` version that `aomi-run` itself uses, shown in the banner. If you see `SDK version mismatch: plugin=X, host=Y`, your installed toolchain and your pin differ. Set your `aomi-sdk` pin to the host version `Y`, rebuild, and run again. Switch the pin back to the platform version before you deploy.
+    </Note>
+
+    <Warning>
+    The local runtime is for chatting with your own tools, not for testing wallet flows. It stubs out every host namespace and never fires wallet routes. To exercise host powers, deploy and run against the real backend.
+    </Warning>
+  </Step>
+
+  <Step title="Commit your files">
+    Deploy works from a clean git commit, so set up a repo and commit your three files. Add a `.gitignore` so build output does not dirty the tree.
+
+    ```bash
+    printf '/target\n/.aomi\nCargo.lock\n' > .gitignore
+    git init && git add . && git commit -m "init hello-aomi"
+    ```
+  </Step>
+
+  <Step title="Plan the deploy with a dry run">
+    Before you push anything, run a dry run. It plans the deploy and runs the four-stage validation pipeline without staging files, committing, or pushing.
+
+    ```bash
+    AOMI_BACKEND_URL=https://staging-api.aomi.dev aomi-git deploy --dry-run
+    ```
+
+    Expected output:
+
+    ```text
+    Publish plan (DryRun)
+      platform        : community
+      app_slug        : hello-aomi
+      display_name    : Hello Aomi
+      app_config      : aomi.toml
+      source_branch   : main
+      dirty           : false
+      publish_repo    : aomi-labs/community-apps
+      publish_branch  : publish
+      publish_path    : apps/hello-aomi
+      release_tag     : apps-hello-aomi-2ba922a02ca1
+      server_tags     : staging
+    Preflight
+      [ok]   workspace git_clean
+      [ok]   manifest  platform_declared, git_declared  |  defaulted=true server_tags=[staging]
+      [ok]   platform  backend_reachable, platform_resolved, branch_matches_contract, git_url_matches_platform  |  deployment_branch=publish github_repo=aomi-labs/community-apps name=community
+      [ok]   backend   server_tags_subset
+    ```
+
+    Every Preflight stage should read `[ok]`. Note the `release_tag`; that is how your App is published and activated. If a stage fails, fix what it names in your `aomi.toml` and run the dry run again.
+  </Step>
+
+  <Step title="Deploy">
+    Now ship it. This stages your source into a cached clone of the community platform repo, commits, and pushes to the `publish` branch, which kicks off CI.
+
+    ```bash
+    aomi-git deploy
+    ```
+
+    The output is the same plan as the dry run, now with `pushes : true`, followed by your next steps:
+
+    ```text
+    Publish plan
+      ...
+      release_tag     : apps-hello-aomi-2ba922a02ca1
+      pushes          : true
+      staged_files    : 3
+
+    Next steps:
+      1. Track the build and release:
+           aomi-git status
+         This polls CI and tells you when the release is ready to activate.
+      2. Request activation from platform ops:
+           aomi-git activate --request
+    ```
+
+    Note the `release_tag`, named `apps-<slug>-<short-commit>`. CI now builds your plugin and cuts a GitHub release under that tag.
+  </Step>
+
+  <Step title="Watch CI">
+    CI compiles your plugin and publishes the release. Check progress from your source repo.
+
+    ```bash
+    aomi-git status
+    ```
+
+    While CI runs the `ci` line reads `[running]`. When it finishes, expected output:
+
+    ```text
+    Publication status
+      repo          : aomi-labs/community-apps
+      release_tag   : apps-hello-aomi-2ba922a02ca1
+      branch        : publish
+      local state   : pushed=true deployed=true activated=false
+      ci            : [ok] green - Publish Aomi Apps
+                      https://github.com/aomi-labs/community-apps/actions/runs/26719962570
+      release       : published, ready to activate
+      backend       : not activated yet on https://staging-api.aomi.dev
+    ```
+
+    Once `release` reads "ready to activate," you can request activation. A build usually takes a few minutes.
+  </Step>
+
+  <Step title="Request activation">
+    Activation is the step that loads your release onto the live runtime. You do not hold the token for it, and you do not need one. This command posts your App and release tag into the team's activation channel and pings ops.
+
+    ```bash
+    aomi-git activate --request
+    ```
+
+    It posts this message to the ops activation channel and pings the ops role:
+
+    ```text
+    @ops **Activation requested**
+    - app: `hello-aomi`
+    - repo: `aomi-labs/community-apps`
+    - release: `apps-hello-aomi-2ba922a02ca1`
+    - target tags: `staging`
+    Please activate when you have a chance.
+    ```
+
+    That is all you do. An ops member reads the release tag, mints a token scoped to that exact release, runs the activation, and confirms your App is live. Within a few minutes your `greet` tool appears in the agent's tool list for new sessions.
+
+    <Tip>
+    Add `--dry-run` to see the exact message without posting: `aomi-git activate --request --dry-run`.
+    </Tip>
+  </Step>
+</Steps>
+
+## What you have now
+
+You went from an empty folder to a live App. Along the way you:
+
+- Installed the Aomi toolchain with one command.
+- Wrote a complete App: `aomi.toml`, `Cargo.toml`, and one tool in `src/lib.rs`.
+- Built it into a plugin with `cargo build --release`.
+- Chatted with it locally against a real model using `aomi-run`, no backend needed.
+- Deployed it to the public community platform with `aomi-git deploy`.
+- Requested activation with `aomi-git activate --request` so the team could load it live.
+
+From here, two next steps:
+
+<CardGroup cols={2}>
+  <Card title="Building an App" href="/reference/building-apps">
+    Go past the template. Learn the anatomy of an App: tools, arguments, the preamble, and host namespaces.
+  </Card>
+  <Card title="Deploy and activate" href="/build/deploy">
+    The full shipping process with every flag, the validation pipeline in detail, and how to promote from staging to prod.
+  </Card>
+</CardGroup>

@@ -1,296 +1,348 @@
 ---
-title: Building Apps
-description: How AomiApps are constructed — the AomiApp abstraction, builder pattern, tool definitions, preamble authoring, model selection, and app registration flow.
+title: Building an App
+description: How an Aomi App is built. The standard crate file split, the aomi.toml manifest, the preamble, tools, and host namespaces. Authoring only; compiling and shipping link forward.
 ---
 
-This page explains how AI assistants are constructed on the Aomi platform. It covers the AomiApp abstraction, the builder pattern, tool definitions, model selection, and app registration.
+This page is about **authoring** an Aomi App: how the crate is laid out, what goes in each file, and how you wire it together. An App is a Rust crate that compiles to a dynamic plugin the Aomi runtime hot loads. It wraps an external API as a small set of typed tools, ships a preamble that tells the model how to use them, and declares which host capabilities it needs.
 
-## AomiApp: The Core Abstraction
+When you are ready to compile and ship, follow the forward links at the bottom of this page. This page does not cover the build or deploy steps.
 
-Every AI assistant on the Aomi platform implements the **AomiApp** pattern. An AomiApp bundles:
+<Note>
+Throughout this page, **App** (capitalized) means the deployed unit: a `cdylib` crate the runtime loads. The earlier docs talked about `aomi_chat::CoreAppBuilder`. That is an internal runtime crate and is not how you author a plugin. The real authoring model is the one below: the `dyn_aomi_app!` macro plus the `DynAomiTool` trait from the public `aomi-sdk` crate.
+</Note>
 
-| Component | Purpose |
+## What you are building
+
+The Aomi SDK lets you wrap any crypto API as a dynamic plugin. The runtime loads your compiled plugin and routes chat to it. The apps in the SDK repo show the range you can cover:
+
+<CardGroup cols={2}>
+  <Card title="DeFi protocols" icon="coins">
+    Wrap a DEX, lending market, or staking protocol as tools the chat can drive. See `defi`, `defillama`, `morpho`.
+  </Card>
+  <Card title="Prediction markets" icon="chart-line">
+    Market discovery, search, and trading flows. See `polymarket`, `kalshi`.
+  </Card>
+  <Card title="Cross-chain intents" icon="shuffle">
+    Bridge and intent-order clients. See `khalani`, `across`, `lifi`.
+  </Card>
+  <Card title="Social and accounts" icon="user">
+    Feeds, posts, user data, wallet and account tooling. See `x`, `neynar`, `para`.
+  </Card>
+</CardGroup>
+
+## The standard file split
+
+Every App follows the same layout across three files. Keep this split even for small apps. It keeps the surface the model sees easy to scan and keeps API details out of your tool logic.
+
+```text
+my-app/
+├─ Cargo.toml
+├─ aomi.toml          (contributor apps only — see "The aomi.toml manifest")
+└─ src/
+   ├─ lib.rs          App registration + preamble (via dyn_aomi_app!)
+   ├─ client.rs       HTTP client + typed models + tool arg structs
+   └─ tool.rs         Tool implementations (DynAomiTool)
+```
+
+| File | What it owns |
 | --- | --- |
-| **Tools** | Functions the AI can call during conversations |
-| **Preamble** | System prompt defining personality, rules, and domain knowledge |
-| **Model** | Which LLM powers the assistant |
-| **RAG docs** | Optional document store for knowledge retrieval |
-| **MCP servers** | Optional Model Context Protocol connections for external tool servers |
+| **`src/lib.rs`** | The preamble string and the `dyn_aomi_app!` registration. This is your manifest surface: app name, version, the tool list, and the host namespaces you depend on. |
+| **`src/client.rs`** | HTTP client setup, auth headers, response models, and the typed argument structs your tools accept. Outside API details stay here. |
+| **`src/tool.rs`** | The tool implementations. Each tool implements `DynAomiTool`, carries a description the model reads, and maps client responses into stable JSON. |
 
-```mermaid
-flowchart TB
-    subgraph "AomiApp"
-        PREAMBLE[Preamble<br/>System prompt]
-        TOOLS[Tool Set<br/>API-backed functions]
-        MODEL[Model Selection<br/>Claude / GPT / OpenRouter]
-        RAG[RAG Store<br/>Domain documents]
-        MCP[MCP Servers<br/>External tool providers]
-    end
+The fastest way to start is to copy `sdk/examples/app-template-http` from the SDK repo and adapt it. It is the canonical reference for this layout.
 
-    subgraph "Builder"
-        B[CoreAppBuilder]
-    end
+## src/lib.rs: registration and preamble
 
-    B --> PREAMBLE
-    B --> TOOLS
-    B --> MODEL
-    B --> RAG
-    B --> MCP
-```
-
-## CoreAppBuilder
-
-Apps are constructed using the builder pattern:
-
-```mermaid
-flowchart LR
-    NEW[new] --> TOOL[add_tool]
-    TOOL --> TOOL
-    TOOL --> DOCS[add_docs_tool]
-    DOCS --> BUILD[build]
-    BUILD --> APP[AomiApp]
-```
-
-### Basic Example
+`lib.rs` is short on purpose. It declares the other modules, holds the preamble, and calls `dyn_aomi_app!` to register the App. Here is the full `lib.rs` from the HTTP template:
 
 ```rust
-use aomi_chat::CoreAppBuilder;
+use aomi_sdk::*;
 
-let app = CoreAppBuilder::new("You are a helpful trading assistant.")
-    .await?
-    .add_tool(GetTokenPrice)?
-    .add_tool(ExecuteTrade)?
-    .add_tool(GetPortfolio)?
-    .build(skip_mcp, system_events, sender)
-    .await?;
+mod client;
+mod tool;
+
+const PREAMBLE: &str = r#"## Role
+You are a lightweight example app for market lookup and simple HTTP API integration.
+
+## Purpose
+- Demonstrate the recommended Aomi app file structure
+- Show how to wrap a public JSON API with typed tools
+- Keep the example free of private infrastructure assumptions
+
+## Workflow
+1. Use `search_coins` to find a CoinGecko asset ID.
+2. Use `get_coin_price` to fetch the current USD price for that asset.
+"#;
+
+dyn_aomi_app!(
+    app = client::HttpJsonExampleApp,
+    name = "http-json-example",
+    version = "0.1.0",
+    preamble = PREAMBLE,
+    tools = [client::SearchCoins, client::GetCoinPrice,],
+    namespaces = []
+);
 ```
 
-### With RAG Documents
+The `dyn_aomi_app!` macro is the single registration point. It generates the plugin entry the runtime looks for, so you never write `#[no_mangle]` by hand. Its fields:
+
+| Field | Meaning |
+| --- | --- |
+| `app` | Your app type. It is a small struct (often unit-like) that holds any shared state. |
+| `name` | The app slug. Kebab-case. This is how the runtime and the URL refer to your App. |
+| `version` | The app version string. |
+| `preamble` | The system prompt that shapes behavior (see below). |
+| `tools` | The list of tool types the model can call. Keep it small: 3 to 8 tools is typical. |
+| `namespaces` | The host capability sets your App depends on. `[]` for a read only HTTP wrapper (see "Declaring host namespaces"). |
+
+## Writing the preamble
+
+The preamble is the system prompt. It is the single most important thing you author, because it decides whether the model picks the right tool at the right time. Write it as plain prose with clear headings, not as code.
+
+A strong preamble does four things:
+
+<Steps>
+  <Step title="States the role">
+    One or two sentences on what the App is and what it must never do. The DeFiLlama app opens with "You are a read only analyst... never to execute trades."
+  </Step>
+  <Step title="Maps capabilities to tools">
+    List what the App can do and name the exact tool for each job, so the model learns the mapping. "Token prices: `defillama_get_token_price` for current price."
+  </Step>
+  <Step title="Pins down identifiers and conventions">
+    Spell out the formats the API expects: coin id schemes, protocol slugs, chain names, timestamp units. This is where most tool call errors are prevented.
+  </Step>
+  <Step title="Gives workflow guidance">
+    Tell the model how to chain tools for common questions. "Comparison questions: start with `list_protocols`, then dig into the winners with `get_protocol_tvl`."
+  </Step>
+</Steps>
+
+Here is the shape, trimmed from the real `defillama` app:
 
 ```rust
-let app = CoreAppBuilder::new(&preamble)
-    .await?
-    .add_tool(GetTokenPrice)?
-    .add_tool(ExecuteTrade)?
-    .add_docs_tool(sender, None)
-    .await?
-    .build(false, Some(&system_events), Some(&sender_to_ui))
-    .await?;
-```
-
-The `add_docs_tool` method registers a document search tool that queries a vector store of ingested documents.
-
-## Tools
-
-Tools are the functions your AI assistant can call. Each tool wraps an API endpoint or computation and makes it available to the LLM during conversations.
-
-### Defining a Tool
-
-Tools are defined using the `#[tool]` macro:
-
-```rust
-use rig::tool;
-use serde::{Deserialize, Serialize};
-use schemars::JsonSchema;
-
-#[derive(Debug, Deserialize, JsonSchema, Clone)]
-pub struct GetTokenPriceArgs {
-    /// The token symbol (e.g., "ETH", "BTC")
-    pub symbol: String,
-}
-
-#[derive(Debug, Serialize, Clone)]
-pub struct TokenPrice {
-    pub symbol: String,
-    pub price: f64,
-    pub currency: String,
-}
-
-/// Get the current price of a token
-#[tool(description = "Get the current price of a cryptocurrency token")]
-pub async fn get_token_price(
-    args: GetTokenPriceArgs,
-) -> Result<TokenPrice, ToolError> {
-    let price = your_api_client.get_price(&args.symbol).await?;
-
-    Ok(TokenPrice {
-        symbol: args.symbol,
-        price,
-        currency: "USD".into(),
-    })
-}
-```
-
-The LLM uses the tool's `description` and parameter documentation to decide when and how to call it. Clear descriptions and well-documented parameters lead to better tool use.
-
-> For full trait definitions and API details, see the [SDK Reference](/reference/sdk-api).
-
-### Tool Documentation
-
-The doc comments on your args struct fields become the parameter descriptions the LLM sees:
-
-```rust
-#[derive(Debug, Deserialize, JsonSchema, Clone)]
-pub struct ExecuteTradeArgs {
-    /// The token to buy (symbol or contract address)
-    pub buy_token: String,
-
-    /// The token to sell (symbol or contract address)
-    pub sell_token: String,
-
-    /// Amount to sell in human-readable format (e.g., "1.5")
-    pub amount: String,
-
-    /// Maximum acceptable slippage as a percentage (e.g., "0.5" for 0.5%)
-    #[serde(default = "default_slippage")]
-    pub max_slippage: String,
-}
-```
-
-## Preamble
-
-The preamble is the system prompt that defines the assistant's personality, capabilities, and rules. It is the single most important configuration for shaping behavior.
-
-### Example Preamble
-
-```
-You are the MyCoinDex trading assistant.
+const PREAMBLE: &str = r#"## Role
+You are **DeFi Data Assistant**, a read-only analyst backed by DeFiLlama's free public API.
+Your job is to answer questions about token prices, protocol size, chain activity, and yield
+opportunities — never to execute trades.
 
 ## Capabilities
-- Check real-time token prices
-- View user portfolio and P&L
-- Execute trades (with user confirmation)
-- List available trading pairs
+- **Token prices** -- `defillama_get_token_price` for current price.
+- **Protocols** -- `defillama_list_protocols` ranks protocols by current TVL.
+- **Chains** -- `defillama_get_chain_tvl` returns the chain leaderboard by TVL.
 
-## Rules
-- Always confirm with the user before executing a trade
-- Show prices in USD unless the user requests otherwise
-- If you don't have data for a token, say so clearly
-- Never fabricate prices or portfolio data
+## Conventions
+- **No auth.** DefiLlama is a free public API; no key is needed.
+- **Coin identifiers** use `coingecko:<id>` (e.g. `coingecko:bitcoin`) or `<chain>:<address>`.
+- **Protocol slugs** match DefiLlama URLs (e.g. `aave-v3`, `uniswap`, `lido`).
 
-## Tone
-- Professional but approachable
-- Concise responses unless the user asks for detail
-- Use bullet points for lists of data
+## Formatting
+- Format USD amounts: TVL > $1B as `$X.XXB`, > $1M as `$XXX.XM`, otherwise `$X,XXX`.
+"#;
 ```
 
-### Dynamic Preambles
+## Defining tools
 
-Preambles can include runtime context:
+Tools live in `src/tool.rs`. Each tool is a type that implements `DynAomiTool`. The trait ties together your app type, the typed argument struct, the name and description the model reads, and a `run` function that does the work and returns JSON.
 
 ```rust
-fn build_preamble(user_preferences: &UserPrefs) -> String {
-    format!(
-        "You are the MyCoinDex trading assistant.\n\
-         \n\
-         User preferences:\n\
-         - Default currency: {}\n\
-         - Risk tolerance: {}\n\
-         - Preferred chains: {}",
-        user_preferences.currency,
-        user_preferences.risk_level,
-        user_preferences.chains.join(", ")
-    )
+use crate::client::*;
+use aomi_sdk::*;
+use serde_json::{Value, json};
+
+pub(crate) struct SearchCoins;
+
+impl DynAomiTool for SearchCoins {
+    type App = HttpJsonExampleApp;
+    type Args = SearchCoinsArgs;
+    const NAME: &'static str = "search_coins";
+    const DESCRIPTION: &'static str =
+        "Search CoinGecko for matching assets and return coin ids developers can use in follow-up price calls.";
+
+    fn run(
+        _app: &HttpJsonExampleApp,
+        args: Self::Args,
+        _ctx: DynToolCallCtx,
+    ) -> Result<Value, String> {
+        let client = CoinGeckoClient::new()?;
+        let value = client.get_json("/search", &[("query", args.query.as_str())])?;
+        // ...normalize into stable JSON...
+        Ok(json!({ "query": args.query, "matches": value }))
+    }
 }
 ```
 
-## Model Selection
+The pieces that matter:
 
-Aomi supports multiple LLM providers. The model is configured via the `Selection` type:
+- **`NAME`** is the function name the model calls. Prefer names shaped by intent like `search_*`, `get_*`, `build_*`, and `submit_*` over raw endpoint wraps.
+- **`DESCRIPTION`** is read by the model when it decides whether to call the tool. Write it for the model, not for a human reader.
+- **`run`** returns `Result<Value, String>`. On error, return a short actionable string. Normalize upstream API errors so the model gets a clean message, not a raw stack.
 
-| Provider | Models | Notes |
+### Typed, documented arguments
+
+The argument struct lives in `src/client.rs`. Derive `Deserialize` and `JsonSchema`, and put a doc comment on every field. Those doc comments become the parameter descriptions the model sees, so they directly shape how it fills the call.
+
+```rust
+use aomi_sdk::schemars::JsonSchema;
+use serde::Deserialize;
+
+#[derive(Debug, Deserialize, JsonSchema)]
+pub(crate) struct SearchCoinsArgs {
+    /// Free-form search query such as `bitcoin`, `eth`, or `dogecoin`
+    pub(crate) query: String,
+}
+
+#[derive(Debug, Deserialize, JsonSchema)]
+pub(crate) struct GetCoinPriceArgs {
+    /// CoinGecko coin id such as `bitcoin` or `ethereum`
+    pub(crate) coin_id: String,
+}
+```
+
+<Note>
+Doc comments on argument fields are read by the model. A vague field comment is a vague tool. Give a concrete example value in each one, the way the template does.
+</Note>
+
+### The client and models
+
+`src/client.rs` owns the HTTP plumbing so your tools stay readable. Build the client once, set a timeout, normalize errors into strings, and keep the response shapes here.
+
+```rust
+pub(crate) struct CoinGeckoClient {
+    pub(crate) http: reqwest::blocking::Client,
+}
+
+impl CoinGeckoClient {
+    pub(crate) fn get_json(&self, path: &str, query: &[(&str, &str)]) -> Result<Value, String> {
+        let url = format!("{API_BASE}{path}");
+        let response = self.http.get(&url).query(query).send()
+            .map_err(|e| format!("CoinGecko request failed: {e}"))?;
+        let status = response.status();
+        let body = response.text().unwrap_or_default();
+        if !status.is_success() {
+            return Err(format!("CoinGecko error {status}: {body}"));
+        }
+        serde_json::from_str(&body).map_err(|e| format!("CoinGecko decode failed: {e}"))
+    }
+}
+```
+
+<Note>
+For full trait signatures (`DynAomiTool`, `DynToolCallCtx`, the `dyn_aomi_app!` macro, and the `aomi_sdk::testing` helpers like `TestCtxBuilder` and `run_tool`), see the [SDK Reference](/reference/sdk-api).
+</Note>
+
+## Declaring host namespaces
+
+The `namespaces` field in `dyn_aomi_app!` declares which host capabilities your App needs. A read only HTTP wrapper needs none, so it uses `namespaces = []`, like the template above. An App that reads chain state or stages transactions declares a namespace, the way the `defillama` app does:
+
+```rust
+dyn_aomi_app!(
+    app = tool::DefiLlamaApp,
+    name = "defillama",
+    version = "0.1.0",
+    preamble = PREAMBLE,
+    tools = [tool::GetTokenPrice, tool::ListProtocols, tool::GetChainTvl],
+    namespaces = ["evm-core"]
+);
+```
+
+Host capabilities are a public contract, not private infrastructure. Apps that execute transactions may assume the host runtime exposes tools such as:
+
+| Host tool | What it does |
+| --- | --- |
+| `view_state` | Encode calldata from ABI arguments and run a read only `eth_call`. |
+| `run_tx` | Encode calldata and simulate a call that changes state without staging it. |
+| `stage_tx` | Stage an EVM transaction for later simulation and signing. |
+| `simulate_batch` | Simulate one or more staged transactions before prompting a wallet. |
+| `commit_tx` | Ask the user wallet to sign and broadcast one staged transaction. |
+| `commit_eip712` | Ask the user wallet to sign EIP-712 typed data. |
+
+The transaction model is always **stage first, then simulate, then commit**. Describe the host capabilities you rely on in your tool descriptions and preamble. Do not refer to private namespaces, and do not assume a hidden fallback network. If a host does not implement a capability, it surfaces that absence rather than silently redirecting.
+
+<Note>
+Apps that execute across several steps (like `polymarket` or `khalani`) return a `ToolReturn` with route hints instead of a bare JSON value, so the host can chain a wallet signature back into the next tool call. The full route hint contract lives in the SDK repo's `docs/host-interop.md` and the [SDK Reference](/reference/sdk-api).
+</Note>
+
+## The aomi.toml manifest
+
+If you are building a **community or partner App** in your own source repo, you also author an `aomi.toml`. This manifest tells the deploy tooling where your App ships and how the backend should load it. (Official Apps that live in the SDK repo do not use `aomi.toml`; they ship through the repo's release pipeline instead.)
+
+```toml
+[app]
+name         = "my-cool-app"            # slug — kebab-case, becomes the release tag
+display_name = "My Cool App"            # human-readable name
+platform     = "community"              # the platform you publish to
+git          = "https://github.com/aomi-labs/community-apps"
+public       = true                     # visible to all backend users
+
+# Optional. Which backend tier may load this release.
+# Omit to default to ["staging"]. Set to ["prod"] once tested,
+# or ["staging", "prod"] for both.
+# server_tags = ["staging"]
+```
+
+Field reference:
+
+| Field | Required | Meaning |
 | --- | --- | --- |
-| **Anthropic** | Claude Sonnet, Claude Haiku | Strong tool use, reliable structured output |
-| **OpenAI** | GPT-4o, GPT-4o Mini | Broad general knowledge |
-| **OpenRouter** | 100+ models | Access to Llama, Mistral, and others |
+| `name` | yes | The App slug. Kebab-case. Becomes the release tag. |
+| `display_name` | yes | A name shown to people, easy to read. |
+| `platform` | yes | The publishing platform, for example `community`. |
+| `git` | yes | The platform repo your App ships into. |
+| `public` | yes | Whether the App is visible to all backend users. |
+| `server_tags` | no | The backend tiers this build may load on. Defaults to `["staging"]`. |
+| `access_token` | no | Only for private platform repos. A `$ENV_VAR` reference, never a literal. |
 
-Models can be switched at runtime via the `/api/control/model` endpoint without redeploying the app.
+<Warning>
+`access_token` must point at an environment variable, not a literal token. Write `access_token = "$MY_GH_TOKEN"`. A literal like `"ghp_xxxx"` is rejected at parse time so a committed config can never leak a secret. The public `community-apps` repo does not need this field at all; omit it.
+</Warning>
 
-## RAG: Document Store
+### Pin the SDK version
 
-For assistants that need domain knowledge beyond what tools provide, Aomi supports RAG (Retrieval-Augmented Generation):
+Your `Cargo.toml` must pin `aomi-sdk` to the exact version the platform expects, and your crate must build as a `cdylib`:
 
-1. **Ingest** — documents (markdown, PDF, HTML) are chunked and embedded into a vector store.
-2. **Search** — when the assistant needs context, it queries the vector store for relevant chunks.
-3. **Augment** — retrieved chunks are injected into the LLM context alongside the user's message.
+```toml
+[package]
+name = "my-cool-app"
+version = "0.1.0"
+edition = "2024"
 
-RAG is added via the builder:
+[lib]
+crate-type = ["cdylib"]
 
-```rust
-builder.add_docs_tool(sender, None).await?;
+[dependencies]
+aomi-sdk   = "=0.1.20"          # match platform.json's required_sdk_version
+serde      = { version = "1", features = ["derive"] }
+serde_json = "1"
 ```
 
-## MCP: Model Context Protocol
+<Note>
+`=0.1.20` is the pin the `community-apps` platform expects today. Always confirm against `platform.json`'s `required_sdk_version` in the platform repo before you deploy; a mismatch fails CI with an `sdk_version mismatch` error.
+</Note>
 
-Aomi supports [Model Context Protocol](https://modelcontextprotocol.io/) for connecting to external tool servers. This allows the assistant to use tools hosted outside the Aomi platform.
+## Authoring guidelines
 
-MCP servers are connected during the build phase:
+- Prefer one App crate per external product or ecosystem.
+- Keep the toolset small. 3 to 8 tools per App is typical for a clean workflow.
+- Keep tool arguments typed and documented with `JsonSchema`. The doc comments are read by the model.
+- Normalize upstream API errors into short actionable strings.
+- Keep assumptions about one host out of your prompts.
+- If your App needs signing or execution, depend only on the public host capabilities above.
 
-```rust
-let app = CoreAppBuilder::new(&preamble)
-    .await?
-    .add_tool(LocalTool)?
-    .build(false, system_events, sender) // false = don't skip MCP
-    .await?;
-```
+## Next steps
 
-When `skip_mcp` is `false`, the builder connects to configured MCP servers and registers their tools alongside local tools.
+You have authored the crate. Now compile it, test it, and ship it.
 
-## App Registration
-
-Once an app is built, it is registered in the backend's app map:
-
-```rust
-fn build_backends() -> HashMap<String, Arc<dyn AomiBackend>> {
-    let mut backends = HashMap::new();
-
-    // Register MyCoinDex
-    let mycoindex_app = MyCoinDexApp::new().await?;
-    backends.insert("mycoindex".to_string(), Arc::new(mycoindex_app));
-
-    // Register another app
-    let defiwatch_app = DeFiWatchApp::new().await?;
-    backends.insert("defiwatch".to_string(), Arc::new(defiwatch_app));
-
-    backends
-}
-```
-
-When a request arrives with `?app=mycoindex`, the backend looks up the app in this map and routes the request to the corresponding app.
-
-Each registered app implements the `AomiBackend` trait, which provides a uniform interface for the backend to route messages to any app. For the full trait definition, see the [SDK Reference](/reference/sdk-api).
-
-## Putting It All Together
-
-Here is the complete flow for a MyCoinDex app:
-
-```mermaid
-flowchart TB
-    subgraph "Build Phase"
-        P[Define Preamble] --> B[CoreAppBuilder::new]
-        B --> T1[add_tool: GetTokenPrice]
-        T1 --> T2[add_tool: ExecuteTrade]
-        T2 --> T3[add_tool: GetPortfolio]
-        T3 --> D[add_docs_tool]
-        D --> BUILD[build]
-    end
-
-    subgraph "Register Phase"
-        BUILD --> APP[MyCoinDexApp]
-        APP --> REG[backends.insert 'mycoindex']
-    end
-
-    subgraph "Runtime"
-        REQ[POST /api/chat?app=mycoindex] --> LOOKUP[Lookup app]
-        LOOKUP --> APP2[MyCoinDexApp.process_message]
-        APP2 --> RESPONSE[SSE Stream]
-    end
-
-    REG --> LOOKUP
-```
-
-## Next Steps
-
-- [How It Works](/concepts/how-it-works) — see the full request flow with sequence diagrams.
-- [API Reference](/reference/api-reference) — the HTTP endpoints your frontend uses.
-- [SDK Reference](/reference/sdk-api) — detailed Rust SDK reference for `CoreAppBuilder` and related types.
+<CardGroup cols={2}>
+  <Card title="Compile and run" icon="hammer" href="/reference/cli-toolchain">
+    Use the `aomi-build` CLI to compile your plugin and `aomi-run` to exercise it locally before you ship.
+  </Card>
+  <Card title="Deploy and activate" icon="rocket" href="/reference/cli-toolchain">
+    Use `aomi-git deploy` to stage your source into the platform repo, then request activation so the backend loads it.
+  </Card>
+  <Card title="SDK Reference" icon="book" href="/reference/sdk-api">
+    Full trait definitions: `DynAomiTool`, the `dyn_aomi_app!` macro, the host-interop contract, and the testing helpers.
+  </Card>
+  <Card title="How it works" icon="diagram-project" href="/concepts/how-it-works">
+    See the full request flow once your App is loaded on the runtime.
+  </Card>
+</CardGroup>
