@@ -19,6 +19,20 @@
       ]
       },
       {
+        "group": "Build on Aomi",
+        "icon": "hammer",
+        "pages": [
+          "build/index",
+          "build/quickstart",
+          "reference/building-apps",
+          "reference/sdk-api",
+          "reference/cli-toolchain",
+          "build/deploy",
+          "reference/cli",
+          "guides/cli-usage"
+        ]
+      },
+      {
         "group": "Integrations",
         "pages": [
           "guides/integration",
@@ -46,8 +60,7 @@
               "guides/custom-tools",
               "guides/evals-testing"
             ]
-          },
-          "guides/cli-usage"
+          }
         ]
       },
       {
@@ -98,14 +111,11 @@
         "group": "Reference",
         "pages": [
           "reference/index",
-          "reference/sdk-api",
-          "reference/cli",
           "reference/simulation",
           "reference/account-abstraction",
           "reference/runtime",
           "reference/api-reference",
           "reference/sessions",
-          "reference/building-apps",
           "reference/apps-auth"
         ]
       },

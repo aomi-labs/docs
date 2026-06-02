@@ -1,0 +1,230 @@
+---
+title: "Quickstart"
+description: "Go from an empty folder to a deployed Aomi App on the community platform in about ten minutes."
+---
+
+By the end you will have written a small Aomi App, deployed it to the public community platform, and handed it to ops to load onto the live runtime.
+
+An App is a Rust crate the runtime loads as a plugin. You write the tools, the platform runs them. This is the happy path, start to finish.
+
+## Before you start
+
+<Steps>
+  <Step title="Check Rust">
+    The SDK uses the `2024` edition, which needs Rust 1.85 or newer. A recent stable toolchain works.
+
+    ```bash
+    rustc --version
+    ```
+
+    No Rust yet? Install it from [rustup.rs](https://rustup.rs).
+  </Step>
+
+  <Step title="Check git and the GitHub CLI">
+    `aomi-git` uses `git` to push your App and your `gh` login to reach the platform repo.
+
+    ```bash
+    git --version
+    gh auth status
+    ```
+
+    If `gh` says you are not logged in, run `gh auth login`.
+  </Step>
+
+  <Step title="Install the toolchain">
+    This installs `aomi-git`, the tool that ships your App.
+
+    ```bash
+    cargo install --git https://github.com/aomi-labs/aomi-sdk --features cli aomi-sdk
+    ```
+
+    There is no `--version` flag, so confirm the install with `--help`:
+
+    ```bash
+    aomi-git --help
+    ```
+  </Step>
+</Steps>
+
+## Write your App
+
+Your App is three small files. Make a folder and add them.
+
+<Steps>
+  <Step title="Create the folder">
+    ```bash
+    mkdir hello-aomi && cd hello-aomi && mkdir src
+    ```
+
+    The folder name is your slug. Use kebab-case.
+  </Step>
+
+  <Step title="aomi.toml">
+    This tells the platform who your App is and where it ships.
+
+    ```toml aomi.toml
+    [app]
+    name         = "hello-aomi"
+    display_name = "Hello Aomi"
+    platform     = "community"
+    git          = "https://github.com/aomi-labs/community-apps"
+    public       = true
+    ```
+  </Step>
+
+  <Step title="Cargo.toml">
+    Your App compiles to a `cdylib`. Pin `aomi-sdk` to the exact version the platform requires, today `=0.1.20`.
+
+    ```toml Cargo.toml
+    [package]
+    name = "hello-aomi"
+    version = "0.1.0"
+    edition = "2024"
+
+    [lib]
+    crate-type = ["cdylib"]
+
+    [dependencies]
+    aomi-sdk   = "=0.1.20"
+    schemars   = "1"
+    serde      = { version = "1", features = ["derive"] }
+    serde_json = "1"
+    ```
+
+    <Note>
+    The exact version lives in `platform.json` in the community-apps repo, under `required_sdk_version`. The runtime loads a plugin only if it was built against that version.
+    </Note>
+  </Step>
+
+  <Step title="src/lib.rs">
+    One tool plus the `dyn_aomi_app!` macro that registers it. This tool takes a name and returns a greeting.
+
+    ```rust src/lib.rs
+    use aomi_sdk::schemars::JsonSchema;
+    use aomi_sdk::*;
+    use serde::Deserialize;
+    use serde_json::{Value, json};
+
+    #[derive(Clone, Default)]
+    pub struct HelloApp;
+
+    #[derive(Debug, Deserialize, JsonSchema)]
+    pub struct GreetArgs {
+        /// The name of the person to greet.
+        pub name: String,
+    }
+
+    pub struct Greet;
+
+    impl DynAomiTool for Greet {
+        type App = HelloApp;
+        type Args = GreetArgs;
+        const NAME: &'static str = "greet";
+        const DESCRIPTION: &'static str =
+            "Use when the user wants a friendly greeting. Takes a name and returns a hello message.";
+
+        fn run(_app: &HelloApp, args: GreetArgs, _ctx: DynToolCallCtx) -> Result<Value, String> {
+            Ok(json!({ "message": format!("Hello, {}! Welcome to Aomi.", args.name) }))
+        }
+    }
+
+    const PREAMBLE: &str =
+        "When the user asks to be greeted, call the greet tool with their name.";
+
+    dyn_aomi_app!(
+        app = HelloApp,
+        name = "hello-aomi",
+        version = "0.1.0",
+        preamble = PREAMBLE,
+        tools = [Greet,],
+        namespaces = []
+    );
+    ```
+
+    The `DESCRIPTION` is what the model reads to decide when to call your tool, so write it as a trigger. `namespaces = []` means your App asks for no host powers like wallet signing.
+  </Step>
+</Steps>
+
+## Build and ship
+
+<Steps>
+  <Step title="Build it">
+    ```bash
+    cargo build --release
+    ```
+
+    Expected output:
+
+    ```text
+    Compiling aomi-sdk v0.1.20
+    Compiling hello-aomi v0.1.0
+    Finished `release` profile [optimized] target(s) in 12.6s
+    ```
+  </Step>
+
+  <Step title="Commit your files">
+    Deploy works from a clean commit. Add a `.gitignore` so build output does not dirty the tree.
+
+    ```bash
+    printf '/target\n/.aomi\nCargo.lock\n' > .gitignore
+    git init && git add . && git commit -m "init hello-aomi"
+    ```
+  </Step>
+
+  <Step title="Check the plan">
+    A dry run shows the plan and runs the checks. It pushes nothing.
+
+    ```bash
+    AOMI_BACKEND_URL=https://staging-api.aomi.dev aomi-git deploy --dry-run
+    ```
+
+    Every Preflight line should read `[ok]`:
+
+    ```text
+    Preflight
+      [ok]   workspace git_clean
+      [ok]   manifest  platform_declared, git_declared
+      [ok]   platform  backend_reachable, platform_resolved, branch_matches_contract
+      [ok]   backend   server_tags_subset
+    ```
+
+    If a line fails, fix what it names in your `aomi.toml` and run the dry run again.
+  </Step>
+
+  <Step title="Deploy">
+    ```bash
+    aomi-git deploy
+    ```
+
+    This pushes your source to the community platform and starts CI. CI builds your plugin and cuts a release tagged `apps-hello-aomi-<short-commit>`.
+  </Step>
+
+  <Step title="Watch CI">
+    ```bash
+    aomi-git status
+    ```
+
+    When the `ci` line reads `[ok] green` and `release` says it is ready to activate, you are set. A build takes a few minutes.
+  </Step>
+
+  <Step title="Request activation">
+    ```bash
+    aomi-git activate --request
+    ```
+
+    This posts your App and release tag to the ops channel and pings ops. You do not hold the activation token, and you do not need one. Ops load your App, and within a few minutes your `greet` tool appears in the agent for new chats.
+  </Step>
+</Steps>
+
+## What you have now
+
+A live App. You wrote three files, deployed with `aomi-git deploy`, and requested activation. To go further:
+
+<CardGroup cols={2}>
+  <Card title="Building an App" href="/reference/building-apps">
+    The anatomy: tools, arguments, the preamble, and host namespaces.
+  </Card>
+  <Card title="Deploy and activate" href="/build/deploy">
+    The full shipping process, the validation pipeline, and troubleshooting.
+  </Card>
+</CardGroup>
