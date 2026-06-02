@@ -119,12 +119,14 @@ When the dry run is clean, deploy for real.
 aomi-git deploy
 ```
 
-Expected output:
+The output ends with your next steps:
 
 ```text
 Next steps:
-  Watch CI: https://github.com/aomi-labs/community-apps/actions
-  Once green, request activation:  aomi-git activate --request
+  1. Track the build and release:
+       aomi-git status
+  2. Request activation from platform ops:
+       aomi-git activate --request
 ```
 
 What this does, in order:
@@ -170,8 +172,9 @@ Every deploy, including a dry run, runs a validation pipeline and records the re
 
 Stages 1 and 2 are **offline**. They are computed from your local git and your `aomi.toml`, so they run even with no network. Stages 3 and 4 are **online**. They run only when a backend URL is available, which is why you point the dry run at staging.
 
-Here is what each stage checks in plain English, and what a failure means.
+In short: stages 1 and 2 check that your files are ready, and stages 3 and 4 check that the platform will accept them. If every line reads `[ok]`, you are good to deploy. The accordion below has the detail when you need it.
 
+<Accordion title="What each stage checks">
 **Stage 1, workspace.** Asks: is the local tree shippable? It runs one check, `git_clean`, which fails if you have uncommitted changes. A failure means commit or stash first. CI builds from a clean source commit, so a dirty tree is a hard stop unless you pass `--allow-dirty`.
 
 **Stage 2, manifest.** Asks: does `aomi.toml` declare what we need? It runs `platform_declared`, a check at error severity that fails if `[app].platform` is missing, since nothing resolves without it. It also runs `git_declared`, a check at warn severity for `[app].git`; a missing git URL only skips the later `git_url_matches_platform` check, so it does not block you. This stage also resolves your `server_tags` and records whether you set them or the default `["staging"]` filled in.
@@ -181,6 +184,7 @@ Here is what each stage checks in plain English, and what a failure means.
 **Stage 4, backend.** Asks: will the backend actually accept this release? It runs `server_tags_subset`, which fails if your `server_tags` are not a subset of the backend's `AOMI_SERVER_TAGS`. A failure here becomes a 409 error at activate time, so it is worth catching now. Match your declared tags to the backend you plan to activate against.
 
 Each check carries a severity. An **error** check is a gate: if it fails, the stage fails and the deploy is blocked. A **warn** check is advisory: if it fails, the stage is downgraded to `warning` but you are not blocked. A stage that never runs because an upstream gate failed, or because it had no backend URL, is recorded as `skipped`.
+</Accordion>
 
 ## `aomi-git status`
 
@@ -219,7 +223,7 @@ You do not need the activation token. Once CI is green and the release tag exist
 aomi-git activate --request
 ```
 
-This reads your `.aomi/deployment.json` and posts an **Activation requested** message into the `✅-activation-requests` Discord channel, pinging the **@ops** role. The message carries your App name, the repo, the **release tag**, and your target tags. Every request lands in one place instead of scattered DMs.
+This reads your `.aomi/deployment.json` and posts an **Activation requested** message into the ops activation channel on Discord, pinging the **@ops** role. The message carries your App name, the repo, the **release tag**, and your target tags. Every request lands in one place instead of scattered DMs.
 
 Preview it first without posting:
 
@@ -244,8 +248,7 @@ An @ops member reads the release tag, mints an activation token **scoped to that
 
 The request flow is identical whether you ship to a public platform like `community` or a private partner platform like `krexa`. You deploy, you run `aomi-git activate --request`, ops mint a scoped token and activate. The only difference is the platform repo behind the scenes and, for private repos, the `access_token` field described above.
 
-### If you are the operator
-
+<Accordion title="If you hold an activation token (operators)">
 If you hold a token already, you activate directly from the source repo. `aomi-git activate` reads `.aomi/deployment.json` and pulls the release tag, platform, source repo, display name, visibility, and target tags from it, so you pass almost nothing.
 
 ```bash
@@ -264,6 +267,7 @@ aomi-git activate apps-<slug>-<short-commit> \
   --target-tag staging \
   --visibility public
 ```
+</Accordion>
 
 ## Iterating
 
