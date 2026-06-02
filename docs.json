@@ -19,7 +19,7 @@
       ]
       },
       {
-        "group": "Build with Aomi",
+        "group": "Build on Aomi",
         "icon": "hammer",
         "pages": [
           "build/index",
