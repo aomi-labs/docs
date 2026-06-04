@@ -12,7 +12,7 @@
     "pages": [
       "index",
       {
-        "group": "Getting Started",
+        "group": "Introduction",
         "pages": [
         "getting-started/quickstart",
         "getting-started/playground"
@@ -30,6 +30,22 @@
           "build/deploy",
           "reference/cli",
           "guides/cli-usage"
+        ]
+      },
+      {
+        "group": "Trade on Aomi",
+        "icon": "arrow-right-arrow-left",
+        "pages": [
+          "trade/index",
+          "trade/execution",
+          "trade/portal"
+        ]
+      },
+      {
+        "group": "Aomi Skills",
+        "icon": "robot",
+        "pages": [
+          "skills/index"
         ]
       },
       {
@@ -71,15 +87,6 @@
           "getting-started/discord",
           "getting-started/ios",
           "guides/troubleshooting"
-        ]
-      },
-      {
-        "group": "Transactions",
-        "icon": "arrow-right-arrow-left",
-        "pages": [
-          "guides/portal",
-          "guides/payment",
-          "guides/execution"
         ]
       },
       {
@@ -128,6 +135,16 @@
       }
     ]
   },
+  "redirects": [
+    {
+      "source": "/guides/execution",
+      "destination": "/trade/execution"
+    },
+    {
+      "source": "/guides/portal",
+      "destination": "/trade/portal"
+    }
+  ],
   "logo": {
     "light": "/logo/light.svg",
     "dark": "/logo/dark.svg"
