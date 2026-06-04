@@ -5,10 +5,7 @@ mode: custom
 ---
 
 <div style={{
-  display: "flex",
-  flexDirection: "column",
-  height: "100vh",
-  overflow: "hidden",
+  minHeight: "100vh",
   background: "var(--background)",
   fontFamily: "inherit"
 }}>
@@ -20,11 +17,11 @@ mode: custom
     gap: "10px",
     padding: "0 20px",
     height: "44px",
-    minHeight: "44px",
     borderBottom: "1px solid var(--border)",
     background: "var(--background)",
-    flexShrink: 0,
-    overflow: "hidden"
+    position: "sticky",
+    top: 0,
+    zIndex: 10
   }}>
     <a
       href="/getting-started/quickstart"
@@ -57,21 +54,18 @@ mode: custom
       marginLeft: "auto",
       whiteSpace: "nowrap",
       overflow: "hidden",
-      textOverflow: "ellipsis",
-      flexShrink: 1
+      textOverflow: "ellipsis"
     }}>
       Adjust layout, theme, and options — then copy the JSX into your app
     </span>
   </div>
 
-  {/* Scrollable iframe container — scrolls if viewport is too small */}
+  {/* Centered content container — mirrors aomi.dev/playground/configurator layout */}
   <div style={{
-    flex: 1,
-    minHeight: 0,
-    overflow: "auto",
-    padding: "12px",
-    boxSizing: "border-box",
-    background: "var(--background)"
+    maxWidth: "980px",
+    margin: "24px auto",
+    padding: "0 16px",
+    boxSizing: "border-box"
   }}>
     <iframe
       src="https://aomi.dev/embed-playground?embed=true"
@@ -80,10 +74,9 @@ mode: custom
       style={{
         display: "block",
         width: "100%",
-        minWidth: "960px",
-        height: "900px",
+        height: "820px",
         border: "1px solid var(--border)",
-        borderRadius: "8px",
+        borderRadius: "12px",
         background: "var(--background)"
       }}
     />
