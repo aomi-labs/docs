@@ -15,9 +15,11 @@ import { useAomiRuntime } from "@aomi-labs/react";
 function MyComponent() {
   const aomi = useAomiRuntime();
 
-  // User API
-  aomi.user;                  // { address?, chainId?, isConnected, ensName? }
-  aomi.setUser({ ... });
+  // User API — `user` is a nested UserState; read it with accessors
+  aomi.user;                  // UserState (nested: connection, evm, svm)
+  UserState.address(aomi.user);     // "0x..." | undefined
+  UserState.isConnected(aomi.user); // boolean | undefined
+  aomi.setUser({ evm: { address: "0x..." } });
   aomi.getUserState();
   aomi.onUserStateChange((user) => { ... });
 
@@ -92,27 +94,31 @@ type AomiRuntimeApi = {
   rejectWalletRequest: (id: string, error?: string) => void;
 
   subscribe: (type: string, cb: EventSubscriber) => () => void;
-  sendSystemCommand: (event: Omit<OutboundEvent, "timestamp">) => Promise<void>;
+  sendSystemCommand: (event: {
+    type: string;
+    sessionId: string;
+    payload: unknown;
+  }) => Promise<void>;
   sseStatus: SSEStatus;
 };
 ```
 
 ## useUser
 
-Wallet and user state management.
+Wallet and user state management. `UserState` is a nested object: EVM identity lives under `evm`, Solana under `svm`, and session-level connection facts under `connection`. Read fields with the `UserState` accessor functions rather than reaching into the object directly. `useUser` returns `{ user, setUser, addExtValue, removeExtValue, getUserState, onUserStateChange }`.
 
 ```tsx
-import { useUser } from "@aomi-labs/react";
+import { useUser, UserState } from "@aomi-labs/react";
 
 function WalletStatus() {
   const { user, setUser, getUserState, onUserStateChange } = useUser();
 
-  user.address;      // "0xABC..." | undefined
-  user.chainId;      // 1 | undefined
-  user.isConnected;  // boolean
-  user.ensName;      // "vitalik.eth" | undefined
+  UserState.address(user);      // "0xABC..." | undefined
+  UserState.chainId(user);      // 1 | undefined
+  UserState.isConnected(user);  // boolean | undefined
+  UserState.ensName(user);      // "vitalik.eth" | undefined
 
-  setUser({ address: "0x...", chainId: 1, isConnected: true });
+  setUser({ connection: { is_connected: true }, evm: { address: "0x...", chain_id: 1 } });
   const current = getUserState();
   const unsubscribe = onUserStateChange((newUser) => {
     console.log("User changed:", newUser);
@@ -122,14 +128,29 @@ function WalletStatus() {
 
 ### UserState
 
+`UserState` is canonicalized to the backend's nested snake_case shape. The fields you read most often:
+
 ```typescript
 type UserState = {
-  address?: string;
-  chainId?: number;
-  isConnected: boolean;
-  ensName?: string;
+  connection?: {
+    is_connected?: boolean | null;
+    // ...auth and provider facts
+  } | null;
+  evm?: {
+    address?: string | null;
+    chain_id?: number | string | null;
+    ens_name?: string | null;
+    // ...aa, sponsorship
+  } | null;
+  svm?: {
+    address?: string | null;
+    // ...cluster, capabilities
+  } | null;
+  ext?: Record<string, unknown> | null;
 };
 ```
+
+Accessor functions normalize the nested shape for you: `UserState.address`, `UserState.chainId`, `UserState.ensName`, `UserState.isConnected`, `UserState.svmAddress`, and `UserState.preferredPublicKey`.
 
 ## useThreadContext
 
@@ -207,10 +228,13 @@ function ControlPanel() {
 ```typescript
 type ControlState = {
   apiKey: string | null;
+  clientId: string | null;
   availableModels: string[];
   authorizedApps: string[];
+  appDescriptors: AomiAppDescriptor[];
   defaultModel: string | null;
   defaultApp: string | null;
+  byokKeys: Record<string, StoredByokKey>;
 };
 ```
 
@@ -257,8 +281,7 @@ SSE subscription and outbound event dispatch.
 import { useEventContext } from "@aomi-labs/react";
 
 function EventListener() {
-  const { subscribe, sendOutboundSystem, dispatchInboundSystem, sseStatus } =
-    useEventContext();
+  const { subscribe, sendOutboundSystem, sseStatus } = useEventContext();
 
   useEffect(() => {
     const unsubscribe = subscribe("wallet_tx_request", (event) => {
@@ -279,25 +302,31 @@ function EventListener() {
 
 Handles wallet transaction requests and EIP-712 signing requests from the AI backend.
 
+`useWalletHandler` takes a `{ getSession }` config that returns the `ClientSession` for the current thread, and returns `{ pendingRequests, setRequests, startRequest, resolveRequest, rejectRequest }`. Each request's `kind` is `"transaction"`, `"eip712_sign"`, or `"solana_sign"`. When you resolve a request, the `result.kind` must match the request's `kind`.
+
 ```tsx
 import { useWalletHandler } from "@aomi-labs/react";
 
 function WalletHandler() {
-  const { pendingRequests, startProcessing, resolveRequest, rejectRequest } =
+  const { pendingRequests, startRequest, resolveRequest, rejectRequest } =
     useWalletHandler({
-      sessionId: currentThreadId,
-      onRequestComplete: () => {},
+      getSession: () => getCurrentSession(),
     });
 
   for (const req of pendingRequests) {
     if (req.kind === "transaction") {
-      startProcessing(req.id);
-      resolveRequest(req.id, { txHash: "0x..." });
+      startRequest(req.id);
+      await resolveRequest(req.id, { kind: "transaction", txHash: "0x..." });
     }
 
     if (req.kind === "eip712_sign") {
-      startProcessing(req.id);
-      resolveRequest(req.id, { signature: "0x..." });
+      startRequest(req.id);
+      await resolveRequest(req.id, { kind: "eip712_sign", signature: "0x..." });
+    }
+
+    if (req.kind === "solana_sign") {
+      startRequest(req.id);
+      await resolveRequest(req.id, { kind: "solana_sign", signedTx: "..." });
     }
   }
 }

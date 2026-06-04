@@ -29,20 +29,21 @@ flowchart TB
 
 ## Session Creation
 
-Sessions are created by the client. The client generates a UUID and sends it as the `X-Session-Id` header.
+Sessions are created by the client. The client generates a UUID and sends it as the `X-Session-Id` header. The message rides in the query string as `message`.
 
 ```ts
 const sessionId = crypto.randomUUID();
 
-const response = await fetch("/api/chat?app=mycoindex", {
-  method: "POST",
-  headers: {
-    "X-Session-Id": sessionId,
-    "X-API-Key": "sk-mcd-...",
-    "Content-Type": "application/json",
+const response = await fetch(
+  `/api/chat?message=${encodeURIComponent("Hello")}&app=mycoindex`,
+  {
+    method: "POST",
+    headers: {
+      "X-Session-Id": sessionId,
+      "AOMI-APP-KEY": "sk-mcd-...",
+    },
   },
-  body: JSON.stringify({ text: "Hello" }),
-});
+);
 ```
 
 If no session exists for that ID, the backend creates one automatically on the first request.
@@ -123,7 +124,8 @@ Within a session, users can create multiple **threads** — separate conversatio
 | Operation | API Call | Description |
 | --- | --- | --- |
 | **Create** | `POST /api/sessions` | Start a new thread |
-| **List** | `GET /api/sessions/{id}` | List all threads in a session |
+| **List** | `GET /api/sessions?public_key={key}` | List all threads for a wallet |
+| **Get** | `GET /api/sessions/{id}` | Fetch one thread by ID |
 | **Switch** | Client-side | Change the active thread (update `X-Session-Id`) |
 | **Rename** | `PATCH /api/sessions/{id}` | Update a thread's title |
 | **Delete** | `DELETE /api/sessions/{id}` | Remove a thread and its messages |
@@ -162,55 +164,52 @@ function ThreadManager() {
 
 ## Session State
 
-The full session state includes:
+`GET /api/state` returns a snapshot of the session:
 
 ```ts
-type SessionState = {
-  // Conversation
-  messages: Message[];
-  threads: ThreadMetadata[];
-  currentThreadId: string;
-
-  // User state
-  userState: {
-    address: string | null; // Wallet address
-    chainId: number | null; // Connected chain
-    isConnected: boolean; // Wallet connection status
-  };
-
-  // Processing
-  status: "idle" | "processing" | "interrupted";
-  isGenerating: boolean;
+type StateResponse = {
+  messages: Message[] | null;
+  system_events: SystemEvent[] | null;
+  title: string | null;
+  is_processing: boolean; // true while the assistant is working
+  user_state: {
+    connection?: { is_connected?: boolean | null };
+    evm?: { address?: string | null; chain_id?: number | string | null };
+  } | null;
 };
 ```
 
+Wallet fields are nested: the address is `user_state.evm.address`, the chain is `user_state.evm.chain_id`, and connection status is `user_state.connection.is_connected`.
+
 ### Polling State
 
-Use the state endpoint to poll for the current session state:
+Pass the session ID in the `X-Session-Id` header and poll for the current snapshot:
 
 ```ts
-const state = await fetch(
-  `/api/state?session_id=${sessionId}`
-).then((r) => r.json());
+const state = await fetch("/api/state", {
+  headers: { "X-Session-Id": sessionId },
+}).then((r) => r.json());
 
-console.log(state.status); // "idle" | "processing"
-console.log(state.userState.address); // "0x742d..." or null
+console.log(state.is_processing); // true | false
+console.log(state.user_state?.evm?.address); // "0x742d..." or undefined
 ```
 
 ### Real-Time Updates
 
-For real-time updates without polling, subscribe to the SSE updates endpoint:
+For real-time updates without polling, subscribe to the SSE updates channel. The session ID travels in a header, so open it with `fetch` and read the body instead of using `EventSource`:
 
 ```ts
-const events = new EventSource(
-  `/api/updates?session_id=${sessionId}`,
-);
-
-events.onmessage = (event) => {
-  const data = JSON.parse(event.data);
-  // Handle state update
-};
+const response = await fetch("/api/updates", {
+  headers: {
+    "X-Session-Id": sessionId,
+    Accept: "text/event-stream",
+  },
+});
+// Read response.body and parse each `data:` line as JSON.
+// Event types: title_changed, tool_update, tool_complete, system_notice.
 ```
+
+See the [API Reference](/reference/api-reference#subscribe-to-updates) for a full consumer example.
 
 ## Next Steps
 

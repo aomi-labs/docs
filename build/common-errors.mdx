@@ -1,0 +1,55 @@
+---
+title: "Common errors"
+description: "The errors you are most likely to hit while building, running, and shipping an Aomi App, each with the cause and the fix."
+---
+
+These are the failures contributors hit most often. Each accordion title is the literal error or symptom, so you can search this page for what you see in your terminal.
+
+<AccordionGroup>
+  <Accordion title="SDK version mismatch: plugin=X, host=Y">
+    <Warning>
+    `aomi-run` refuses to load a plugin whose `aomi-sdk` pin differs from `aomi-run`'s own version. The loader gates on an exact match, so a plugin built against a different SDK never runs.
+    </Warning>
+
+    Today `aomi-run` built with `dev-runtime` is `0.1.21`, while the community platform pins `=0.1.20`. For a local run, bump the plugin to match `aomi-run`:
+
+    ```toml Cargo.toml
+    [dependencies]
+    aomi-sdk = "=0.1.21"   # match aomi-run for local runs
+    ```
+
+    When you go to ship, pin back to the platform's `required_sdk_version` (see `platform.json` in the platform repo) so CI and the backend accept the build.
+  </Accordion>
+
+  <Accordion title="aomi-run: command not found (after installing the toolchain)">
+    <Warning>
+    Installing with `--features cli` alone builds only `aomi-build` and `aomi-git`. The `cli` feature does not include `aomi-run`.
+    </Warning>
+
+    Install with both features so the `dev-runtime` feature builds `aomi-run`:
+
+    ```bash
+    cargo install --git https://github.com/aomi-labs/aomi-sdk --features cli,dev-runtime aomi-sdk
+    ```
+  </Accordion>
+
+  <Accordion title="No --version flag on the binaries">
+    <Warning>
+    None of the three binaries (`aomi-build`, `aomi-run`, `aomi-git`) accept `--version`. Running it errors instead of printing a version.
+    </Warning>
+
+    Use `--help` to confirm an install and see the available commands:
+
+    ```bash
+    aomi-git --help
+    aomi-build --help
+    aomi-run --help
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Next
+
+<Card title="The CLI toolchain" href="/reference/cli-toolchain">
+The full reference for the three Rust binaries: `aomi-build`, `aomi-run`, and `aomi-git`.
+</Card>

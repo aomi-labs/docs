@@ -29,6 +29,7 @@
           "reference/sdk-api",
           "reference/cli-toolchain",
           "build/deploy",
+          "build/common-errors",
           "reference/cli",
           "guides/cli-usage"
         ]
@@ -125,7 +126,6 @@
         "pages": [
           "reference/index",
           "reference/simulation",
-          "reference/account-abstraction",
           "reference/runtime",
           "reference/api-reference",
           "reference/sessions",

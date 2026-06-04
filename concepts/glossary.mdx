@@ -23,12 +23,6 @@ A Rust trait for single-result tools. Tools implement `call()`, `name()`, and `d
 
 See: [SDK Reference](/reference/sdk-api)
 
-### AomiBackend
-
-A Rust trait implemented by all agentic applications (ChatApp, ForgeApp, L2BeatApp). Provides `process_message()` and `system_events()` as a common interface.
-
-See: [SDK Reference](/reference/sdk-api)
-
 ### AomiRuntimeProvider
 
 The top-level React provider from `@aomi-labs/react`. Sets up all contexts — thread state, user state, notifications, events, and control — with a single wrapper.
@@ -75,27 +69,15 @@ See: [Skills](/concepts/skills)
 
 ## B
 
-### BackendApi
+### AomiClient
 
-A direct HTTP client class from `@aomi-labs/react` usable outside React. Provides methods for chat, thread management, model queries, and tool calls.
+A direct HTTP client class from `@aomi-labs/react`, usable outside React. Construct it with `new AomiClient({ baseUrl })`. It provides methods for chat, thread management, and model queries.
 
 See: [Headless Library](/guides/headless-library)
 
 ---
 
 ## C
-
-### ChatApp
-
-The default agentic application type. A general-purpose assistant that can be configured with custom tools, preamble, and document store.
-
-See: [SDK Reference](/reference/sdk-api)
-
-### ChatAppBuilder
-
-A builder-pattern API for constructing ChatApp instances. Supports adding tools, configuring docs, and finalizing builds with MCP and event channel options.
-
-See: [SDK Reference](/reference/sdk-api)
 
 ### ChatCommand
 
@@ -139,7 +121,7 @@ See: [Evals & Testing](/guides/evals-testing)
 
 ### EvalHarness
 
-The test runner for evaluating agent behavior. Takes an AomiBackend instance and runs EvalCases against it, reporting pass/fail for each assertion.
+The test runner for evaluating agent behavior. Runs EvalCases against an agent and reports pass or fail for each assertion.
 
 See: [Evals & Testing](/guides/evals-testing)
 
@@ -147,23 +129,13 @@ See: [Evals & Testing](/guides/evals-testing)
 
 A grouped set of operations produced by the ForgeExecutor. Groups related script steps into a single execution unit for dependency-aware ordering.
 
-See: [Script Generation](/guides/script-generation)
-
 ---
 
 ## F
 
-### ForgeApp
-
-An agentic application specialized for smart contract development. Extends ChatApp with Forge-specific tools — compilation, deployment, fork testing, and dependency management.
-
-See: [SDK Reference](/reference/sdk-api)
-
 ### ForgeExecutor
 
 A dependency-aware executor for Forge scripts. Handles compilation, dependency resolution, and script execution against Anvil forks.
-
-See: [Script Generation](/guides/script-generation)
 
 ### Fork Provider
 
@@ -215,16 +187,6 @@ See: [Integration Guide](/guides/integration)
 
 ---
 
-## L
-
-### L2BeatApp
-
-An agentic application specialized for Layer-2 protocol analysis. Provides tools for querying L2Beat data, analyzing rollup configurations, and comparing risk parameters.
-
-See: [SDK Reference](/reference/sdk-api)
-
----
-
 ## M
 
 ### MCP
@@ -253,9 +215,9 @@ See: [Non-Custodial Wallets](/concepts/non-custodial-wallets), [Security](/conce
 
 ## O
 
-### OWASP AST03
+### OWASP Agentic Skills Top 10
 
-The OWASP AI Security framework. Aomi's skill repository runs four AST03-compliant scanners on every pull request: behavioral audit, offline analysis, static analysis, and dependency scanning.
+The security framework Aomi audits skills against. AST03 (Over-Privileged Skills) is the category these checks target most directly. Aomi's skill repository runs four scanners on every pull request: behavioral audit, offline analysis, static analysis, and dependency scanning.
 
 See: [Security](/concepts/security), [Skills](/concepts/skills)
 
@@ -294,12 +256,6 @@ See: [Runtime Reference](/reference/runtime)
 ---
 
 ## S
-
-### Script Generation
-
-The process of constructing and executing Foundry forge scripts through Aomi's ScriptAssembler and ForgeExecutor. Supports dependency resolution, source fetching, and execution planning.
-
-See: [Script Generation](/guides/script-generation)
 
 ### Server-Sent Events
 

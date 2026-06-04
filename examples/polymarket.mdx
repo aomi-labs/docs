@@ -3,29 +3,32 @@ title: Polymarket
 description: Polymarket prediction market integration via Gamma, Data API, and CLOB — search markets, resolve user intent, browse trades, and submit orders on-chain.
 ---
 
-Polymarket exposes three public API surfaces — **Gamma** for market metadata, **Data API** for trade history, and **CLOB** for order book and order submission. Aomi wraps these as tools so your AI assistant can search markets, resolve user intent, and execute trades through the connected wallet.
+Polymarket exposes three public API surfaces: **Gamma** for market metadata, **Data API** for trade history, and **CLOB** for order submission. Aomi wraps these as tools so your AI assistant can search markets, resolve user intent, and execute trades through the connected wallet.
 
 ## Available Tools
 
+The Polymarket App registers exactly six tools.
+
 | Tool | Description | Source API |
 |------|-------------|------------|
-| `SearchMarkets` | Search prediction markets by keyword | Gamma |
-| `GetMarketDetails` | Get market metadata, volume, liquidity | Gamma |
-| `GetTradeHistory` | Browse recent trades for a market | Data API |
-| `GetOrderBook` | View open orders and depth | CLOB API |
-| `PlaceOrder` | Submit a buy/sell order | CLOB API |
-| `GetPortfolio` | View your open positions and P&L | Gamma |
+| `search_polymarket` | Search prediction markets by keyword | Gamma |
+| `get_polymarket_details` | Get market metadata, volume, liquidity | Gamma |
+| `get_polymarket_trades` | Browse recent trades for a market | Data API |
+| `resolve_polymarket_trade_intent` | Turn a plain English trade request into concrete order parameters | CLOB |
+| `build_polymarket_order` | Build an unsigned order from resolved parameters | CLOB |
+| `submit_polymarket_order` | Submit the signed order on-chain | CLOB |
+
+Trading is a two-step flow: `build_polymarket_order` prepares the order, then `submit_polymarket_order` sends it. The order is simulated before you sign.
 
 ## Example Conversations
 
 **Market research:**
 > "What are the hottest prediction markets right now?"
-> "Show me the order book for 'BTC > $100k by June'"
+> "Show me the recent trades on 'BTC > $100k by June'"
 > "What's the volume and liquidity on that market?"
 
 **Trading:**
 > "Buy 100 shares of 'ETH > $4k by July' at the current ask"
-> "What are my open positions?"
 > "Place a limit order on 'Fed cuts rates in June' at 60¢"
 
 ## How It Works

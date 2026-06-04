@@ -32,7 +32,7 @@ flowchart TB
     end
 
     subgraph "CI/CD Security"
-        OWASP[OWASP AST03 Scanners]
+        OWASP[OWASP Agentic Skills Scanners]
         AUDIT[Skill Behavioral Audit]
         SNYK[Dependency Scanning]
         SAST[Static Analysis]
@@ -73,7 +73,7 @@ sequenceDiagram
     participant App
 
     Client->>Edge: POST /api/chat?app=mycoindex
-    Edge->>Edge: Validate X-API-Key format
+    Edge->>Edge: Validate AOMI-APP-KEY format
     Edge->>Backend: Forward with key hash
     Backend->>Backend: Verify key against app
     Backend->>App: Authorized session
@@ -210,9 +210,9 @@ sequenceDiagram
 ```
 
 
-## OWASP AST03 Compliance
+## OWASP Agentic Skills Top 10 Compliance
 
-Skills published under `aomi-labs/skills` are security-audited against the [OWASP AST03](https://owasp.org/www-project-ai-security/) framework. Every pull request runs four automated scanners in CI:
+Skills published under `aomi-labs/skills` are security-audited against the [OWASP Agentic Skills Top 10](https://owasp.org/www-project-agentic-skills-top-10/) framework. AST03 (Over-Privileged Skills) is the category these checks target most directly. Every pull request runs four automated scanners in CI:
 
 ### Scanner Pipeline
 
@@ -259,7 +259,7 @@ flowchart LR
 | **Unauthorized tool invocation** | Tools are scoped per app; session isolation prevents cross-app tool calls |
 | **Session hijacking** | UUID-based session IDs, configurable TTL, no sequential IDs |
 | **API key leakage** | Per-app key scoping limits blast radius; rotation support enables fast recovery |
-| **Malicious skill definitions** | 4 OWASP AST03 scanners run on every skill PR — blocked if any fail |
+| **Malicious skill definitions** | 4 OWASP Agentic Skills Top 10 scanners run on every skill PR — blocked if any fail |
 | **Replay attacks** | Sessions expire; nonce-based tx ordering prevents tx replay |
 
 ### Out of Scope: User Responsibility

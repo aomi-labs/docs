@@ -5,6 +5,8 @@ description: "Aomi platform changelog — track major surface-area changes, SDK 
 
 Track significant changes to the Aomi platform, SDK, widget, and runtime. For day-to-day fixes, see the [GitHub releases](https://github.com/aomi-labs).
 
+<Note>Documentation version: **v1.1** (updated 2026-06-04).</Note>
+
 ## In development
 
 - **Discord bot** — bringing the assistant to Discord servers ([status](/getting-started/discord))
@@ -37,7 +39,7 @@ The frontend story lands.
 **Added**
 
 - **Widget GA via shadcn registry** — `npx shadcn add https://aomi.dev/r/aomi-frame.json` installs `AomiFrame` and all sub-components. Source is copied into your project; you own and edit it.
-- **`@aomi-labs/react` headless library** — `AomiRuntimeProvider`, `useAomiRuntime`, `useControl`, `useUser`, and the `BackendApi` client for building custom UIs.
+- **`@aomi-labs/react` headless library** — `AomiRuntimeProvider`, `useAomiRuntime`, `useControl`, `useUser`, and the `AomiClient` client for building custom UIs.
 - **Simulation pipeline with Anvil fork management** — every transaction simulated on a forked network before reaching the wallet. See [Simulation Reference](/reference/simulation).
 - **Compound component API** — `AomiFrame.Root`, `AomiFrame.Header`, `AomiFrame.Composer` for custom layouts.
 
@@ -59,7 +61,7 @@ The runtime gets real.
 
 **Changed**
 
-- Sessions are now keyed by `X-Session-Id` UUID with separate `X-API-Key` for App scoping. See [Apps & Authentication](/reference/apps-auth).
+- Sessions are now keyed by `X-Session-Id` UUID with separate `AOMI-APP-KEY` for App scoping. See [Apps & Authentication](/reference/apps-auth).
 
 ---
 

@@ -25,7 +25,7 @@ Teaches agents how to scaffold and build new Aomi Apps from API specs. The agent
 
 - Generate Aomi SDK project structure (`lib.rs`, `client.rs`, `tool.rs`)
 - Design tools that wrap REST/GraphQL endpoints
-- Configure preambles, models, and MCP servers
+- Configure preambles, namespaces, and secrets
 - Validate builds and run tests
 
 ## Installation
@@ -44,41 +44,31 @@ This downloads both skill definitions into the AI tool's skills directory. The a
 
 ## Protocol Catalog
 
-The `aomi-transact` skill references 25+ protocol integrations that the Aomi runtime loads dynamically. Each app has its own tool set and credential requirements:
+The `aomi-transact` skill references 30+ protocol integrations that the Aomi runtime loads dynamically. Each app has its own tool set and credential requirements. The list below is a partial, illustrative selection of apps with the exact tool names from each app's source. Run `aomi app list` for the full live catalog.
 
 | App | Description | App-Specific Tools | Credentials |
 |-----|-------------|-------------------|-------------|
-| `default` | General-purpose on-chain agent with web search | `brave_search` | None |
-| `binance` | Binance CEX — prices, order book, klines | `binance_get_price`, `binance_get_depth`, `binance_get_klines` | Exchange credentials |
-| `bybit` | Bybit CEX — orders, positions, leverage | (No Bybit-specific tools yet) | Exchange credentials |
-| `cow` | CoW Protocol — MEV-protected swaps via batch auctions | `get_cow_swap_quote`, `place_cow_order`, `get_cow_order_status` | None |
-| `defillama` | DefiLlama — TVL, yields, volumes, stablecoins | `get_token_price`, `get_yield_opportunities`, `get_defi_protocols`, `get_chain_tvl`, `get_dex_volumes` | None |
-| `dune` | Dune Analytics — execute and fetch SQL queries | `execute_query`, `get_execution_status`, `get_execution_results` | Provider token |
-| `dydx` | dYdX perpetuals — markets, orderbook, candles, trades | `dydx_get_markets`, `dydx_get_orderbook`, `dydx_get_candles`, `dydx_get_trades`, `dydx_get_account` | None |
+| `binance` | Binance CEX — prices, order book, klines, orders | `binance_get_price`, `binance_get_depth`, `binance_get_klines`, `binance_place_order`, `binance_get_account` | Exchange credentials |
+| `bybit` | Bybit CEX — prices, orders, positions, leverage | `bybit_get_price`, `bybit_get_orderbook`, `bybit_place_limit_order`, `bybit_get_positions`, `bybit_set_leverage` | Exchange credentials |
+| `cow` | CoW Protocol — MEV-protected swaps via batch auctions | `get_cow_swap_quote`, `place_cow_order`, `get_cow_order_status`, `cancel_cow_orders` | None |
+| `defillama` | DefiLlama — TVL, yields, prices, protocols | `defillama_get_token_price`, `defillama_top_yield_pools`, `defillama_list_protocols`, `defillama_get_chain_tvl` | None |
+| `dune` | Dune Analytics — run queries and SQL, fetch results | `dune_run_query`, `dune_run_sql`, `dune_get_latest_results`, `dune_get_execution_status` | Provider token |
+| `dydx` | dYdX perpetuals — markets, orderbook, candles, trades | `dydx_get_markets`, `dydx_get_orderbook`, `dydx_get_candles`, `dydx_get_account` | None |
 | `gmx` | GMX perpetuals — markets, positions, orders, prices | `get_gmx_prices`, `get_gmx_markets`, `get_gmx_positions`, `get_gmx_orders` | None |
-| `hyperliquid` | Hyperliquid perps — mid prices, orderbook | `get_meta`, `get_all_mids` | None |
-| `kaito` | Kaito — crypto social search, trending, mindshare | `kaito_search`, `kaito_get_trending`, `kaito_get_mindshare` | Provider token |
-| `kalshi` | Kalshi prediction markets via Simmer SDK | `simmer_register`, `simmer_status`, `simmer_briefing` | SDK token |
-| `khalani` | Khalani cross-chain intents — quote, build, submit | `get_khalani_quote`, `build_khalani_order`, `submit_khalani_order`, `get_khalani_order_status` | None |
-| `lifi` | LI.FI aggregator — cross-chain swaps and bridges | `get_lifi_swap_quote`, `place_lifi_order`, `get_lifi_bridge_quote`, `get_lifi_transfer_status` | Optional provider token |
-| `manifold` | Manifold prediction markets — search, bet, create | `list_markets`, `get_market`, `search_markets`, `place_bet`, `create_market` | Provider token |
-| `molinar` | Molinar on-chain world — move, explore, chat | `molinar_get_state`, `molinar_move`, `molinar_jump`, `molinar_chat`, `molinar_collect_coins` | None |
-| `morpho` | Morpho lending — markets, vaults, positions | `get_markets`, `get_vaults`, `get_user_positions` | None |
-| `neynar` | Farcaster social — users, search | `get_user_by_username`, `search_users` | Provider token |
-| `okx` | OKX CEX — tickers, order book, candles | `okx_get_tickers`, `okx_get_order_book`, `okx_get_candles` | Exchange credentials |
-| `oneinch` | 1inch DEX aggregator — quotes, swaps, allowances | `get_oneinch_quote`, `get_oneinch_swap`, `get_oneinch_approve_transaction` | Provider token |
-| `para` | Para — MPC wallet management across EVM, Solana, Cosmos | (Para wallet tools) | Provider token |
-| `polymarket` | Polymarket prediction markets — search, trade, CLOB | `search_polymarket`, `get_polymarket_details`, `get_polymarket_trades`, `build_polymarket_order_preview` | None |
-| `polymarket-rewards` | Polymarket LP — liquidity provisioning into reward markets | (LP scoring and position tools) | Provider token |
+| `hyperliquid` | Hyperliquid perps — mids, orderbook, positions | `get_meta`, `get_all_mids`, `get_l2_book`, `get_clearinghouse_state` | None |
+| `kaito` | Kaito — crypto social search, trending, mindshare | `kaito_search`, `kaito_trending_narratives`, `kaito_get_token_mindshare`, `kaito_get_yapper_score` | Provider token |
+| `morpho` | Morpho lending — markets, vaults, positions | `morpho_list_markets`, `morpho_list_vaults`, `morpho_get_user_positions` | None |
+| `oneinch` | 1inch DEX aggregator — quotes, swaps, allowances | `oneinch_get_quote`, `oneinch_build_swap_tx`, `oneinch_check_allowance`, `oneinch_get_approve_tx` | Provider token |
+| `polymarket` | Polymarket prediction markets — search, trade, CLOB | `search_polymarket`, `get_polymarket_details`, `get_polymarket_trades`, `build_polymarket_order`, `submit_polymarket_order` | None |
 | `x` | X/Twitter — users, posts, search, trends | `get_x_user`, `get_x_user_posts`, `search_x`, `get_x_trends` | Provider token |
-| `yearn` | Yearn Finance — vault discovery, details | `get_all_vaults`, `get_vault_detail`, `get_blacklisted_vaults` | None |
-| `zerox` | 0x DEX aggregator — swaps, quotes, liquidity | `get_zerox_swap_quote`, `place_zerox_order`, `get_zerox_swap_chains` | Provider token |
+| `yearn` | Yearn Finance — vault discovery, details, APY | `yearn_list_vaults`, `yearn_get_vault_detail`, `yearn_top_vaults_by_apy` | None |
+| `zerox` | 0x DEX aggregator — prices, swaps, gasless | `zerox_get_price`, `zerox_build_swap`, `zerox_get_gasless_quote`, `zerox_submit_gasless_swap` | Provider token |
 
 Each protocol has its own tool definitions, credential requirements, and usage examples documented in the skill's reference files. Pass `--app <name>` to select an app for a chat turn, or set `AOMI_APP=<name>` for a multi-command shell.
 
 ## Security
 
-Skills are security-audited against the [OWASP AST03](https://owasp.org/www-project-ai-security/) framework. Every PR runs four automated scanners in CI:
+Skills are security-audited against the [OWASP Agentic Skills Top 10](https://owasp.org/www-project-agentic-skills-top-10/) framework. AST03 (Over-Privileged Skills) is the category these checks target most directly. Every PR runs four automated scanners in CI:
 
 | Scanner | Purpose |
 |---------|---------|
@@ -115,7 +105,7 @@ The CLI reports at runtime what credentials are missing. Configure them on your 
 
 ### Can I build my own app and add it to the catalog?
 
-Yes. Use the `aomi-build` skill and the [`aomi-sdk`](https://github.com/aomi-labs/aomi-sdk) Rust SDK to scaffold a new app from an API spec. The SDK provides the `CoreAppBuilder` pattern — define your tools, preamble, and model, then deploy it as a loadable app in the Aomi runtime.
+Yes. Use the `aomi-build` skill and the [`aomi-sdk`](https://github.com/aomi-labs/aomi-sdk) Rust SDK to scaffold a new app from an API spec. You write tools by implementing the `DynAomiTool` trait, then register them with the `dyn_aomi_app!` macro. The macro declares the app name, version, preamble, tools, namespaces, and secrets, and exports the C symbols the runtime loads. The compiled crate is a `cdylib` plugin that the Aomi runtime hot-loads.
 
 ### Are skills kept up to date?
 
@@ -123,15 +113,15 @@ The `aomi-labs/skills` repo is actively maintained. Each PR runs four security s
 
 ### Which chains does Aomi support?
 
-Aomi supports all EVM chains accessible through the configured RPC endpoints, plus Solana and Cosmos via the Para wallet integration. Individual apps may have chain-specific requirements — the app catalog and CLI output indicate supported networks.
+The public write surface is EVM: Ethereum, Base, Arbitrum, Optimism, Polygon, and Linea. Read access reaches any EVM chain accessible through the configured RPC endpoints. Individual apps may have chain-specific requirements, so check the app catalog and CLI output for supported networks.
 
 ### Do I need to install both skill bundles?
 
 No. Install both with `npx skills add aomi-labs/skills` and your agent picks the right one based on context. `aomi-transact` activates on transaction-related prompts; `aomi-build` activates on app-building prompts.
 
-## SDK for Custom Skills
+## SDK for Custom Apps
 
-For protocol teams that want to build their own Aomi App (with custom tools, preamble, and deployment), use the [`aomi-sdk`](https://github.com/aomi-labs/aomi-sdk) Rust SDK. The SDK provides the `CoreAppBuilder` pattern for constructing apps that the Aomi runtime can load and the skills layer can invoke.
+For protocol teams that want to build their own Aomi App (with custom tools, preamble, and deployment), use the [`aomi-sdk`](https://github.com/aomi-labs/aomi-sdk) Rust SDK. You implement each tool with the `DynAomiTool` trait and register the set with the `dyn_aomi_app!` macro. The macro generates the manifest, the tool router, and the C ABI exports, producing a `cdylib` plugin that the Aomi runtime hot-loads and the skills layer can invoke.
 
 See [Building Apps](/reference/building-apps) for the full SDK reference.
 

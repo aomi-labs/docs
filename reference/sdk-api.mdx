@@ -3,6 +3,8 @@ title: SDK reference
 description: Rust reference for the Aomi plugin SDK. Build an App as a cdylib plugin with typed tools, the DynAomiTool trait, the dyn_aomi_app! macro, secrets, host namespaces, and the runtime hot load model.
 ---
 
+<Info>Verified against aomi-sdk@main on 2026-06-04.</Info>
+
 The Aomi SDK is a Rust crate for building **Apps**. An App is a dynamic plugin that the Aomi runtime hot loads at runtime as a shared library (`cdylib`) over a stable C ABI. You write typed tools in Rust, compile to a `.so` (Linux) or `.dylib` (macOS), and the runtime loads it without a restart.
 
 <Note>
@@ -271,8 +273,7 @@ The `namespaces` field lists host side capability sets the runtime injects along
 | You want to… | Set namespaces to |
 | --- | --- |
 | Use the default EVM wallet flow | omit the field, or `["evm-core"]` |
-| Add Solana wallet flows alongside EVM | `["evm-core", "solana-core"]` |
-| Ship a namespace only App (no wallet flow) | `["database"]` or similar |
+| Ship a namespace only App (no wallet flow) | `["database"]` |
 | Opt out of host namespaces entirely | `[]` |
 
 ## How the runtime hot loads your plugin

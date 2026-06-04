@@ -45,18 +45,17 @@ Pluggable persistence layer for session history:
 
 ## Streaming & Events
 
-Messages stream via Server-Sent Events (SSE). The runtime pushes events as they happen:
+Chat replies come back as a JSON session snapshot, not a token stream. To follow work in real time, the runtime exposes a Server-Sent Events (SSE) channel at `GET /api/updates`. It pushes one JSON event per line, and each event carries a `type` and `session_id`:
 
-```json
-event: text
-data: {"token": "The"}
-
-event: text  
-data: {"token": "current"}
-
-event: text
-data: {"token": "price"}
 ```
+data: {"type":"title_changed","session_id":"550e8400-...","new_title":"ETH price check"}
+
+data: {"type":"tool_update","session_id":"550e8400-..."}
+
+data: {"type":"tool_complete","session_id":"550e8400-..."}
+```
+
+The event types are `title_changed`, `tool_update`, `tool_complete`, and `system_notice`. Clients usually pair this channel with polling `GET /api/state` to pick up new messages. See the [API Reference](/reference/api-reference#subscribe-to-updates) for headers and a consumer example.
 
 ## App Isolation
 

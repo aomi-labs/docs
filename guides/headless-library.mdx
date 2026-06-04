@@ -25,9 +25,13 @@ pnpm install @aomi-labs/react
 {
   "@assistant-ui/react": "^0.11.0",
   "react": "^18.0.0 || ^19.0.0",
-  "react-dom": "^18.0.0 || ^19.0.0"
+  "react-dom": "^18.0.0 || ^19.0.0",
+  "wagmi": "^2.0.0",
+  "viem": "^2.0.0"
 }
 ```
+
+`wagmi` and `viem` are optional peer dependencies. Install them only if your app uses wallet connection; skip them for read-only or non-wallet UIs.
 
 ## What's Included
 
@@ -61,7 +65,7 @@ pnpm install @aomi-labs/react
 
 | Export | Description |
 | --- | --- |
-| `BackendApi` | Direct HTTP client for the Aomi backend (usable outside React) |
+| `AomiClient` | Direct HTTP client for the Aomi backend (usable outside React), re-exported from `@aomi-labs/client` |
 
 ### Utilities
 
@@ -89,7 +93,6 @@ import type {
   WalletTxPayload,
   WalletEip712Payload,
   InboundEvent,
-  OutboundEvent,
   SSEStatus,
 } from "@aomi-labs/react";
 ```
@@ -118,13 +121,12 @@ function App() {
 
 ```
 AomiRuntimeProvider
-├── ThreadContextProvider         ← Thread state (messages, metadata, switching)
-│   └── NotificationContextProvider    ← Toast notifications
-│       └── ExtUserProvider           ← Wallet/user state
-│           └── ControlContextProvider     ← Model/app/API key
-│               └── EventContextProvider     ← SSE + system events
-│                   └── AomiRuntimeCore     ← Orchestration + unified API
-│                       └── {children}
+└── ThreadContextProvider             ← Thread state (messages, metadata, switching)
+    └── NotificationContextProvider   ← Toast notifications
+        └── ExtUserProvider           ← Wallet/user state
+            └── ControlContextProvider    ← Model/app/API key
+                └── EventContextProvider  ← SSE + system events
+                    └── {children}
 ```
 
 Each layer provides specific functionality through its own hook:
@@ -212,23 +214,23 @@ export function Providers({ children }) {
 
 The `ConnectButton` control and runtime transaction handler will simply be inactive.
 
-### Using BackendApi Directly
+### Using AomiClient Directly
 
-For non-React code or server-side use, you can use the `BackendApi` class without any providers:
+For non-React code or server-side use, you can use the `AomiClient` class without any providers. Construct it with an options object, not a bare URL:
 
 ```ts
-import { BackendApi } from "@aomi-labs/react";
+import { AomiClient } from "@aomi-labs/react";
 
-const api = new BackendApi("https://api.aomi.dev");
+const client = new AomiClient({ baseUrl: "https://api.aomi.dev" });
 
-// List threads
-const threads = await api.getThreads(sessionId, publicKey);
+// List threads for a wallet address
+const threads = await client.listThreads(sessionId, publicKey);
 
 // Send a message
-await api.chat(sessionId, message, app, apiKey);
+await client.sendMessage(sessionId, message, { app, apiKey });
 
 // Get available models
-const models = await api.getModels(sessionId);
+const models = await client.getModels(sessionId);
 ```
 
 ## When to Use Headless vs Widget
@@ -238,7 +240,7 @@ const models = await api.getModels(sessionId);
 | Standard chat interface needed quickly | Widget |
 | Existing design system, custom look | Headless |
 | Non-Next.js React app | Headless |
-| Server-side API calls (no React) | Headless (`BackendApi` class directly) |
+| Server-side API calls (no React) | Headless (`AomiClient` class directly) |
 | Want to start fast, customize later | Widget (edit source files) |
 | Embedding in an existing complex layout | Headless |
 
@@ -263,14 +265,17 @@ The `useWalletHandler` hook processes wallet transaction and signing requests fr
 import { useWalletHandler } from "@aomi-labs/react";
 
 function WalletHandler() {
-  const { handleRequest, currentRequest, isProcessing } = useWalletHandler();
+  const { pendingRequests, startRequest, resolveRequest, rejectRequest } =
+    useWalletHandler({ getSession: () => getCurrentSession() });
 
-  // currentRequest contains payload, type (tx / eip712), and status
-  // Call handleRequest(response) to approve or reject
+  // Each request has a `kind`: "transaction" | "eip712_sign" | "solana_sign".
+  // Resolve with a matching result kind, or call rejectRequest(id).
 
-  return null; // Renders nothing — call handleRequest programmatically
+  return null; // Renders nothing — drive the requests programmatically
 }
 ```
+
+See the [Hooks Reference](/guides/headless/hooks) for the full `useWalletHandler` API and result shapes.
 
 ### Notification Handler
 
@@ -280,10 +285,15 @@ The `useNotificationHandler` hook processes notification events from the backend
 import { useNotificationHandler } from "@aomi-labs/react";
 
 function NotificationListener() {
-  const { lastEvent, clearEvent } = useNotificationHandler();
+  const { notifications, unhandledCount, markDone } = useNotificationHandler({
+    onNotification: (n) => {
+      // Trigger your own toast or banner UI when a notification arrives
+    },
+  });
 
-  // lastEvent contains type, title, message, and metadata
-  // Trigger your own toast or banner UI based on the event
+  // notifications: every notification received, newest first
+  // unhandledCount: how many are not yet marked done
+  // markDone(id): mark one as handled
 
   return null;
 }
@@ -293,25 +303,31 @@ function NotificationListener() {
 
 ### Event Types
 
-The event context supports both inbound events (SSE from backend) and outbound events (dispatched to backend):
+The event context handles inbound events streamed from the backend over SSE, and lets you send outbound system messages back to the backend:
 
-| Event | Direction | Description |
+| Direction | How | Description |
 | --- | --- | --- |
-| `InboundEvent` | Server → Client | System notifications, wallet requests, status updates |
-| `OutboundEvent` | Client → Server | User actions, UI state, interrupt signals |
+| Server → Client | `subscribe(type, handler)` delivers an `InboundEvent` | System notifications, wallet requests, status updates |
+| Client → Server | `sendOutboundSystem({ type, sessionId, payload })` | UI state and system commands sent to the backend |
 
 ### Subscription
 
 ```tsx
+import { useEffect } from "react";
 import { useEventContext } from "@aomi-labs/react";
 
 function EventSubscriber() {
-  const { subscribe, unsubscribe, sseStatus } = useEventContext();
+  const { subscribe, sseStatus } = useEventContext();
 
-  // subscribe(eventType, handler) — listen for specific events
-  // unsubscribe(eventType, handler) — remove listener
-  // sseStatus — 'connected' | 'disconnected' | 'reconnecting'
+  useEffect(() => {
+    // subscribe(eventType, handler) returns an unsubscribe function
+    const unsubscribe = subscribe("wallet_tx_request", (event) => {
+      console.log(event.payload);
+    });
+    return unsubscribe;
+  }, [subscribe]);
 
+  // sseStatus — "connected" | "connecting" | "disconnected"
   return (
     <div className="text-xs text-white/40">
       SSE: {sseStatus}
@@ -320,22 +336,25 @@ function EventSubscriber() {
 }
 ```
 
-### Dispatch
+### Sending Outbound System Messages
+
+To send a system message back to the backend, use `sendOutboundSystem`. It takes an object with `type`, `sessionId`, and `payload`:
 
 ```tsx
 import { useEventContext } from "@aomi-labs/react";
 
-function useInterrupt() {
-  const { dispatch } = useEventContext();
+function useTxComplete(sessionId: string) {
+  const { sendOutboundSystem } = useEventContext();
 
-  const interrupt = () => {
-    dispatch({
-      type: "interrupt",
-      payload: { reason: "user_cancelled" },
+  const notifyTxComplete = async (txHash: string) => {
+    await sendOutboundSystem({
+      type: "wallet:tx_complete",
+      sessionId,
+      payload: { txHash, status: "success" },
     });
   };
 
-  return { interrupt };
+  return { notifyTxComplete };
 }
 ```
 

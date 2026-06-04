@@ -32,11 +32,17 @@ An App is a Rust crate the runtime loads as a plugin. You write the tools, the p
   </Step>
 
   <Step title="Install the toolchain">
-    This installs `aomi-git`, the tool that ships your App.
+    This installs the builder binaries. The `cli` feature builds `aomi-build` and `aomi-git`, the tool that ships your App. Add `dev-runtime` to also get `aomi-run`, which lets you chat with your App locally before you ship.
 
-    ```bash
-    cargo install --git https://github.com/aomi-labs/aomi-sdk --features cli aomi-sdk
+    <CodeGroup>
+    ```bash macOS / Linux
+    cargo install --git https://github.com/aomi-labs/aomi-sdk --features cli,dev-runtime aomi-sdk
     ```
+
+    ```powershell Windows
+    cargo install --git https://github.com/aomi-labs/aomi-sdk --features cli,dev-runtime aomi-sdk
+    ```
+    </CodeGroup>
 
     There is no `--version` flag, so confirm the install with `--help`:
 
@@ -207,18 +213,36 @@ Your App is three small files. Make a folder and add them.
     When the `ci` line reads `[ok] green` and `release` says it is ready to activate, you are set. A build takes a few minutes.
   </Step>
 
-  <Step title="Request activation">
+  <Step title="Get access (first time only)">
+    The first time you ship to a platform, ask ops for access. This runs once, not per deploy.
+
     ```bash
-    aomi-git activate --request
+    aomi-git request --email you@example.com --git-account your-github-user
     ```
 
-    This posts your App and release tag to the ops channel and pings ops. You do not hold the activation token, and you do not need one. Ops load your App, and within a few minutes your `greet` tool appears in the agent for new chats.
+    This posts a request to the Aomi apps Discord. Ops then do two things: they invite your GitHub account to the platform repo as a collaborator, and they email you a per-app activation code. The code arrives by email, never over Discord.
+  </Step>
+
+  <Step title="Activate your release">
+    Once CI is green and you hold your per-app code, you activate the release yourself. Set the code as `AOMI_APP_ACTIVATION_TOKEN`.
+
+    ```bash
+    AOMI_APP_ACTIVATION_TOKEN=<your per-app code> \
+    AOMI_BACKEND_URL=https://staging-api.aomi.dev \
+      aomi-git activate
+    ```
+
+    The backend fetches your release, validates it, and loads it. Within a few minutes your `greet` tool appears in the agent for new chats.
   </Step>
 </Steps>
 
 ## What you have now
 
-A live App. You wrote three files, deployed with `aomi-git deploy`, and requested activation. To go further:
+<Check>
+You have a deployed Aomi App on the live runtime. You wrote three files, deployed with `aomi-git deploy`, and activated the release with your per-app code. Your `greet` tool now runs inside real chats.
+</Check>
+
+To go further:
 
 <CardGroup cols={2}>
   <Card title="Building an App" href="/reference/building-apps">
@@ -226,5 +250,8 @@ A live App. You wrote three files, deployed with `aomi-git deploy`, and requeste
   </Card>
   <Card title="Deploy and activate" href="/build/deploy">
     The full shipping process, the validation pipeline, and troubleshooting.
+  </Card>
+  <Card title="Common errors" href="/build/common-errors">
+    The errors you are most likely to hit, each with its fix.
   </Card>
 </CardGroup>
