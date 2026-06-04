@@ -81,7 +81,7 @@ Intermediate `emit` calls must send bare values. The terminal `complete` call ac
 
 ## Multistep Tools
 
-A tool can ask the host to run a follow-up step by returning a routed `ToolReturn` instead of a bare value. Override `run_with_routes` and build the route with `aomi_sdk::route`:
+A tool can ask the host to run a follow-up step by returning a routed `ToolReturn` instead of a bare value. Override `run_with_routes` and build the route with `ToolReturn::with_route` and `RouteStep::on_return`:
 
 ```rust
 use aomi_sdk::{RouteStep, ToolReturn};

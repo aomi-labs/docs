@@ -140,10 +140,12 @@ After `new-app` finishes, the App compiles but its tools are mechanical, one per
 ### Sharpen and validate the spec
 
 ```bash
-# Infer concrete response types from real captured JSON
-mkdir -p ext/specs/khalani.samples/get_quote
-curl ... > ext/specs/khalani.samples/get_quote/sample.json
-aomi-build tighten-spec khalani
+# Infer concrete response types from real captured JSON.
+# Samples go directly in <platform>.samples/ named <operationId>.<status>.json
+mkdir -p ext/specs/khalani.samples
+curl ... > ext/specs/khalani.samples/getQuote.200.json
+aomi-build tighten-spec khalani              # prints the diff only
+aomi-build tighten-spec khalani --in-place   # writes the tightened spec back
 aomi-build gen-client khalani --shared --force   # regenerate with tighter types
 
 # Catch schema drift against the live API

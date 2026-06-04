@@ -8,17 +8,17 @@ These are the failures contributors hit most often. Each accordion title is the 
 <AccordionGroup>
   <Accordion title="SDK version mismatch: plugin=X, host=Y">
     <Warning>
-    `aomi-run` refuses to load a plugin whose `aomi-sdk` pin differs from `aomi-run`'s own version. The loader gates on an exact match, so a plugin built against a different SDK never runs.
+    `aomi-run` refuses to load a plugin whose pinned `aomi-sdk` does not match `aomi-run`'s own version. The loader gates on an exact match, so a plugin built against a different SDK never runs.
     </Warning>
 
-    Today `aomi-run` built with `dev-runtime` is `0.1.21`, while the community platform pins `=0.1.20`. For a local run, bump the plugin to match `aomi-run`:
+    For a local run, pin the plugin's `aomi-sdk` to the version your installed `aomi-run` reports in its boot banner (the `(aomi-sdk X.Y.Z)` on the first line at startup):
 
     ```toml Cargo.toml
     [dependencies]
-    aomi-sdk = "=0.1.21"   # match aomi-run for local runs
+    aomi-sdk = "=X.Y.Z"   # match the version aomi-run prints at startup
     ```
 
-    When you go to ship, pin back to the platform's `required_sdk_version` (see `platform.json` in the platform repo) so CI and the backend accept the build.
+    When you go to ship, pin instead to the platform's `required_sdk_version` (see `platform.json` in the platform repo) so CI and the backend accept the build. The community platform pins a specific version, such as `=0.1.20`, which can differ from whatever `aomi-run` you have installed.
   </Accordion>
 
   <Accordion title="aomi-run: command not found (after installing the toolchain)">

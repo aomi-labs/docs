@@ -143,12 +143,12 @@ The widget's sidebar provides a thread management UI out of the box:
 With `@aomi-labs/react`, manage threads programmatically:
 
 ```tsx
-import { useRuntimeActions, useThreadContext } from "@aomi-labs/react";
+import { useAomiRuntime, useThreadContext } from "@aomi-labs/react";
 
 function ThreadManager() {
   const { currentThreadId } = useThreadContext();
   const { createThread, deleteThread, selectThread, renameThread } =
-    useRuntimeActions();
+    useAomiRuntime();
 
   return (
     <div>

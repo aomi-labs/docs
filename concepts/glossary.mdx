@@ -17,12 +17,6 @@ An ephemeral copy of a blockchain network state created using [Foundry's Anvil](
 
 See: [Simulation Reference](/reference/simulation)
 
-### AomiApiTool
-
-A Rust trait for single-result tools. Tools implement `call()`, `name()`, and `description()` and are registered with the Tool Scheduler.
-
-See: [SDK Reference](/reference/sdk-api)
-
 ### AomiRuntimeProvider
 
 The top-level React provider from `@aomi-labs/react`. Sets up all contexts (thread state, user state, notifications, events, and control) with a single wrapper.
@@ -46,12 +40,6 @@ See: [Agentic Application](/concepts/key-concepts)
 Each App runs independently with its own tool registry, model configuration, and API key scope. No cross-App data sharing.
 
 See: [Architecture](/concepts/architecture), [Runtime](/reference/runtime)
-
-### Assertion
-
-A check used in evaluation harnesses to verify agent behavior. Examples: balance assertions, state assertions, event assertions.
-
-See: [Evals & Testing](/guides/evals-testing)
 
 ### aomi-build
 
@@ -78,12 +66,6 @@ See: [Headless Library](/guides/headless-library)
 ---
 
 ## C
-
-### ChatCommand
-
-An enum representing streaming response variants from the Aomi runtime: `StreamingText`, `ToolCall`, `AsyncToolResult`, `Complete`, `Error`, `Interrupted`.
-
-See: [SDK Reference](/reference/sdk-api)
 
 ### CLI
 
@@ -113,42 +95,6 @@ The signature validation standard for smart contract wallets. Aomi supports EIP-
 
 See: [Account Abstraction](/reference/account-abstraction)
 
-### EvalCase
-
-A single test case in the Aomi evaluation framework. Defines a name, instruction, and set of assertions to verify agent behavior.
-
-See: [Evals & Testing](/guides/evals-testing)
-
-### EvalHarness
-
-The test runner for evaluating agent behavior. Runs EvalCases against an agent and reports pass or fail for each assertion.
-
-See: [Evals & Testing](/guides/evals-testing)
-
-### Execution Plan
-
-A grouped set of operations produced by the ForgeExecutor. Groups related script steps into a single execution unit for dependency-aware ordering.
-
----
-
-## F
-
-### ForgeExecutor
-
-A dependency-aware executor for Forge scripts. Handles compilation, dependency resolution, and script execution against Anvil forks.
-
-### Fork Provider
-
-Manages the lifecycle of Anvil fork instances. Supports managed forks (created on demand) and external forks (connected to existing instances).
-
-See: [Simulation Reference](/reference/simulation)
-
-### Fork Snapshot
-
-A captured state of an Anvil fork at a point in time. Enables reverting to a known state after simulation, allowing multiple simulations without recreating the fork.
-
-See: [Simulation Reference](/reference/simulation)
-
 ---
 
 ## G
@@ -169,12 +115,6 @@ The `@aomi-labs/react` npm package. Provides runtime logic, state management, ho
 
 See: [Headless Library](/guides/headless-library)
 
-### HistoryBackend
-
-A pluggable persistence trait for session history. Supports in-memory (development), SQLite, PostgreSQL, and custom backends.
-
-See: [Runtime Reference](/reference/runtime), [SDK Reference](/reference/sdk-api)
-
 ---
 
 ## I
@@ -194,12 +134,6 @@ See: [Integration Guide](/guides/integration)
 Model Context Protocol. A protocol for connecting LLMs to external tools and data sources. Aomi supports MCP for extended tool registrations beyond built-in tools.
 
 See: [Architecture](/concepts/architecture)
-
-### MultiStepApiTool
-
-A Rust trait for tools that produce streaming results over time. Implements `call_stream()` with a sender channel for progress updates and final results.
-
-See: [SDK Reference](/reference/sdk-api)
 
 ---
 
@@ -293,18 +227,6 @@ The process of computing the difference between pre-simulation and post-simulati
 
 See: [Simulation Reference](/reference/simulation)
 
-### SystemEvent
-
-An event emitted by the Aomi runtime for out-of-band communication. Variants: `InlineDisplay` (UI notifications), `SystemNotice` (status messages), `SystemError` (errors), `AsyncUpdate` (background updates).
-
-See: [SDK Reference](/reference/sdk-api)
-
-### SystemEventQueue
-
-A thread-safe event buffer used by the runtime to collect and dispatch system events. Consumers can read events without consuming them.
-
-See: [SDK Reference](/reference/sdk-api)
-
 ---
 
 ## T
@@ -314,18 +236,6 @@ See: [SDK Reference](/reference/sdk-api)
 A typed function that an LLM can invoke during a conversation. Tools wrap APIs, onchain actions, or data sources. Each tool has a name, description, and typed input parameters.
 
 See: [Integration Guide](/guides/integration), [Custom Tools](/guides/custom-tools)
-
-### Tool Scheduler
-
-The global registry and executor for all registered tools. Manages tool registration, concurrent execution, and result streaming back to the LLM.
-
-See: [SDK Reference](/reference/sdk-api)
-
-### ToolResultStream
-
-A streaming abstraction for tool results. Supports single-result tools (shared future) and multi-step tools (mpsc channel) for progressive result delivery.
-
-See: [SDK Reference](/reference/sdk-api)
 
 ---
 
