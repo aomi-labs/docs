@@ -12,7 +12,7 @@
     "pages": [
       "index",
       {
-        "group": "Introduction",
+        "group": "Try Aomi",
         "icon": "rocket",
         "pages": [
         "getting-started/quickstart",
