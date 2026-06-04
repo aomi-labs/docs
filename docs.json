@@ -125,6 +125,7 @@
         "pages": [
           "reference/index",
           "reference/simulation",
+          "reference/account-abstraction",
           "reference/runtime",
           "reference/api-reference",
           "reference/sessions",

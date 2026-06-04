@@ -79,19 +79,7 @@ See: [Client CLI](/reference/cli)
 
 ### ERC-4337
 
-The Ethereum account abstraction standard. Aomi supports ERC-4337 for session keys, gas sponsorship, and batched user operations.
-
-See: [Account Abstraction](/reference/account-abstraction)
-
-### ERC-6900
-
-The modular account standard. Extends ERC-4337 with pluggable modules for custom validation, execution, and payment logic.
-
-See: [Account Abstraction](/reference/account-abstraction)
-
-### EIP-1271
-
-The signature validation standard for smart contract wallets. Aomi supports EIP-1271 for contract-based account signing.
+The Ethereum account abstraction standard. Aomi supports ERC-4337 for gas sponsorship and batched user operations.
 
 See: [Account Abstraction](/reference/account-abstraction)
 
@@ -202,12 +190,6 @@ See: [How It Works](/concepts/how-it-works), [Runtime Reference](/reference/runt
 A conversation thread identified by a UUID. Sessions maintain their own message history, tool execution state, and event queue. Sessions expire after a configurable TTL.
 
 See: [Sessions Reference](/reference/sessions)
-
-### Session Key
-
-An ephemeral, limited-permission key used in account abstraction. Session keys allow the AI to execute approved operations without requiring user interaction for every transaction.
-
-See: [Account Abstraction](/reference/account-abstraction)
 
 ### Simulation-First
 

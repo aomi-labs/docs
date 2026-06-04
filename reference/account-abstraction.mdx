@@ -1,13 +1,40 @@
 ---
 title: Account Abstraction
-description: Account abstraction support in Aomi. Session keys, sponsored gas, and batched operations are coming soon.
+description: How Aomi signs through account abstraction by default, with paymaster gas sponsorship, batched operations, and automatic EOA fallback.
 ---
 
-Account abstraction support in Aomi is coming soon.
+Aomi signs transactions through account abstraction by default. When account abstraction is not available, it falls back to a direct EOA signature, so signing always completes either way.
 
-When it lands, this page will document the public API for session keys, sponsored gas, and batched operations. Until then, transactions follow the standard [non-custodial](/concepts/non-custodial-wallets) flow: the App stages a transaction, the host simulates it, and you sign it in your own wallet.
+## What you get
+
+Signing through account abstraction unlocks two things on top of a plain wallet signature:
+
+- **Gas sponsorship through a paymaster.** A paymaster covers the gas, so a user does not need to hold the gas token to transact.
+- **Batched operations.** Several actions are bundled into a single user operation and submitted together, instead of one signature per step.
+
+## The two modes
+
+Account abstraction runs in one of two modes, selected with `--aa-mode`:
+
+| Mode | Flag | What it is |
+| --- | --- | --- |
+| ERC-4337 | `--aa-mode 4337` | The user operation standard. Actions are bundled into a user operation and sent through an entry point contract. |
+| EIP-7702 | `--aa-mode 7702` | Lets a regular EOA act as a smart account for a transaction, so an existing wallet gets account abstraction features without migrating to a new address. |
+
+The paymaster that sponsors gas comes from one of two providers, selected with `--aa-provider`: `alchemy` or `pimlico`.
+
+## How to control it
+
+You do not need to set anything for the default behavior. Account abstraction first with automatic EOA fallback is the default. When you want to force or constrain the path, use the `aomi` CLI:
+
+- `--aa` requires account abstraction and errors if no provider is configured.
+- `--eoa` forces a direct EOA signature and skips account abstraction.
+- `--aa-provider` picks the paymaster provider (`alchemy` or `pimlico`).
+- `--aa-mode` picks the mode (`4337` or `7702`).
+
+See the [Client CLI signing modes](/reference/cli#signing-modes) for the full flag surface, including how `--aa` and `--eoa` interact. For how signing fits into a trade end to end, see [Trade Execution](/trade/execution).
 
 ## Next Steps
 
-- [Non-Custodial Automation](/concepts/non-custodial-wallets): wallet security model
-- [Simulation Reference](/reference/simulation): transaction pipeline details
+- [Client CLI signing modes](/reference/cli#signing-modes): the `--aa`, `--eoa`, `--aa-provider`, and `--aa-mode` flags in full
+- [Trade Execution](/trade/execution): the trade flow from quote to signed transaction
