@@ -50,6 +50,7 @@
       },
       {
         "group": "Integrations",
+        "icon": "puzzle",
         "pages": [
           "guides/integration",
           {
@@ -106,6 +107,7 @@
       },
       {
         "group": "Examples",
+        "icon": "rectangle-code",
         "pages": [
           "examples/index",
           "examples/polymarket",
