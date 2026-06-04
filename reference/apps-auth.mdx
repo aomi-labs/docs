@@ -1,6 +1,6 @@
 ---
 title: Apps & Authentication
-description: How Aomi Apps, scoped App keys, and chat sessions work together — App composition, key isolation, authentication flow, and per-App configuration boundaries.
+description: How Aomi Apps, scoped App keys, and chat sessions work together. App composition, key isolation, authentication flow, and per-App configuration boundaries.
 ---
 
 Every Aomi-powered assistant runs inside an **App**. This page explains how Apps, App keys, and sessions work together.
@@ -16,7 +16,7 @@ An App is a self-contained AI assistant environment that encapsulates:
 | **Model config** | Default LLM and available alternatives |
 | **RAG docs** | Optional document store for domain knowledge |
 
-Each App is fully isolated — its tools and configuration have no visibility into other Apps.
+Each App is fully isolated. Its tools and configuration have no visibility into other Apps.
 
 ## App Keys
 
@@ -24,9 +24,9 @@ App keys are issued by Aomi and scoped to one or more Apps.
 
 ### Properties
 
-- **Scoped** — each key authorizes access to specific Apps
-- **Stored securely** — keys are hashed in the database
-- **Revocable** — keys can be deactivated without affecting the App
+- **Scoped**: each key authorizes access to specific Apps
+- **Stored securely**: keys are hashed in the database
+- **Revocable**: keys can be deactivated without affecting the App
 
 ### Usage
 
@@ -78,18 +78,18 @@ Sessions represent conversation threads identified by a UUID in the `X-Session-I
 
 ### Properties
 
-- **ID** — client-generated UUID
-- **Messages** — full conversation history
-- **Wallet binding** — optional association with a wallet address
-- **Processing status** — idle, processing, or interrupted
+- **ID**: client-generated UUID
+- **Messages**: full conversation history
+- **Wallet binding**: optional association with a wallet address
+- **Processing status**: idle, processing, or interrupted
 
 ### Lifecycle
 
 Sessions use a three-tier load strategy:
 
-1. **Memory cache** — check if the session is active in memory
-2. **Database** — load persisted session from PostgreSQL
-3. **Create new** — if not found, create a fresh session
+1. **Memory cache**: check if the session is active in memory
+2. **Database**: load persisted session from PostgreSQL
+3. **Create new**: if not found, create a fresh session
 
 ### Wallet Binding
 
@@ -114,6 +114,6 @@ Aomi provides a `default` App accessible without an App key. Useful for public d
 
 ## Next Steps
 
-- [API Reference](/reference/api-reference) — full endpoint documentation
-- [Sessions](/reference/sessions) — session management deep-dive
-- [Quickstart](/getting-started/quickstart) — get a working integration in 5 minutes
+- [API Reference](/reference/api-reference): full endpoint documentation
+- [Sessions](/reference/sessions): session management deep dive
+- [Quickstart](/getting-started/quickstart): get a working integration in 5 minutes

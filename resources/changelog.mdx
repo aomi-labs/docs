@@ -1,6 +1,6 @@
 ---
 title: "Changelog"
-description: "Aomi platform changelog — track major surface-area changes, SDK and widget releases, runtime updates, new integrations, and current development priorities."
+description: "Aomi platform changelog: track major surface area changes, SDK and widget releases, runtime updates, new integrations, and current development priorities."
 ---
 
 Track significant changes to the Aomi platform, SDK, widget, and runtime. For day-to-day fixes, see the [GitHub releases](https://github.com/aomi-labs).
@@ -9,10 +9,10 @@ Track significant changes to the Aomi platform, SDK, widget, and runtime. For da
 
 ## In development
 
-- **Discord bot** — bringing the assistant to Discord servers ([status](/getting-started/discord))
-- **iOS app** — native mobile experience ([status](/getting-started/ios))
-- **Agent discovery surfaces** — make Apps visible across the network
-- **Stable markdown mirrors** — documentation parity across channels
+- **Discord bot.** Bringing the assistant to Discord servers ([status](/getting-started/discord)).
+- **iOS app.** Native mobile experience ([status](/getting-started/ios)).
+- **Agent discovery surfaces.** Make Apps visible across the network.
+- **Stable markdown mirrors.** Documentation parity across channels.
 
 ---
 
@@ -22,9 +22,9 @@ Smoother UX without compromising custody.
 
 **Added**
 
-- **Account abstraction support** — session keys for repeated actions without re-signing, gas sponsorship via paymasters, and batched operations in a single user-op. See [Account Abstraction](/reference/account-abstraction).
-- **Telegram bot panel system** — interactive panels for transaction review and tool output, including approve/reject flows for on-chain actions.
-- **`@aomi-labs/client` CLI GA** — full reference at [CLI Reference](/reference/cli); validate prompts, inspect sessions, and simulate execution locally.
+- **Account abstraction support.** Session keys for repeated actions without re-signing, gas sponsorship via paymasters, and batched operations in a single user-op. See [Account Abstraction](/reference/account-abstraction).
+- **Telegram bot panel system.** Interactive panels for transaction review and tool output, including approve/reject flows for onchain actions.
+- **`@aomi-labs/client` CLI GA.** Full reference at [CLI Reference](/reference/cli); validate prompts, inspect sessions, and simulate execution locally.
 
 **Changed**
 
@@ -38,10 +38,10 @@ The frontend story lands.
 
 **Added**
 
-- **Widget GA via shadcn registry** — `npx shadcn add https://aomi.dev/r/aomi-frame.json` installs `AomiFrame` and all sub-components. Source is copied into your project; you own and edit it.
-- **`@aomi-labs/react` headless library** — `AomiRuntimeProvider`, `useAomiRuntime`, `useControl`, `useUser`, and the `AomiClient` client for building custom UIs.
-- **Simulation pipeline with Anvil fork management** — every transaction simulated on a forked network before reaching the wallet. See [Simulation Reference](/reference/simulation).
-- **Compound component API** — `AomiFrame.Root`, `AomiFrame.Header`, `AomiFrame.Composer` for custom layouts.
+- **Widget GA via shadcn registry.** `npx shadcn add https://aomi.dev/r/aomi-frame.json` installs `AomiFrame` and all sub-components. Source is copied into your project; you own and edit it.
+- **`@aomi-labs/react` headless library.** `AomiRuntimeProvider`, `useAomiRuntime`, `useControl`, `useUser`, and the `AomiClient` client for building custom UIs.
+- **Simulation pipeline with Anvil fork management.** Every transaction simulated on a forked network before reaching the wallet. See [Simulation Reference](/reference/simulation).
+- **Compound component API.** `AomiFrame.Root`, `AomiFrame.Header`, `AomiFrame.Composer` for custom layouts.
 
 **Changed**
 
@@ -55,9 +55,9 @@ The runtime gets real.
 
 **Added**
 
-- **Streaming responses (SSE)** — text, tool calls, and tool results stream incrementally. Event types: `text`, `tool_call`, `tool_result`, `complete`.
-- **Multi-model support** — Claude (Sonnet, Haiku), GPT-4o (and Mini), and 100\+ models via OpenRouter. Switch at runtime via `/api/control/model` without redeploying.
-- **Non-custodial wallet integration** — Para handles connect and account management; signing flows through wagmi-compatible connectors. Aomi never holds keys.
+- **Streaming responses (SSE).** Text, tool calls, and tool results stream incrementally. Event types: `text`, `tool_call`, `tool_result`, `complete`.
+- **Multi-model support.** Claude (Sonnet, Haiku), GPT-4o (and Mini), and 100\+ models via OpenRouter. Switch at runtime via `/api/control/model` without redeploying.
+- **Non-custodial wallet integration.** Para handles connect and account management; signing flows through wagmi-compatible connectors. Aomi never holds keys.
 
 **Changed**
 
@@ -71,15 +71,15 @@ Aomi opens to early users.
 
 **Added**
 
-- **Aomi platform beta** — hosted runtime with App configuration, preamble \+ model selection, and the default App for unauthenticated testing.
-- **Web App at [chat.aomi.dev](https://chat.aomi.dev)** — public chat interface, no install required.
-- **Telegram bot [@aomi\_sendit\_bot](https://t.me/aomi_sendit_bot)** — chat with Aomi from Telegram.
-- **App isolation** — each App has scoped tools, preamble, model, and API key. Switching Apps changes the entire agent.
+- **Aomi platform beta.** Hosted runtime with App configuration, preamble \+ model selection, and the default App for unauthenticated testing.
+- **Web App at [chat.aomi.dev](https://chat.aomi.dev).** Public chat interface, no install required.
+- **Telegram bot [@aomi\_sendit\_bot](https://t.me/aomi_sendit_bot).** Chat with Aomi from Telegram.
+- **App isolation.** Each App has scoped tools, preamble, model, and API key. Switching Apps changes the entire agent.
 
 ---
 
 ## Next steps
 
-- [FAQ](/resources/faq) — frequently asked questions
-- [What is Aomi?](/concepts/what-is-aomi) — platform overview
-- [Quickstart](/getting-started/quickstart) — install in minutes
+- [FAQ](/resources/faq): frequently asked questions
+- [What is Aomi?](/concepts/what-is-aomi): platform overview
+- [Quickstart](/getting-started/quickstart): install in minutes

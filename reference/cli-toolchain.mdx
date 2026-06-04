@@ -19,6 +19,10 @@ cargo install --git https://github.com/aomi-labs/aomi-sdk --features cli,dev-run
 
 The `cli` feature builds `aomi-build` and `aomi-git`; the `dev-runtime` feature builds `aomi-run`. Install with `--features cli` alone and you get only `aomi-build` and `aomi-git`, not `aomi-run`. These binaries have no `--version` flag; run `aomi-git --help` (or `--help` on any of them) to confirm the install.
 
+<Note>
+These are not standalone crates or npm packages, so there is no `aomi-run` to find on crates.io or npm. They are binaries built from the `aomi-sdk` crate, which is why the install command points at that crate and uses feature flags to choose which binaries you get.
+</Note>
+
 Each binary owns one job. You move left to right as your App matures.
 
 <CardGroup cols={3}>
@@ -284,12 +288,12 @@ Ops then invite your GitHub account as a platform repo collaborator and email yo
 
 | Flag | Mirrors `aomi.toml` | Meaning |
 |---|---|---|
-| `--email <EMAIL>` | — | Where ops send your activation code. **Required.** |
-| `--git-account <USER>` | — | GitHub account to invite as a platform repo collaborator. **Required.** |
+| `--email <EMAIL>` | n/a | Where ops send your activation code. **Required.** |
+| `--git-account <USER>` | n/a | GitHub account to invite as a platform repo collaborator. **Required.** |
 | `--app <NAME>` | `[app].name` | App slug. Defaults to the value in `aomi.toml`. |
 | `--platform <NAME>` | `[app].platform` | Platform tag. Falls back to `aomi.toml`, then `community`. |
-| `--path <DIR>` | — | Source repo for the `aomi.toml` lookup. Default: `.` |
-| `--dry-run` | — | Print the Discord message; post nothing. |
+| `--path <DIR>` | n/a | Source repo for the `aomi.toml` lookup. Default: `.` |
+| `--dry-run` | n/a | Print the Discord message; post nothing. |
 
 <Note>
 `request` is community tier only. B2B partners deploy through a server-side proxy and do not get direct repo access, so they do not use it.
@@ -310,14 +314,14 @@ aomi-git deploy --platform-dir /path/to/platform-repo
 
 | Flag | Mirrors `aomi.toml` | Meaning |
 |---|---|---|
-| `[PATH]` (`--path`) | — | App source directory. Default: `.` |
+| `[PATH]` (`--path`) | n/a | App source directory. Default: `.` |
 | `--platform <NAME>` | `[app].platform` | Platform tag. Default: the toml value, then `community`. |
 | `--source-repo <URL\|owner/repo>` | `[app].git` | Platform repo. Resolved from the backend record when omitted. |
-| `--platform-dir <DIR>` | — | Hand managed local clone to stage and push from. Skips the transit cache. |
+| `--platform-dir <DIR>` | n/a | Hand managed local clone to stage and push from. Skips the transit cache. |
 | `--backend <URL>` | `AOMI_BACKEND_URL` | Backend base URL for online checks. |
-| `--dry-run` | — | Plan plus best effort backend reads. No staging, push, or activation. |
-| `--allow-dirty` | — | Permit a dirty working tree in the plan and during staging. |
-| `--json` | — | Print the plan or outcome as JSON. |
+| `--dry-run` | n/a | Plan plus best effort backend reads. No staging, push, or activation. |
+| `--allow-dirty` | n/a | Permit a dirty working tree in the plan and during staging. |
+| `--json` | n/a | Print the plan or outcome as JSON. |
 
 <Note>
 **Auto activate on deploy.** If `AOMI_APP_ACTIVATION_TOKEN` is set and the push lands, `deploy` tries to activate right away. This usually returns a 502 on the first push because the release tarball does not exist yet, since CI is still building. That is expected. The normal flow is to run `activate` yourself once CI is green.
@@ -331,12 +335,12 @@ aomi-git status --path /path/to/app
 
 | Flag | Mirrors `aomi.toml` | Meaning |
 |---|---|---|
-| `[APP_RELEASE_TAG]` | — | Release to check. Falls back to deployment.json's `target.app_release_tag`. |
+| `[APP_RELEASE_TAG]` | n/a | Release to check. Falls back to deployment.json's `target.app_release_tag`. |
 | `--source-repo <URL\|owner/repo>` | `[app].git` | Platform repo. Falls back to deployment.json. |
 | `--backend <URL>` | `AOMI_BACKEND_URL` | Backend base URL. Pass `--backend ''` to skip. |
 | `--access-token <$ENV\|VAL>` | `[app].access_token` | GitHub PAT for private repo reads. Omit for public repos. |
-| `--path <DIR>` | — | Source repo for the deployment.json fallback. Default: `.` |
-| `--json` | — | Print the status report as JSON. |
+| `--path <DIR>` | n/a | Source repo for the deployment.json fallback. Default: `.` |
+| `--json` | n/a | Print the status report as JSON. |
 
 ### activate
 
@@ -353,21 +357,21 @@ aomi-git activate apps-my-bot-abc1234 \
 
 | Flag | Mirrors `aomi.toml` | Meaning |
 |---|---|---|
-| `[APP_RELEASE_TAG]` | — | Release to activate (e.g. `apps-my-bot-abc1234`). Falls back to deployment.json's `target.app_release_tag`. |
+| `[APP_RELEASE_TAG]` | n/a | Release to activate (e.g. `apps-my-bot-abc1234`). Falls back to deployment.json's `target.app_release_tag`. |
 | `--platform <NAME>` | `[app].platform` | Platform tag. Falls back to deployment.json, then `community`. |
 | `--source-repo <URL\|owner/repo>` | `[app].git` | `source_repo` on the app row. Falls back to deployment.json, then a backend lookup. |
 | `--backend <URL>` | `AOMI_BACKEND_URL` | Backend base URL. **Required.** |
 | `--activation-token <T>` | `AOMI_APP_ACTIVATION_TOKEN` | Your per-app activation code. **Required.** |
 | `--access-token <$ENV\|VAL>` | `[app].access_token` | GitHub PAT for the backend's one shot release fetch. Only for private platform repos. |
-| `--target-tag <TAG>` | — | Required backend server tag. Repeatable. |
+| `--target-tag <TAG>` | n/a | Required backend server tag. Repeatable. |
 | `--visibility <V>` | `[app].public` | `private` (default) or `public`. |
 | `--display-name <STR>` | `[app].display_name` | Registry label. Falls back to deployment.json. |
-| `--source-commit <SHA>` | — | Provenance. Falls back to deployment.json. |
-| `--source-tree <SHA>` | — | Provenance. Falls back to deployment.json. |
-| `--source-digest <SHA>` | — | Provenance. Falls back to deployment.json. |
-| `--path <DIR>` | — | Source repo for the deployment.json fallback. Default: `.` |
-| `--dry-run` | — | Print the activation request that would be sent. No HTTP. |
-| `--json` | — | Print the backend response as JSON. |
+| `--source-commit <SHA>` | n/a | Provenance. Falls back to deployment.json. |
+| `--source-tree <SHA>` | n/a | Provenance. Falls back to deployment.json. |
+| `--source-digest <SHA>` | n/a | Provenance. Falls back to deployment.json. |
+| `--path <DIR>` | n/a | Source repo for the deployment.json fallback. Default: `.` |
+| `--dry-run` | n/a | Print the activation request that would be sent. No HTTP. |
+| `--json` | n/a | Print the backend response as JSON. |
 
 <Note>
 Flags resolve through a defaults pyramid: a CLI flag wins, then `.aomi/deployment.json` at `--path`, then a backend lookup, then a hardcoded default. Each step is best effort, so a missing deployment.json or an unreachable backend never aborts the whole plan. Only the operation that genuinely needs the unresolved value will error. Two env vars feed the chain: `AOMI_BACKEND_URL` (used by every subcommand that talks to a backend) and `AOMI_APP_ACTIVATION_TOKEN` (used by `activate`, `config`, and deploy auto activate).
@@ -397,9 +401,9 @@ AOMI_BACKEND_URL=https://staging-api.aomi.dev \
 | `--activation-token <T>` | `AOMI_APP_ACTIVATION_TOKEN` | Your per-app activation code. |
 | `--public <BOOL>` | `[app].public` | Flip visibility live. Omit to leave it untouched. |
 | `--display-name <STR>` | `[app].display_name` | New registry label. Omit to leave it untouched. |
-| `--path <DIR>` | — | Source repo for the deployment.json fallback. Default: `.` |
-| `--dry-run` | — | Print the planned config request. No HTTP. |
-| `--json` | — | Print the backend response as JSON. |
+| `--path <DIR>` | n/a | Source repo for the deployment.json fallback. Default: `.` |
+| `--dry-run` | n/a | Print the planned config request. No HTTP. |
+| `--json` | n/a | Print the backend response as JSON. |
 
 ### The validation pipeline
 

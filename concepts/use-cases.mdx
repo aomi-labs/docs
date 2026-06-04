@@ -1,27 +1,27 @@
 ---
 title: Use Cases
-description: What teams are building with Aomi — prediction market trading terminals, DeFi yield allocators, GameFi asset trading, and more.
+description: What teams are building with Aomi: prediction market trading terminals, DeFi yield allocators, GameFi asset trading, and more.
 ---
 
 ## Trading and DeFi
 
 ### Prediction Market Trading Terminal
 
-Build an AI-native hybrid trading platform where users search markets, preview trades, and execute through their wallet — all in natural language. The proxy layer injects live market data into every request so the AI already knows current odds and volume before the user finishes typing. Structured trade cards render inline for one-click confirmation. Position guards monitor open positions and execute exit orders automatically when stop-loss or take-profit thresholds are met.
+Build an AI-native hybrid trading platform where users search markets, preview trades, and execute through their wallet, all in natural language. The proxy layer injects live market data into every request so the AI already knows current odds and volume before the user finishes typing. Structured trade cards render inline for one-click confirmation. Position guards monitor open positions and execute exit orders automatically when stop-loss or take-profit thresholds are met.
 
 See the [Polymarket app](/concepts/skills) for market tools and [Session class](/reference/sessions) for the execution pipeline.
 
 ### Portfolio Risk Manager
 
-Build a system that continuously monitors user positions across markets and automatically reacts to risk. Users define rules in plain language — "reduce exposure if probability drops below 40%" — and the agent tracks, suggests, or executes on confirmation.
+Build a system that continuously monitors user positions across markets and automatically reacts to risk. Users define rules in plain language, like "reduce exposure if probability drops below 40%", and the agent tracks, suggests, or executes on confirmation.
 
 ### Automated Trading Strategies
 
-Let users define trading logic without writing scripts: "buy when odds fall below 30% and sell at 55%." The agent watches continuously and executes when conditions are met. Position guards handle the monitoring loop; the [Aomi CLI](/reference/cli) handles execution.
+Let users define trading logic without writing scripts: "buy when odds fall below 30% and sell at 55%." The agent watches continuously and executes when conditions are met. Position guards handle the monitoring loop, and the [Aomi CLI](/reference/cli) handles execution.
 
 ### Alert and Execution Bot
 
-Instead of simple notifications, build agents that act. A user sets "alert me and buy $50 if this crosses 60%" — the agent both notifies and prepares the transaction, cutting the delay between signal and action. Uses [SSE streaming](/reference/runtime#streaming--events) for real-time triggers.
+Instead of simple notifications, build agents that act. A user sets "alert me and buy $50 if this crosses 60%", and the agent both notifies and prepares the transaction, cutting the delay between signal and action. Uses [SSE streaming](/reference/runtime#streaming--events) for real time triggers.
 
 ### DeFi Yield Allocator
 
@@ -45,7 +45,7 @@ Readers pay to unlock a post through Aomi. Micropayment, instant settlement, no 
 
 ### Music Platforms
 
-Artists release tracks, fans mint limited edition ownership certificates. The artist gets paid instantly onchain — no label, no distributor. Use the [headless library](/guides/headless-library) for custom minting UI.
+Artists release tracks, fans mint limited edition ownership certificates. The artist gets paid instantly onchain, with no label and no distributor. Use the [headless library](/guides/headless-library) for custom minting UI.
 
 ### Video Platforms
 
@@ -65,9 +65,9 @@ Build a system where strategies are shared and executed through agents. A user s
 
 ### In-Game Asset Trading
 
-Embed the widget into your game client and let players trade in-game assets using natural language. "Sell my sword for the best price" — the agent routes through the right marketplace and executes on confirmation. Adding new marketplaces is additive, not a rewrite.
+Embed the widget into your game client and let players trade in-game assets using natural language. A player says "sell my sword for the best price", and the agent routes through the right marketplace and executes on confirmation. Adding new marketplaces is additive, not a rewrite.
 
-An example is **Mochi** — an AI companion in a Roblox-style world where players make things by talking. Integrated with Aomi SDK so users transact onchain without ever knowing they're on a blockchain.
+An example is **Mochi**, an AI companion in a Roblox-style world where players make things by talking. Integrated with Aomi SDK so users transact onchain without ever knowing they're on a blockchain.
 
 ### NFT and Asset Trading Agent
 
@@ -79,7 +79,7 @@ Users define conditions like "buy this NFT if the floor drops 10%" and the agent
 
 ### CI/CD Onchain Attestation
 
-When a build passes, Aomi triggers an onchain attestation — proof that code was audited, tested, and deployed at a specific commit hash. Immutable, verifiable, trustless. See the [execution guide](/trade/execution) for the simulation and signing pipeline.
+When a build passes, Aomi triggers an onchain attestation, proof that code was audited, tested, and deployed at a specific commit hash. Immutable, verifiable, trustless. See the [execution guide](/trade/execution) for the simulation and signing pipeline.
 
 ### Contributor Badges
 
@@ -99,15 +99,15 @@ The agent monitors allocations, suggests rebalancing, or executes predefined str
 
 ### DAO Tooling
 
-Members vote on proposals through Aomi. Votes are onchain. Execution is automatic when the threshold is met — no multisig coordination, no manual execution. See [account abstraction](/reference/account-abstraction) for batched operations.
+Members vote on proposals through Aomi. Votes are onchain. Execution is automatic when the threshold is met, with no multisig coordination and no manual execution. See [account abstraction](/reference/account-abstraction) for batched operations.
 
 ### Onchain Role Management
 
-Earn roles by completing onchain tasks. Aomi verifies completion and upgrades your role automatically — no admin needed. Uses the [apps-auth](/reference/apps-auth) model for scoped permissions.
+Earn roles by completing onchain tasks. Aomi verifies completion and upgrades your role automatically, with no admin needed. Uses the [apps-auth](/reference/apps-auth) model for scoped permissions.
 
 ### Compliance and Risk Guardrails
 
-Enforce constraints through the agent: "block trades above this risk threshold" or "require confirmation for high-value transactions" — applied automatically as a safety layer. Built on top of Aomi's [simulation-first](/reference/simulation) security model.
+Enforce constraints through the agent: "block trades above this risk threshold" or "require confirmation for high-value transactions", applied automatically as a safety layer. Built on top of Aomi's [simulation-first](/reference/simulation) security model.
 
 ---
 
@@ -119,7 +119,7 @@ Embed the widget into any dApp to help users execute complex onchain actions. Th
 
 ### Wallet AI Assistant
 
-Embed AomiFrame inside any crypto wallet. Users ask "what does this contract do?" before signing. The agent simulates the transaction, shows exact token changes and gas costs, and lets the user approve or reject with full context — no more blind signing. See the [simulation reference](/reference/simulation) for the safety pipeline.
+Embed AomiFrame inside any crypto wallet. Users ask "what does this contract do?" before signing. The agent simulates the transaction, shows exact token changes and gas costs, and lets the user approve or reject with full context. No more blind signing. See the [simulation reference](/reference/simulation) for the safety pipeline.
 
 ---
 
@@ -127,10 +127,10 @@ Embed AomiFrame inside any crypto wallet. Users ask "what does this contract do?
 
 All use cases above use the same stack:
 
-- [`aomi-labs/aomi`](https://github.com/aomi-labs/aomi) — core widget library and backend
-- [`aomi-labs/aomi-sdk`](https://github.com/aomi-labs/aomi-sdk) — Rust SDK for custom plugins
-- [`aomi-labs/aomi-client-example`](https://github.com/aomi-labs/aomi-client-example) — working example proxy bot
-- [`aomi-labs/skills`](https://github.com/aomi-labs/skills) — protocol skill definitions
+- [`aomi-labs/aomi`](https://github.com/aomi-labs/aomi): core widget library and backend
+- [`aomi-labs/aomi-sdk`](https://github.com/aomi-labs/aomi-sdk): Rust SDK for custom plugins
+- [`aomi-labs/aomi-client-example`](https://github.com/aomi-labs/aomi-client-example): working example proxy bot
+- [`aomi-labs/skills`](https://github.com/aomi-labs/skills): protocol skill definitions
 
 ```bash
 npm i -g @aomi-labs/client

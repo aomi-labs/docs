@@ -1,6 +1,6 @@
 ---
 title: Sessions
-description: How Aomi chat sessions work — creation, loading, message history persistence, thread management, and the full lifecycle of a conversation in the runtime.
+description: How Aomi chat sessions work. Creation, loading, message history persistence, thread management, and the full lifecycle of a conversation in the runtime.
 ---
 
 A session is a conversation thread with message history. This page covers how sessions are created, loaded, persisted, and managed.
@@ -67,9 +67,9 @@ flowchart TD
     CACHE --> USE
 ```
 
-1. **Memory cache** — the session is already active in the server's memory. This is the fastest path and handles the common case where a user is mid-conversation.
-2. **Database** — the session was previously persisted to PostgreSQL. It is loaded and cached in memory.
-3. **Create new** — no prior session exists. A fresh session is created and cached.
+1. **Memory cache**: the session is already active in the server's memory. This is the fastest path and handles the common case where a user is mid-conversation.
+2. **Database**: the session was previously persisted to PostgreSQL. It is loaded and cached in memory.
+3. **Create new**: no prior session exists. A fresh session is created and cached.
 
 ## Message Persistence
 
@@ -109,15 +109,15 @@ flowchart LR
     BIND --> HISTORY
 ```
 
-- **Tool context** — tools like `GetPortfolio` can automatically scope queries to the connected wallet.
-- **Persistent history** — conversations tied to a public key persist across sessions and devices.
-- **Cross-session continuity** — the assistant remembers previous interactions when the same wallet reconnects.
+- **Tool context**: tools like `GetPortfolio` can automatically scope queries to the connected wallet.
+- **Persistent history**: conversations tied to a public key persist across sessions and devices.
+- **Cross-session continuity**: the assistant remembers previous interactions when the same wallet reconnects.
 
 Wallet binding is optional. Sessions work without a wallet for non-Web3 use cases.
 
 ## Thread Management
 
-Within a session, users can create multiple **threads** — separate conversation topics with independent message histories.
+Within a session, users can create multiple **threads**, separate conversation topics with independent message histories.
 
 ### Operations
 
@@ -194,9 +194,9 @@ console.log(state.is_processing); // true | false
 console.log(state.user_state?.evm?.address); // "0x742d..." or undefined
 ```
 
-### Real-Time Updates
+### Real Time Updates
 
-For real-time updates without polling, subscribe to the SSE updates channel. The session ID travels in a header, so open it with `fetch` and read the body instead of using `EventSource`:
+For real time updates without polling, subscribe to the SSE updates channel. The session ID travels in a header, so open it with `fetch` and read the body instead of using `EventSource`:
 
 ```ts
 const response = await fetch("/api/updates", {
@@ -213,6 +213,6 @@ See the [API Reference](/reference/api-reference#subscribe-to-updates) for a ful
 
 ## Next Steps
 
-- [API Reference](/reference/api-reference) — full endpoint documentation for session operations.
-- [Headless Library](/guides/headless-library) — build custom session UIs with @aomi-labs/react.
-- [Widget Installation](/guides/widget-installation) — install and configure the chat widget.
+- [API Reference](/reference/api-reference): full endpoint documentation for session operations.
+- [Headless Library](/guides/headless-library): build custom session UIs with @aomi-labs/react.
+- [Widget Installation](/guides/widget-installation): install and configure the chat widget.

@@ -1,9 +1,9 @@
 ---
 title: Custom Tools
-description: Extend Aomi with custom tools using the Rust SDK — implement the DynAomiTool trait, register tools with the dyn_aomi_app! macro, and ship them as a plugin.
+description: Extend Aomi with custom tools using the Rust SDK. Implement the DynAomiTool trait, register tools with the dyn_aomi_app! macro, and ship them as a plugin.
 ---
 
-Custom tools are how you extend Aomi with your own APIs, data sources, and on-chain actions. You define each tool in the Rust SDK by implementing the `DynAomiTool` trait, then register your tools with the `dyn_aomi_app!` macro. The macro compiles your tool list into a manifest, a dispatch router, and the C ABI entry points the host loads at runtime.
+Custom tools are how you extend Aomi with your own APIs, data sources, and onchain actions. You define each tool in the Rust SDK by implementing the `DynAomiTool` trait, then register your tools with the `dyn_aomi_app!` macro. The macro compiles your tool list into a manifest, a dispatch router, and the C ABI entry points the host loads at runtime.
 
 For the full app lifecycle (crate setup, building, and shipping), see [Building Apps](/reference/building-apps). This page focuses on the tool surface.
 
@@ -41,11 +41,11 @@ impl DynAomiTool for GetPrice {
 
 Each tool declares:
 
-- An **`App`** — the app struct the tool belongs to.
-- An **`Args`** struct — the typed parameters the LLM generates. It must derive `Deserialize` and `JsonSchema`.
-- A **`NAME`** — the identifier the LLM uses to invoke the tool.
-- A **`DESCRIPTION`** — tells the LLM when to use the tool.
-- A **`run`** function — the logic. It returns a JSON `Value` on success or an error `String`.
+- An **`App`** is the app struct the tool belongs to.
+- An **`Args`** struct holds the typed parameters the LLM generates. It must derive `Deserialize` and `JsonSchema`.
+- A **`NAME`** is the identifier the LLM uses to invoke the tool.
+- A **`DESCRIPTION`** tells the LLM when to use the tool.
+- A **`run`** function holds the logic. It returns a JSON `Value` on success or an error `String`.
 
 The `DynToolCallCtx` argument carries per-call context: `session_id`, `call_id`, host-injected `state_attributes`, and resolved `secrets`. Read secrets with `resolve_secret_value` rather than touching the map directly.
 
@@ -79,7 +79,7 @@ impl DynAomiTool for StreamPrices {
 
 Intermediate `emit` calls must send bare values. The terminal `complete` call accepts either a bare value or a routed `ToolReturn`. Check `sink.is_canceled()` to bail out early when the host cancels the call.
 
-## Multi-Step Tools
+## Multistep Tools
 
 A tool can ask the host to run a follow-up step by returning a routed `ToolReturn` instead of a bare value. Override `run_with_routes` and build the route with `aomi_sdk::route`:
 
@@ -128,6 +128,6 @@ assert!(result.is_ok());
 
 ## Next Steps
 
-- [Building Apps](/reference/building-apps) — full app lifecycle and host tool contract
-- [Evals & Testing](/guides/evals-testing) — test your tools and agent behavior
-- [SDK Reference](/reference/sdk-api) — full Rust SDK documentation
+- [Building Apps](/reference/building-apps): full app lifecycle and host tool contract
+- [Evals & Testing](/guides/evals-testing): test your tools and agent behavior
+- [SDK Reference](/reference/sdk-api): full Rust SDK documentation

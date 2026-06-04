@@ -3,7 +3,7 @@ title: Non-Custodial Automation
 description: How Aomi keeps funds safe with local key control, Anvil-forked transaction simulation before signing, and explicit per-transaction user approval.
 ---
 
-Aomi is **non-custodial**: it never holds your private keys or funds. You remain in full control of your wallet at all times. Every transaction is simulated on a forked network before it reaches your wallet, so you can review the exact on-chain outcome before approving.
+Aomi is **non-custodial**: it never holds your private keys or funds. You remain in full control of your wallet at all times. Every transaction is simulated on a forked network before it reaches your wallet, so you can review the exact onchain outcome before approving.
 
 <iframe
   className="aspect-video w-full rounded-lg border"
@@ -24,12 +24,12 @@ Aomi Agent → constructs tx → simulates → presents result → your wallet s
 
 ## Transaction Simulation: The Safety Guardrail
 
-Before any transaction reaches your wallet for approval, Aomi **simulates it on a forked network**. This is a deliberate guardrail for AI-generated transactions -- the LLM cannot send anything to your wallet without first passing through simulation.
+Before any transaction reaches your wallet for approval, Aomi **simulates it on a forked network**. This is a deliberate guardrail for AI-generated transactions. The LLM cannot send anything to your wallet without first passing through simulation.
 
 ### What simulation does
 
 1. Aomi forks the current network state using [Anvil](https://book.getfoundry.sh/anvil/)
-2. The transaction is executed against the fork -- not the real chain
+2. The transaction is executed against the fork, not the real chain
 3. The exact outcome is captured: token balance changes, gas cost, contract calls made
 4. The result is shown to you before you're asked to sign
 
@@ -37,16 +37,16 @@ Before any transaction reaches your wallet for approval, Aomi **simulates it on 
 
 Before your wallet prompt appears, you'll see a simulation result showing:
 
-- **Tokens sent / received** -- exact amounts and token addresses
-- **Gas estimate** -- expected cost in ETH
-- **Contracts called** -- which protocols are involved
-- **Net balance change** -- what your wallet will look like after the transaction
+- **Tokens sent / received**: exact amounts and token addresses
+- **Gas estimate**: expected cost in ETH
+- **Contracts called**: which protocols are involved
+- **Net balance change**: what your wallet will look like after the transaction
 
 Only after you review and confirm the simulation result does Aomi send the transaction to your wallet for signing.
 
 ### Why this matters
 
-LLMs can generate incorrect transaction parameters. Simulation catches problems -- wrong amounts, unexpected contract calls, reverts -- before they become irreversible on-chain. You always have the final say.
+LLMs can generate incorrect transaction parameters. Simulation catches problems like wrong amounts, unexpected contract calls, and reverts before they become irreversible onchain. You always have the final say.
 
 ## Supported Chains
 
@@ -341,6 +341,6 @@ Account abstraction is supported for session keys, gas sponsorship, and batched 
 
 ## Next Steps
 
-- [Agentic Application](/concepts/what-is-aomi) -- understand Apps and API keys
-- [Simulation Reference](/reference/simulation) -- technical deep-dive on the simulation pipeline
-- [Account Abstraction](/reference/account-abstraction) -- session keys and gas sponsorship
+- [Agentic Application](/concepts/what-is-aomi): understand Apps and API keys
+- [Simulation Reference](/reference/simulation): technical deep-dive on the simulation pipeline
+- [Account Abstraction](/reference/account-abstraction): session keys and gas sponsorship

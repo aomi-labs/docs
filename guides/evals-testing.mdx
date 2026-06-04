@@ -1,6 +1,6 @@
 ---
 title: Evals & Testing
-description: Unit-test Aomi tools with the aomi_sdk::testing module — build a tool call context, run sync and async tools, and assert on their results without loading the full plugin.
+description: Unit-test Aomi tools with the aomi_sdk::testing module. Build a tool call context, run sync and async tools, and assert on their results without loading the full plugin.
 ---
 
 The `aomi_sdk::testing` module lets you unit-test your tools without loading the full FFI plugin. You build a tool call context, invoke the tool with typed arguments, and assert on what it returns. Tests run as ordinary `cargo test` cases, so they fit straight into your CI.
@@ -56,7 +56,7 @@ fn get_price_returns_a_value() {
 }
 ```
 
-Tests that only care about the payload can read `output.value`. Tests that exercise multi-step routing can assert on `output.routes`.
+Tests that only care about the payload can read `output.value`. Tests that exercise multistep routing can assert on `output.routes`.
 
 ## Running an Async Tool
 
@@ -102,10 +102,10 @@ cargo test -- --nocapture
 | Test each tool in isolation | A failing tool test points straight at the tool |
 | Cover the error path | Assert that bad input returns an `Err`, not a panic |
 | Use `TestCtxBuilder::secret` | Exercise secret-reading code without a live vault |
-| Assert on `routes` for multi-step tools | Confirm the tool hands off the right follow-up step |
+| Assert on `routes` for multistep tools | Confirm the tool hands off the right follow-up step |
 
 ## Next Steps
 
-- [Custom Tools](/guides/custom-tools) — define tools with `DynAomiTool`
-- [Building Apps](/reference/building-apps) — full app lifecycle and host tool contract
-- [SDK Reference](/reference/sdk-api) — full Rust SDK documentation
+- [Custom Tools](/guides/custom-tools): define tools with `DynAomiTool`
+- [Building Apps](/reference/building-apps): full app lifecycle and host tool contract
+- [SDK Reference](/reference/sdk-api): full Rust SDK documentation

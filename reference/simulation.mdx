@@ -1,11 +1,11 @@
 ---
 title: "Simulation Reference"
-description: "Technical deep-dive into Aomi's simulation-first transaction pipeline — Anvil fork lifecycle, state diffing, token change previews, and safety guarantees."
+description: "Technical deep dive into Aomi's simulation first transaction pipeline. Anvil fork lifecycle, state diffing, token change previews, and safety guarantees."
 ---
 
 The simulation pipeline is the core safety mechanism of the Aomi platform. Every transaction is simulated on a forked network before it reaches the user's wallet.
 
-Aomi uses a **simulation-first** approach for all on-chain transactions. Before any transaction reaches your wallet for signing, it is executed against a forked copy of the current network state. You review the exact outcome — token changes, gas, contract calls — before approving.
+Aomi uses a **simulation first** approach for all onchain transactions. Before any transaction reaches your wallet for signing, it is executed against a forked copy of the current network state. You review the exact outcome, including token changes, gas, and contract calls, before approving.
 
 This is how the system prevents LLM-generated transactions from being sent without verification.
 
@@ -49,10 +49,10 @@ An App never broadcasts a transaction directly. It stages each transaction, asks
 
 | Host tool | Purpose |
 | --- | --- |
-| `view_state` | Encode calldata from ABI arguments and run a read-only `eth_call`. |
-| `run_tx` | Simulate a single state-changing call without staging it. |
+| `view_state` | Encode calldata from ABI arguments and run a read only `eth_call`. |
+| `run_tx` | Simulate a single state changing call without staging it. |
 | `stage_tx` | Stage an EVM transaction in `user_state.pending_txs` for later simulation and signing. The host attaches an authoritative `pending_tx_id`. |
-| `simulate_batch` | Simulate one or more staged transactions by `pending_tx_id` before prompting a wallet. Returns pass or fail, any revert reason, and gas or decoded-call context. |
+| `simulate_batch` | Simulate one or more staged transactions by `pending_tx_id` before prompting a wallet. Returns pass or fail, any revert reason, and gas or decoded call context. |
 | `commit_tx` | Ask the user wallet to sign and broadcast one staged transaction. Returns the `transaction_hash`. |
 
 The order is always the same: **stage first, then `simulate_batch`, then commit**. Because each staged transaction sees the state changes from the ones before it, an approve-then-swap pair simulates correctly as a batch.
@@ -99,11 +99,11 @@ flowchart LR
     TRACE --> CHANGES
 ```
 
-For each staged transaction, the host returns the simulation outcome: whether it succeeded, the revert reason if it failed, the gas used, and any decoded-call context the host can provide. The agent reads these results before deciding whether to commit.
+For each staged transaction, the host returns the simulation outcome: whether it succeeded, the revert reason if it failed, the gas used, and any decoded call context the host can provide. The agent reads these results before deciding whether to commit.
 
 ### Batch Simulation
 
-When you stage more than one transaction, `simulate_batch` runs them in order against the same fork. Each transaction sees the state changes from the ones before it, so a dependent pair such as approve-then-swap simulates exactly as it will execute on-chain. The host returns a pass or fail result per transaction, and the agent can compare outcomes before committing.
+When you stage more than one transaction, `simulate_batch` runs them in order against the same fork. Each transaction sees the state changes from the ones before it, so a dependent pair such as approve-then-swap simulates exactly as it will execute onchain. The host returns a pass or fail result per transaction, and the agent can compare outcomes before committing.
 
 ## Wallet Approval Flow
 
@@ -145,7 +145,7 @@ The flow in summary:
 5. Transaction submitted to real network
 6. Wallet signs locally
 
-## Multi-Network Support
+## Multi Network Support
 
 Simulation works across every network the host runs. When you stage a transaction you pass its `chain_id`, and the host simulates it against a fork of that network. An App can stage transactions on different chains without managing any fork infrastructure itself.
 
@@ -155,7 +155,7 @@ When `simulate_batch` reports a failure, the result includes the reason so the a
 
 | Outcome | Cause | What happens next |
 | --- | --- | --- |
-| Reverted | The contract reverted or the transaction would fail on-chain | The agent surfaces the revert reason and does not commit |
+| Reverted | The contract reverted or the transaction would fail onchain | The agent surfaces the revert reason and does not commit |
 | Insufficient funds | Not enough ETH or tokens for the operation | The agent asks the user to fund the account or adjusts the transaction |
 | Gas estimation failed | The transaction is too complex to estimate automatically | The agent retries with an explicit gas limit |
 | RPC error | The upstream network endpoint was unavailable | The host retries or the agent reports the failure |
@@ -183,6 +183,6 @@ flowchart LR
 
 ## Next Steps
 
-- [Non-Custodial Automation](/concepts/non-custodial-wallets) — wallet security model
-- [Building Apps](/reference/building-apps) — host tool contract for staging and committing
-- [Execution](/trade/execution) — transaction lifecycle from simulation to settlement
+- [Non-Custodial Automation](/concepts/non-custodial-wallets): wallet security model
+- [Building Apps](/reference/building-apps): host tool contract for staging and committing
+- [Execution](/trade/execution): transaction lifecycle from simulation to settlement

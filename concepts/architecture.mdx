@@ -1,6 +1,6 @@
 ---
 title: "Architecture"
-description: "Aomi platform architecture — how the hosted runtime, simulation-first transaction pipeline, tool calling, and widget integration paths fit together."
+description: "Aomi platform architecture: how the hosted runtime, simulation-first transaction pipeline, tool calling, and widget integration paths fit together."
 ---
 
 ![Architecture Overview](/images/architecture-overview.png)
@@ -49,7 +49,7 @@ graph TB
 
 An App is built from three pieces in the public SDK:
 
-- A **tool** is a Rust type that implements the `DynAomiTool` trait. Each tool sets a `NAME`, a `DESCRIPTION`, a typed `Args` struct (deserialized from the model's JSON), and a `run` function. Long-running tools set `IS_ASYNC = true` and implement `run_async` instead.
+- A **tool** is a Rust type that implements the `DynAomiTool` trait. Each tool sets a `NAME`, a `DESCRIPTION`, a typed `Args` struct (deserialized from the model's JSON), and a `run` function. Long running tools set `IS_ASYNC = true` and implement `run_async` instead.
 - The **`dyn_aomi_app!` macro** registers the set. It declares the app name, version, preamble, the list of tools, the host namespaces the plugin needs, and the secrets it reads. The macro generates the manifest, the tool router, and the C ABI the runtime calls.
 - The crate is compiled as a `cdylib`. The runtime loads it and calls a small set of exported functions: `aomi_create`, `aomi_manifest`, `aomi_destroy`, `aomi_free_string`, and `aomi_sdk_version`. The version export is the compatibility gate. The host and the plugin must be built against the same `aomi-sdk` version.
 
@@ -77,9 +77,9 @@ aomi_sdk::dyn_aomi_app!(
 
 ## Namespaces and the Host Surface
 
-A plugin declares which host **namespaces** it needs. The host injects that namespace's tools alongside your own. The default is `["evm-core"]`, which gives a plugin the EVM read and write primitives: read on-chain state, stage and simulate transactions, and request a wallet signature. The public write surface is EVM: Ethereum, Base, Arbitrum, Optimism, Polygon, and Linea.
+A plugin declares which host **namespaces** it needs. The host injects that namespace's tools alongside your own. The default is `["evm-core"]`, which gives a plugin the EVM read and write primitives: read onchain state, stage and simulate transactions, and request a wallet signature. The public write surface is EVM: Ethereum, Base, Arbitrum, Optimism, Polygon, and Linea.
 
-Your tool never holds a private key and never signs. When a tool needs an on-chain action, it returns a route step that points at a host primitive (for example, the host's commit-transaction or commit-message tool). The host runs the simulation and then asks the user's wallet to sign.
+Your tool never holds a private key and never signs. When a tool needs an onchain action, it returns a route step that points at a host primitive (for example, the host's commit-transaction or commit-message tool). The host runs the simulation and then asks the user's wallet to sign.
 
 ## Simulate Before Sign
 
@@ -100,7 +100,7 @@ For the full safety properties, see [Security](/concepts/security). For the simu
 
 ## Next Steps
 
-- [How It Works](/concepts/how-it-works) — end-to-end example with MyCoinDex
-- [Runtime Reference](/reference/runtime) — session management and streaming internals
-- [Simulation Reference](/reference/simulation) — transaction simulation pipeline
-- [API Reference](/reference/api-reference) — HTTP endpoints
+- [How It Works](/concepts/how-it-works): end to end example with MyCoinDex
+- [Runtime Reference](/reference/runtime): session management and streaming internals
+- [Simulation Reference](/reference/simulation): transaction simulation pipeline
+- [API Reference](/reference/api-reference): HTTP endpoints

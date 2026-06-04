@@ -1,9 +1,9 @@
 ---
 title: "Aomi Skills"
-description: "Drop-in Agent Skills that teach Claude Code, Cursor, Codex, and Gemini how to use Aomi: aomi-transact to trade and aomi-build to scaffold Apps."
+description: "Drop in Agent Skills that teach Claude Code, Cursor, Codex, and Gemini how to use Aomi: aomi-transact to trade and aomi-build to scaffold Apps."
 ---
 
-Aomi Skills are drop-in Agent Skills: small markdown files that teach an AI coding assistant how to use Aomi. Install once and your agent learns the full command surface. No code to compile, nothing to configure. They work with Claude Code, Cursor, Gemini CLI, VS Code Copilot, and any tool that supports the Agent Skills spec.
+Aomi Skills are drop in Agent Skills: small markdown files that teach an AI coding assistant how to use Aomi. Install once and your agent learns the full command surface. No code to compile, nothing to configure. They work with Claude Code, Cursor, Gemini CLI, VS Code Copilot, and any tool that supports the Agent Skills spec.
 
 There are two skills, and they pair with the two things you do on Aomi: trade, and build.
 
@@ -11,9 +11,9 @@ There are two skills, and they pair with the two things you do on Aomi: trade, a
 
 Trade by chat. `aomi-transact` teaches your agent to drive the `aomi` CLI, so you ask in plain English and it builds, simulates, and signs the transaction.
 
-- Turns prompts like "swap 1 ETH for USDC" or "open a 3x GMX long" into wallet-signed transactions.
+- Turns prompts like "swap 1 ETH for USDC" or "open a 3x GMX long" into wallet signed transactions.
 - Reads prices, balances, and routes across more than 40 protocols (Uniswap, Aave, Lido, GMX, Hyperliquid, Polymarket, and more).
-- Simulates multi-step flows as a batch on a forked chain before signing. Non-custodial throughout.
+- Simulates multistep flows as a batch on a forked chain before signing. Non-custodial throughout.
 - Works on Ethereum, Base, Arbitrum, Optimism, Polygon, and Linea. Account abstraction first, with an EIP-7702 or EIP-4337 fallback.
 
 This is the skill behind [Trade on Aomi](/trade).
@@ -24,7 +24,7 @@ Scaffold a new App. `aomi-build` teaches your agent to turn an API into Aomi too
 
 - Point it at an OpenAPI or Swagger spec, a REST endpoint, or SDK docs.
 - It generates a working Aomi SDK crate: `lib.rs`, `client.rs`, and `tool.rs`, with tool schemas, a preamble, and validation.
-- Output supports sync HTTP tools, async tools, proxy unwrap (EIP-1967), and multi-step quote to approval to swap flows.
+- Output supports sync HTTP tools, async tools, proxy unwrap (EIP-1967), and multistep quote to approval to swap flows.
 
 This is the skill behind [Build on Aomi](/build).
 

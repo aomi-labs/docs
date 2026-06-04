@@ -14,7 +14,7 @@ flowchart LR
 
 <Steps>
   <Step title="Simulate on a forked chain">
-    Before anything touches the real chain, Aomi forks the current chain state and runs your transaction on the fork. Multi-step flows, like an approve and then a swap, are simulated together as one batch. If the transaction would revert, you find out here, with no gas spent.
+    Before anything touches the real chain, Aomi forks the current chain state and runs your transaction on the fork. Multistep flows, like an approve and then a swap, are simulated together as one batch. If the transaction would revert, you find out here, with no gas spent.
   </Step>
   <Step title="Review the real outcome">
     The simulation returns the actual result: the tokens you would receive, the balances that would change, and any revert reason. You read the real outcome, not an estimate.
@@ -26,6 +26,79 @@ flowchart LR
     The signed transaction is broadcast to the chain. Aomi reports the transaction hash and waits for the confirmation.
   </Step>
 </Steps>
+
+## Driving a trade from the CLI
+
+The `aomi-transact` skill runs this lifecycle for you, but every step maps to a real command. When you want to see the moves, or run them by hand, here is the flow.
+
+The CLI is one shot per command. Each `aomi` command starts, runs, and exits. It is not a long running process. Your session state persists between runs on local disk, so the next command continues the same conversation, holds the same pending transactions, and remembers your wallet.
+
+<Steps>
+  <Step title="Chat your intent">
+    Tell the agent what you want. When the trade needs a signature, the agent stages a wallet request and the CLI queues it locally as `tx-1`, printing the destination, value, and chain.
+
+    ```bash
+    aomi chat "swap 1 ETH for USDC on Uniswap" --public-key 0xYourAddr --chain 1
+    ```
+
+    A chat reply does not always queue a transaction. The agent may return a quote or a route and ask whether to proceed. Stay in the same session and reply with a short confirmation. Nothing is staged until you see `Wallet request queued: tx-N`.
+  </Step>
+  <Step title="List the pending request">
+    Confirm what is queued before you touch simulation or signing.
+
+    ```bash
+    aomi tx list
+    ```
+
+    A swap that needs an approval first shows up as two pending transactions, the approve and the swap.
+  </Step>
+  <Step title="Simulate on a forked chain">
+    Run the pending transactions on a fork before you sign. For a multi step batch like approve then swap, simulate both together so the swap sees the state the approve creates.
+
+    ```bash
+    aomi tx simulate tx-1 tx-2
+    ```
+
+    The result reports per step success, any revert reason, and gas used. If a step reverts, read the reason and fix the intent. Do not sign past a failed simulation.
+  </Step>
+  <Step title="Sign the request you asked for">
+    Sign and submit only the pending transaction the user asked for. The CLI signs, broadcasts, prints the hash, and notifies the backend.
+
+    ```bash
+    aomi tx sign tx-1 tx-2
+    ```
+  </Step>
+</Steps>
+
+For the complete command surface, flags, and environment variables, see the [aomi CLI reference](/reference/cli).
+
+## Safety rules the agent follows
+
+These rules keep a trade safe whether the skill drives the CLI or you do.
+
+- **Never invent or guess credentials.** The agent passes through only a value you gave it for a specific action. It does not fabricate, derive, or echo a key back to you.
+- **Always simulate a multi step batch before signing.** An approve then swap, or an approve then deposit, is state dependent. Simulate the batch together with `aomi tx simulate` first. The second step reverts if you submit it alone.
+- **Only sign the pending transaction you asked for.** The agent signs the queued `tx-N` you named after `aomi tx list` shows it. It does not sweep the queue.
+- **Keep the signing RPC matched to the pending transaction chain.** The `--chain` flag sets your session context. The `--rpc-url` flag sets where the signed transaction is submitted. They are independent controls, so keep the signing RPC aligned with the chain of the transaction you are signing.
+
+## Signing modes
+
+By default `aomi tx sign` is account abstraction first. It tries account abstraction, then falls back to direct EOA signing if account abstraction is unavailable or fails. You can force a mode when you need one.
+
+| Flag | Behavior |
+| --- | --- |
+| (default) | Account abstraction first, automatic EOA fallback |
+| `--aa` | Require account abstraction. Error if no provider is configured |
+| `--eoa` | Force direct EOA execution, skip account abstraction |
+
+You can also constrain the account abstraction path. `--aa-provider` takes `alchemy` or `pimlico`. `--aa-mode` takes `4337` or `7702`.
+
+```bash
+aomi tx sign tx-1 --aa --aa-provider alchemy --aa-mode 7702
+aomi tx sign tx-1 --eoa
+```
+
+`--aa` and `--eoa` are mutually exclusive. You cannot combine `--aa-provider` or `--aa-mode` with `--eoa`. See the [aomi CLI reference](/reference/cli#signing-modes) for the full signing surface.
 
 ## Why simulation comes first
 

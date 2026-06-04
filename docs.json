@@ -163,15 +163,15 @@
         "href": "https://chat.aomi.dev"
       },
       {
-        "label": "aomi (widget + backend)",
+        "label": "client cli",
         "href": "https://github.com/aomi-labs/aomi"
       },
       {
-        "label": "aomi-sdk (Rust SDK)",
+        "label": "rust sdk",
         "href": "https://github.com/aomi-labs/aomi-sdk"
       },
       {
-        "label": "skills (definitions)",
+        "label": "skills",
         "href": "https://github.com/aomi-labs/skills"
       }
     ],

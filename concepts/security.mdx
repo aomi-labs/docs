@@ -1,6 +1,6 @@
 ---
 title: Security
-description: Aomi security architecture — simulation-first transaction safety, non-custodial wallet model, API authentication, OWASP-compliant CI scanning, and the platform threat model.
+description: Aomi security architecture covering simulation-first transaction safety, non-custodial wallet model, API authentication, OWASP-compliant CI scanning, and the platform threat model.
 ---
 
 Aomi's security model is built on four layers: **API authentication** at the edge, **session isolation** at the runtime layer, **simulation-first transaction execution** as the core safety mechanism, and **non-custodial wallet architecture** that never holds private keys.
@@ -83,9 +83,9 @@ sequenceDiagram
 
 | Property | Detail |
 |----------|--------|
-| **Key scope** | Scoped to a single app — a compromised key for `app-a` cannot access `app-b` |
+| **Key scope** | Scoped to a single app. A compromised key for `app-a` cannot access `app-b` |
 | **No client-side exposure** | Keys are used server-side only; frontends route through a proxy or use session tokens |
-| **Rotation** | Keys can be rotated without downtime — old and new keys are accepted during a configurable overlap window |
+| **Rotation** | Keys can be rotated without downtime. Old and new keys are accepted during a configurable overlap window |
 | **Rate limiting** | Per-key and per-IP rate limits enforced at the edge |
 
 ### Best Practices
@@ -104,8 +104,8 @@ Each chat session runs in an isolated context. Sessions are identified by `X-Ses
 
 | Threat | Prevention |
 |--------|-----------|
-| Session hijacking | Session IDs are UUIDs — not sequential or predictable |
-| Cross-session data leak | Each session has its own history and tool state — no shared memory |
+| Session hijacking | Session IDs are UUIDs, not sequential or predictable |
+| Cross-session data leak | Each session has its own history and tool state, with no shared memory |
 | Session replay | Sessions expire after configurable TTL; expired sessions return 401 |
 
 ### Session Lifecycle
@@ -124,7 +124,7 @@ flowchart LR
 The simulation pipeline is the core safety mechanism. Before any transaction reaches the user's wallet, it is executed against a forked copy of the current network state.
 
 <Info>
-  This section covers the security properties of simulation. For the full technical deep-dive — fork lifecycle, state diffing, tool API — see the [Simulation Reference](/reference/simulation).
+  This section covers the security properties of simulation. For the full technical deep-dive covering fork lifecycle, state diffing, and the tool API, see the [Simulation Reference](/reference/simulation).
 </Info>
 
 ### The Safety Pipeline
@@ -146,20 +146,20 @@ flowchart TB
 
 | Scenario | Simulation Catches It? |
 |----------|----------------------|
-| Wrong recipient address | Yes — user sees destination before signing |
-| Incorrect token amount | Yes — exact amounts shown in diff |
-| Unexpected contract call | Yes — all called contracts listed |
-| Transaction would revert | Yes — revert detected before gas spent |
-| Malicious transaction params | Yes — user reviews full tx before signing |
-| Gas estimation failure | Yes — gas estimate included in output |
+| Wrong recipient address | Yes. User sees destination before signing |
+| Incorrect token amount | Yes. Exact amounts shown in diff |
+| Unexpected contract call | Yes. All called contracts listed |
+| Transaction would revert | Yes. Revert detected before gas spent |
+| Malicious transaction params | Yes. User reviews full tx before signing |
+| Gas estimation failure | Yes. Gas estimate included in output |
 
 ### Fork Isolation
 
 Simulation forks are:
 
-- **Ephemeral** — created per-simulation, destroyed after result is delivered
-- **Isolated** — each fork runs independently, no cross-fork state leakage
-- **State-faithful** — forked from the real network state at the current block
+- **Ephemeral**: created per simulation, destroyed after result is delivered
+- **Isolated**: each fork runs independently, no cross-fork state leakage
+- **State-faithful**: forked from the real network state at the current block
 
 ```rust
 // Simplified fork lifecycle
@@ -189,7 +189,7 @@ Aomi never holds private keys. All signing happens locally in the user's wallet 
 |-----------|--------|
 | **No key custody** | Aomi's backend has no access to private keys, seed phrases, or signing material |
 | **Local signing** | All transactions are signed in the user's browser or Telegram client |
-| **Per-transaction approval** | Every transaction requires explicit wallet confirmation — no blanket approvals |
+| **Per-transaction approval** | Every transaction requires explicit wallet confirmation, with no blanket approvals |
 | **No custodial fallback** | Aomi cannot sign or send transactions without user approval |
 
 ### Key Material Flow
@@ -218,10 +218,10 @@ Skills published under `aomi-labs/skills` are security-audited against the [OWAS
 
 | Scanner | Type | What It Checks |
 |---------|------|----------------|
-| `pors/skill-audit` | Behavioral | Skill-specific behavior patterns — verifies tools stay within their declared scope |
-| Cisco AI Defense | Offline | Offline behavioral analysis — detects prompt injection and tool misuse |
-| NMitchem/SkillScan | Static | Static skill analysis — validates markdown structure, no hidden commands |
-| Snyk agent-scan | Dependency | Dependency and configuration scanning — flags vulnerable or malicious packages |
+| `pors/skill-audit` | Behavioral | Skill-specific behavior patterns; verifies tools stay within their declared scope |
+| Cisco AI Defense | Offline | Offline behavioral analysis; detects prompt injection and tool misuse |
+| NMitchem/SkillScan | Static | Static skill analysis; validates markdown structure, no hidden commands |
+| Snyk agent-scan | Dependency | Dependency and configuration scanning; flags vulnerable or malicious packages |
 
 ### CI Flow
 
@@ -259,17 +259,17 @@ flowchart LR
 | **Unauthorized tool invocation** | Tools are scoped per app; session isolation prevents cross-app tool calls |
 | **Session hijacking** | UUID-based session IDs, configurable TTL, no sequential IDs |
 | **API key leakage** | Per-app key scoping limits blast radius; rotation support enables fast recovery |
-| **Malicious skill definitions** | 4 OWASP Agentic Skills Top 10 scanners run on every skill PR — blocked if any fail |
+| **Malicious skill definitions** | 4 OWASP Agentic Skills Top 10 scanners run on every skill PR, blocked if any fail |
 | **Replay attacks** | Sessions expire; nonce-based tx ordering prevents tx replay |
 
 ### Out of Scope: User Responsibility
 
 | Area | Responsibility |
 |------|---------------|
-| **API key storage** | Store keys securely in environment variables or secret managers — never in client bundles |
+| **API key storage** | Store keys securely in environment variables or secret managers, never in client bundles |
 | **Preamble quality** | A well-written preamble prevents the LLM from overstepping its bounds |
-| **Wallet seed phrase custody** | Aomi cannot recover lost seed phrases — users must back them up |
-| **Frontend deployment** | Users control their frontend deployment — CSP headers, input sanitization, etc. |
+| **Wallet seed phrase custody** | Aomi cannot recover lost seed phrases, so users must back them up |
+| **Frontend deployment** | Users control their frontend deployment: CSP headers, input sanitization, etc. |
 | **RAG document content** | Documents ingested for RAG should be reviewed for sensitive information |
 
 
@@ -330,9 +330,9 @@ AdminTool → DELETE /users/{id} (no preamble constraint, no confirmation)
 
 Documents ingested for RAG should be reviewed for:
 
-- **Sensitive data** — no passwords, API keys, or internal URLs
-- **Outdated information** — stale docs lead to incorrect tool usage
-- **Conflicting instructions** — multiple docs with contradictory guidance confuse the LLM
+- **Sensitive data**: no passwords, API keys, or internal URLs
+- **Outdated information**: stale docs lead to incorrect tool usage
+- **Conflicting instructions**: multiple docs with contradictory guidance confuse the LLM
 
 
 ## Security Checklist
@@ -352,7 +352,7 @@ Use this when deploying an Aomi App to production:
 
 ## Next Steps
 
-- [Simulation Reference](/reference/simulation) — technical deep-dive on the simulation pipeline
-- [Non-Custodial Wallets](/concepts/non-custodial-wallets) — wallet security model and integration
-- [Execution Guide](/trade/execution) — transaction lifecycle from simulation to settlement
-- [Skills](/concepts/skills) — OWASP-scanned skill definitions
+- [Simulation Reference](/reference/simulation): technical deep-dive on the simulation pipeline
+- [Non-Custodial Wallets](/concepts/non-custodial-wallets): wallet security model and integration
+- [Execution Guide](/trade/execution): transaction lifecycle from simulation to settlement
+- [Skills](/concepts/skills): OWASP-scanned skill definitions

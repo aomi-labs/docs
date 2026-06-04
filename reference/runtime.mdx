@@ -1,6 +1,6 @@
 ---
 title: Runtime
-description: Architecture of the hosted Aomi runtime — session manager lifecycle, message processing, tool execution coordination, SSE streaming, and event handling.
+description: Architecture of the hosted Aomi runtime. Session manager lifecycle, message processing, tool execution coordination, SSE streaming, and event handling.
 ---
 
 The Aomi runtime is the hosted execution environment that manages sessions, processes messages, and coordinates tool execution.
@@ -11,10 +11,10 @@ The Aomi runtime is the hosted execution environment that manages sessions, proc
 
 The session manager handles the full session lifecycle:
 
-- **Create** — new conversation sessions with unique IDs
-- **Load** — three-tier loading: memory cache → database → create new
-- **Persist** — messages saved as the conversation progresses
-- **Cleanup** — background task removes stale sessions
+- **Create**: new conversation sessions with unique IDs
+- **Load**: three-tier loading: memory cache → database → create new
+- **Persist**: messages saved as the conversation progresses
+- **Cleanup**: background task removes stale sessions
 
 ### Session Lifecycle
 
@@ -26,7 +26,7 @@ User Message → Session Manager → Message Processing → Tool Execution → R
 
 ## Reconstructor
 
-The reconstructor handles session reconciliation — restoring session state from persisted data when a user returns to an existing conversation.
+The reconstructor handles session reconciliation. It restores session state from persisted data when a user returns to an existing conversation.
 
 ## History Backend
 
@@ -69,6 +69,6 @@ Each App runs in an isolated environment with its own tool registry, model confi
 
 ## Next Steps
 
-- [API Reference](/reference/api-reference) — HTTP API documentation
-- [Sessions](/reference/sessions) — session management details
-- [Architecture](/concepts/architecture) — platform overview
+- [API Reference](/reference/api-reference): HTTP API documentation
+- [Sessions](/reference/sessions): session management details
+- [Architecture](/concepts/architecture): platform overview
