@@ -13,6 +13,7 @@
       "index",
       {
         "group": "Introduction",
+        "icon": "rocket",
         "pages": [
         "getting-started/quickstart",
         "getting-started/playground"
@@ -82,6 +83,7 @@
       },
       {
         "group": "Platform",
+        "icon": "layer-group",
         "pages": [
           "getting-started/telegram",
           "getting-started/web-app",
@@ -92,6 +94,7 @@
       },
       {
         "group": "Concepts",
+        "icon": "lightbulb",
         "pages": [
           "concepts/index",
           "concepts/what-is-aomi",
@@ -118,6 +121,7 @@
       },
       {
         "group": "Reference",
+        "icon": "book",
         "pages": [
           "reference/index",
           "reference/simulation",
@@ -130,6 +134,7 @@
       },
       {
         "group": "Resources",
+        "icon": "circle-info",
         "pages": [
           "resources/changelog",
           "resources/faq"
