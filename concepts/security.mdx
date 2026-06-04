@@ -53,8 +53,6 @@ flowchart TB
     OWASP --> SAST
 ```
 
----
-
 ## Layer 1: API Authentication
 
 Every request to the Aomi backend is authenticated with a scoped API key. Keys are issued per app and can be rotated independently.
@@ -98,8 +96,6 @@ Use a backend proxy to attach the API key — never expose it in frontend code.
 Rotate keys on a regular schedule or immediately after a suspected leak.
 ```
 
----
-
 ## Layer 2: Session Isolation
 
 Each chat session runs in an isolated context. Sessions are identified by `X-Session-Id` and maintain their own history, tool execution state, and event queue.
@@ -122,7 +118,6 @@ flowchart LR
     ACTIVE --> EXPIRED
 ```
 
----
 
 ## Layer 3: Simulation-First Transactions
 
@@ -179,7 +174,6 @@ let result = fork.simulate(transaction).await?;
 drop(fork); // Fork destroyed — no persistent state
 ```
 
----
 
 ## Layer 4: Non-Custodial Wallet Model
 
@@ -215,7 +209,6 @@ sequenceDiagram
     App->>Chain: Submit
 ```
 
----
 
 ## OWASP AST03 Compliance
 
@@ -255,7 +248,6 @@ flowchart LR
 - Docker images referenced in skill configurations
 - Dependency manifests (`package.json`, `Cargo.toml`, `requirements.txt`)
 
----
 
 ## Threat Model
 
@@ -280,7 +272,6 @@ flowchart LR
 | **Frontend deployment** | Users control their frontend deployment — CSP headers, input sanitization, etc. |
 | **RAG document content** | Documents ingested for RAG should be reviewed for sensitive information |
 
----
 
 ## Security Best Practices
 
@@ -343,7 +334,6 @@ Documents ingested for RAG should be reviewed for:
 - **Outdated information** — stale docs lead to incorrect tool usage
 - **Conflicting instructions** — multiple docs with contradictory guidance confuse the LLM
 
----
 
 ## Security Checklist
 

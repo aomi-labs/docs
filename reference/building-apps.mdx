@@ -1,6 +1,6 @@
 ---
-title: Building an App
-description: How an Aomi App is built. The standard crate file split, the aomi.toml manifest, the preamble, tools, and host namespaces. Authoring only; compiling and shipping link forward.
+title: "Building an App"
+description: "How an Aomi App is built. The standard crate file split, the aomi.toml manifest, the preamble, tools, and host namespaces. Authoring only; compiling and shipping link forward."
 ---
 
 This page is about **authoring** an Aomi App: how the crate is laid out, what goes in each file, and how you wire it together. An App is a Rust crate that compiles to a dynamic plugin the Aomi runtime hot loads. It wraps an external API as a small set of typed tools, ships a preamble that tells the model how to use them, and declares which host capabilities it needs.
@@ -8,7 +8,7 @@ This page is about **authoring** an Aomi App: how the crate is laid out, what go
 When you are ready to compile and ship, follow the forward links at the bottom of this page. This page does not cover the build or deploy steps.
 
 <Note>
-Throughout this page, **App** (capitalized) means the deployed unit: a `cdylib` crate the runtime loads. The earlier docs talked about `aomi_chat::CoreAppBuilder`. That is an internal runtime crate and is not how you author a plugin. The real authoring model is the one below: the `dyn_aomi_app!` macro plus the `DynAomiTool` trait from the public `aomi-sdk` crate.
+  Throughout this page, **App** (capitalized) means the deployed unit: a `cdylib` crate the runtime loads. The earlier docs talked about `aomi_chat::CoreAppBuilder`. That is an internal runtime crate and is not how you author a plugin. The real authoring model is the one below: the `dyn_aomi_app!` macro plus the `DynAomiTool` trait from the public `aomi-sdk` crate.
 </Note>
 
 ## What you are building
@@ -19,12 +19,15 @@ The Aomi SDK lets you wrap any crypto API as a dynamic plugin. The runtime loads
   <Card title="DeFi protocols" icon="coins">
     Wrap a DEX, lending market, or staking protocol as tools the chat can drive. See `defi`, `defillama`, `morpho`.
   </Card>
+
   <Card title="Prediction markets" icon="chart-line">
     Market discovery, search, and trading flows. See `polymarket`, `kalshi`.
   </Card>
+
   <Card title="Cross-chain intents" icon="shuffle">
     Bridge and intent-order clients. See `khalani`, `across`, `lifi`.
   </Card>
+
   <Card title="Social and accounts" icon="user">
     Feeds, posts, user data, wallet and account tooling. See `x`, `neynar`, `para`.
   </Card>
@@ -142,6 +145,27 @@ opportunities — never to execute trades.
 
 ## Defining tools
 
+```text
+You are the MyCoinDex trading assistant.
+
+## Capabilities
+- Check real-time token prices
+- View user portfolio and P&L
+- Execute trades (with user confirmation)
+- List available trading pairs
+
+## Rules
+- Always confirm with the user before executing a trade
+- Show prices in USD unless the user requests otherwise
+- If you don't have data for a token, say so clearly
+- Never fabricate prices or portfolio data
+
+## Tone
+- Professional but approachable
+- Concise responses unless the user asks for detail
+- Use bullet points for lists of data
+```
+
 Tools live in `src/tool.rs`. Each tool is a type that implements `DynAomiTool`. The trait ties together your app type, the typed argument struct, the name and description the model reads, and a `run` function that does the work and returns JSON.
 
 ```rust
@@ -199,7 +223,7 @@ pub(crate) struct GetCoinPriceArgs {
 ```
 
 <Note>
-Doc comments on argument fields are read by the model. A vague field comment is a vague tool. Give a concrete example value in each one, the way the template does.
+  Doc comments on argument fields are read by the model. A vague field comment is a vague tool. Give a concrete example value in each one, the way the template does.
 </Note>
 
 ### The client and models
@@ -227,7 +251,7 @@ impl CoinGeckoClient {
 ```
 
 <Note>
-For full trait signatures (`DynAomiTool`, `DynToolCallCtx`, the `dyn_aomi_app!` macro, and the `aomi_sdk::testing` helpers like `TestCtxBuilder` and `run_tool`), see the [SDK Reference](/reference/sdk-api).
+  For full trait signatures (`DynAomiTool`, `DynToolCallCtx`, the `dyn_aomi_app!` macro, and the `aomi_sdk::testing` helpers like `TestCtxBuilder` and `run_tool`), see the [SDK Reference](/reference/sdk-api).
 </Note>
 
 ## Declaring host namespaces
@@ -259,7 +283,7 @@ Host capabilities are a public contract, not private infrastructure. Apps that e
 The transaction model is always **stage first, then simulate, then commit**. Describe the host capabilities you rely on in your tool descriptions and preamble. Do not refer to private namespaces, and do not assume a hidden fallback network. If a host does not implement a capability, it surfaces that absence rather than silently redirecting.
 
 <Note>
-Apps that execute across several steps (like `polymarket` or `khalani`) return a `ToolReturn` with route hints instead of a bare JSON value, so the host can chain a wallet signature back into the next tool call. The full route hint contract lives in the SDK repo's `docs/host-interop.md` and the [SDK Reference](/reference/sdk-api).
+  Apps that execute across several steps (like `polymarket` or `khalani`) return a `ToolReturn` with route hints instead of a bare JSON value, so the host can chain a wallet signature back into the next tool call. The full route hint contract lives in the SDK repo's `docs/host-interop.md` and the [SDK Reference](/reference/sdk-api).
 </Note>
 
 ## The aomi.toml manifest
@@ -293,7 +317,7 @@ Field reference:
 | `access_token` | no | Only for private platform repos. A `$ENV_VAR` reference, never a literal. |
 
 <Warning>
-`access_token` must point at an environment variable, not a literal token. Write `access_token = "$MY_GH_TOKEN"`. A literal like `"ghp_xxxx"` is rejected at parse time so a committed config can never leak a secret. The public `community-apps` repo does not need this field at all; omit it.
+  `access_token` must point at an environment variable, not a literal token. Write `access_token = "$MY_GH_TOKEN"`. A literal like `"ghp_xxxx"` is rejected at parse time so a committed config can never leak a secret. The public `community-apps` repo does not need this field at all; omit it.
 </Warning>
 
 ### Pin the SDK version
@@ -316,7 +340,7 @@ serde_json = "1"
 ```
 
 <Note>
-`=0.1.20` is the pin the `community-apps` platform expects today. Always confirm against `platform.json`'s `required_sdk_version` in the platform repo before you deploy; a mismatch fails CI with an `sdk_version mismatch` error.
+  `=0.1.20` is the pin the `community-apps` platform expects today. Always confirm against `platform.json`'s `required_sdk_version` in the platform repo before you deploy; a mismatch fails CI with an `sdk_version mismatch` error.
 </Note>
 
 ## Authoring guidelines
@@ -336,12 +360,15 @@ You have authored the crate. Now compile it, test it, and ship it.
   <Card title="Compile and run" icon="hammer" href="/reference/cli-toolchain">
     Use the `aomi-build` CLI to compile your plugin and `aomi-run` to exercise it locally before you ship.
   </Card>
+
   <Card title="Deploy and activate" icon="rocket" href="/reference/cli-toolchain">
     Use `aomi-git deploy` to stage your source into the platform repo, then request activation so the backend loads it.
   </Card>
+
   <Card title="SDK Reference" icon="book" href="/reference/sdk-api">
     Full trait definitions: `DynAomiTool`, the `dyn_aomi_app!` macro, the host-interop contract, and the testing helpers.
   </Card>
+
   <Card title="How it works" icon="diagram-project" href="/concepts/how-it-works">
     See the full request flow once your App is loaded on the runtime.
   </Card>
