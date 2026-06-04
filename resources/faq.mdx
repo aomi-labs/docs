@@ -1,17 +1,17 @@
 ---
 title: "FAQ"
-description: "Frequently asked questions about Aomi — what tool calls are, wallet safety and custody, simulation, supported models, channels, and how to start integrating."
+description: "Frequently asked questions about Aomi: what tool calls are, wallet safety and custody, simulation, supported models, channels, and how to start integrating."
 ---
 
 ## Getting started
 
 ### What is Aomi?
 
-Aomi is a hosted runtime that turns your APIs into AI-callable tools and ships them as an embeddable chat experience — with simulation-first on-chain transactions and non-custodial wallets built in. See [What is Aomi?](/concepts/what-is-aomi) for more.
+Aomi is a hosted runtime that turns your APIs into AI-callable tools and ships them as an embeddable chat experience, with simulation-first onchain transactions and non-custodial wallets built in. See [What is Aomi?](/concepts/what-is-aomi) for more.
 
 ### Who is Aomi for?
 
-Teams building agentic AI on top of blockchain APIs — DeFi protocols, exchanges, prediction markets, wallets, analytics tools. Anyone with a REST API and a need for a chat interface that can read on-chain state and propose transactions.
+Teams building agentic AI on top of blockchain APIs like DeFi protocols, exchanges, prediction markets, wallets, and analytics tools. Anyone with a REST API and a need for a chat interface that can read onchain state and propose transactions.
 
 ### How do I get started?
 
@@ -19,17 +19,17 @@ Run the [Quickstart](/getting-started/quickstart) to install the widget into a N
 
 ### Do I need a backend?
 
-You need the APIs you want exposed as tools. The Aomi runtime is hosted — you don't run LLMs, the simulation pipeline, or session storage yourself.
+You need the APIs you want exposed as tools. The Aomi runtime is hosted, so you don't run LLMs, the simulation pipeline, or session storage yourself.
 
 ### Can I try Aomi without writing code?
 
-Yes — use the [Web App](https://chat.aomi.dev) or the [Telegram bot](https://t.me/aomi_sendit_bot) with the default App, no API key required.
+Yes. Use the [Web App](https://chat.aomi.dev) or the [Telegram bot](https://t.me/aomi_sendit_bot) with the default App, no API key required.
 
 ## Apps & tools
 
 ### What is an Aomi App?
 
-An App is an isolated agent environment — its tools, system prompt (preamble), model, and API key. Switching Apps changes the agent's full capability surface. See [Apps & Authentication](/reference/apps-auth).
+An App is an isolated agent environment: its tools, system prompt (preamble), model, and API key. Switching Apps changes the agent's full capability surface. See [Apps & Authentication](/reference/apps-auth).
 
 ### What is a tool call?
 
@@ -45,7 +45,7 @@ Use the Rust SDK to define a tool that wraps your API. See [Custom Tools](/guide
 
 ### Can I use my existing OpenAPI / REST endpoints?
 
-Yes — that's the intended path. Wrap each endpoint as a tool. A one-to-one mapping isn't required; you can group multiple endpoints into a single tool for cleaner LLM context.
+Yes, that's the intended path. Wrap each endpoint as a tool. A one-to-one mapping isn't required; you can group multiple endpoints into a single tool for cleaner LLM context.
 
 ## Models
 
@@ -85,7 +85,7 @@ Ethereum, Base, Arbitrum, and any EVM chain you configure. See the [Architecture
 
 ### What about gas sponsorship and session keys?
 
-Supported via [Account Abstraction](/reference/account-abstraction) — smoother UX without custody changes.
+Supported via [Account Abstraction](/reference/account-abstraction) for smoother UX without custody changes.
 
 ## Sessions & threads
 
@@ -109,7 +109,7 @@ Widget: fastest path, full chat UI, edit copied source files. Headless: full con
 
 ### Can I embed Aomi inside another app (MetaMask, mobile, etc.)?
 
-Yes — see the [MetaMask example](/examples/metamask) for one pattern.
+Yes. See the [MetaMask example](/examples/metamask) for one pattern.
 
 ### Does Aomi work in non-React frontends?
 
@@ -135,12 +135,12 @@ Reach out through the [Telegram bot](https://t.me/aomi_sendit_bot) or [aomi.dev/
 
 Only the tools and data sources configured in the active App. It cannot access data outside the App's scope. Conversation history is retained per session for context.
 
-### My tool isn't being called — what's wrong?
+### My tool isn't being called: what's wrong?
 
 Common causes: the tool isn't registered in the active App, the description is unclear, or required parameters aren't typed. See [Troubleshooting](/guides/troubleshooting).
 
 ## Next steps
 
-- [Quickstart](/getting-started/quickstart) — get started in minutes
-- [Troubleshooting](/guides/troubleshooting) — common issues
-- [Changelog](/resources/changelog) — platform updates
+- [Quickstart](/getting-started/quickstart): get started in minutes
+- [Troubleshooting](/guides/troubleshooting): common issues
+- [Changelog](/resources/changelog): platform updates

@@ -1,45 +1,13 @@
 ---
 title: Account Abstraction
-description: Account abstraction in Aomi — limited-permission session keys, sponsored gas, and batched user operations for smoother UX without compromising custody.
+description: Account abstraction support in Aomi. Session keys, sponsored gas, and batched operations are coming soon.
 ---
 
-Aomi supports account abstraction for smoother UX without compromising custody.
+Account abstraction support in Aomi is coming soon.
 
-## Overview
-
-Account abstraction enables:
-- **Session keys** — limited-permission keys for automated operations
-- **Gas sponsorship** — transactions paid by a sponsoring account
-- **Batched operations** — multiple actions in a single transaction
-
-## Session Keys
-
-Session keys are ephemeral keys with restricted permissions. They allow the AI to execute approved operations without requiring user interaction for every transaction.
-
-```rust
-let session_key = SessionKey::new()
-    .with_allowance(ALLOWANCE_AMOUNT)
-    .with_spend_limit(SPEND_LIMIT)
-    .with_expiry(EXPIRY_TIME)
-    .with_allowed_contracts(vec![SWAP_CONTRACT, LP_CONTRACT]);
-```
-
-## Gas Sponsorship
-
-Transactions can be sponsored by a designated payer account. Useful for onboarding users who don't hold ETH for gas.
-
-## Batched Operations
-
-Multiple operations can be batched into a single user operation, reducing confirmation steps and gas costs.
-
-## Supported Standards
-
-- ERC-4337 (account abstraction standard)
-- EIP-1271 (signature validation)
-- ERC-6900 (modular accounts)
+When it lands, this page will document the public API for session keys, sponsored gas, and batched operations. Until then, transactions follow the standard [non-custodial](/concepts/non-custodial-wallets) flow: the App stages a transaction, the host simulates it, and you sign it in your own wallet.
 
 ## Next Steps
 
-- [Non-Custodial Automation](/concepts/non-custodial-wallets) — wallet security model
-- [Simulation Reference](/reference/simulation) — transaction pipeline details
-- [SDK Reference](/reference/sdk-api) — SDK documentation
+- [Non-Custodial Automation](/concepts/non-custodial-wallets): wallet security model
+- [Simulation Reference](/reference/simulation): transaction pipeline details

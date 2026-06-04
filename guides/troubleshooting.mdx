@@ -1,6 +1,6 @@
 ---
 title: Troubleshooting
-description: Fixes for common Aomi integration issues — CLI command-not-found errors, widget mounting problems, missing environment variables, and wallet connection bugs.
+description: Fixes for common Aomi integration issues, from CLI command-not-found errors to widget mounting problems, missing environment variables, and wallet connection bugs.
 ---
 
 ## CLI Issues
@@ -34,18 +34,18 @@ Clear `~/.aomi/` to reset all local session state.
 **Widget vs Headless**
 - Use the widget for quick integration with standard chat UI
 - Use the headless library for fully custom designs
-- Both share the same backend — switch between them without server changes
+- Both share the same backend, so you can switch between them without server changes
 
 ## API Issues
 
 **401 Unauthorized**
-No API key provided. Add an `X-API-Key` header or enter it in the control bar.
+No App key provided. Add an `AOMI-APP-KEY` header or enter it in the control bar.
 
 **403 Forbidden**
 The API key does not authorize the requested App. Verify the key is scoped to the correct App.
 
 ## Next Steps
 
-- [Integration Guide](/guides/integration) — full platform walkthrough
-- [API Reference](/reference/api-reference) — HTTP API documentation
-- [FAQ](/resources/faq) — frequently asked questions
+- [Integration Guide](/guides/integration): full platform walkthrough
+- [API Reference](/reference/api-reference): HTTP API documentation
+- [FAQ](/resources/faq): frequently asked questions

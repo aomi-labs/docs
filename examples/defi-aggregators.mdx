@@ -1,21 +1,64 @@
 ---
 title: DeFi Aggregators
-description: Aomi tools for DeFi aggregation — DefiLlama prices and yields, 0x and LI.FI swap routing, and CoW Protocol intent-based batch settlement.
+description: Aomi tools for DeFi aggregation across DefiLlama prices and yields, 0x and LI.FI swap routing, and CoW Protocol intent-based batch settlement.
 ---
 
-Aomi integrates DeFi data and trading through multiple API surfaces — **DefiLlama** for market intelligence (prices, yields, TVL, bridges), **0x** and **LI.FI** for on-chain swap execution, and **CoW Protocol** for intent-based batch settlement. Aomi wraps each of these as tools so your AI assistant can look up prices, compare routes, and execute trades through the connected wallet.
+Aomi integrates DeFi data and trading through four separate Apps: **DefiLlama** for market intelligence (prices, yields, TVL), **0x** and **LI.FI** for onchain swap execution, and **CoW Protocol** for intent-based settlement. Each App registers its own tools so your AI assistant can look up prices, compare routes, and execute trades through the connected wallet.
 
-## Available Tools
+Swaps are never a single call. Each aggregator separates the read step (get a quote) from the write step (build and submit the transaction), so the assistant always shows you a quote before anything gets signed.
 
-| Tool | Description | Source |
-|------|-------------|--------|
-| `GetTokenPrice` | Current price for any token | DefiLlama |
-| `SearchYieldPools` | Find highest-yield pools by protocol/chain | DefiLlama |
-| `GetProtocolTVL` | Total value locked for a protocol | DefiLlama |
-| `GetBridgeData` | Cross-chain bridge routes and fees | DefiLlama |
-| `GetSwapQuote` | Best swap route across aggregators | 0x / LI.FI |
-| `ExecuteSwap` | Execute a swap transaction | 0x / LI.FI |
-| `GetBatchAuction` | CoW Protocol batch auction prices | CoW Protocol |
+## DefiLlama tools
+
+Market intelligence. Read only, no wallet needed.
+
+| Tool | Description |
+|------|-------------|
+| `defillama_get_token_price` | Current price for a token |
+| `defillama_get_price_history` | Historical price series for a token |
+| `defillama_list_protocols` | List tracked protocols |
+| `defillama_get_protocol_tvl` | Total value locked for a protocol |
+| `defillama_top_yield_pools` | Highest-yield pools by protocol or chain |
+| `defillama_get_chain_tvl` | Total value locked for a chain |
+
+## 0x tools
+
+Swap routing and gasless swaps.
+
+| Tool | Description |
+|------|-------------|
+| `zerox_get_price` | Indicative price for a swap |
+| `zerox_build_swap` | Build an unsigned swap transaction |
+| `zerox_get_gasless_quote` | Quote a gasless (meta-transaction) swap |
+| `zerox_submit_gasless_swap` | Submit a signed gasless swap |
+| `zerox_get_gasless_status` | Check the status of a gasless swap |
+
+## LI.FI tools
+
+Cross-chain swaps and bridging.
+
+| Tool | Description |
+|------|-------------|
+| `lifi_get_swap_quote` | Quote a same-chain or cross-chain swap |
+| `lifi_build_swap_tx` | Build an unsigned swap transaction |
+| `lifi_build_bridge_tx` | Build an unsigned bridge transaction |
+| `lifi_get_transfer_status` | Track a cross-chain transfer |
+| `lifi_list_chains` | List supported chains |
+| `lifi_list_tokens` | List supported tokens |
+
+## CoW Protocol tools
+
+Intent-based settlement. You place an order; solvers settle it.
+
+| Tool | Description |
+|------|-------------|
+| `get_cow_swap_quote` | Quote a swap |
+| `place_cow_order` | Place a signed order |
+| `get_cow_order` | Fetch a single order |
+| `get_cow_order_status` | Check an order's status |
+| `get_cow_user_orders` | List your orders |
+| `cancel_cow_orders` | Cancel open orders |
+| `get_cow_trades` | List settled trades |
+| `get_cow_native_price` | Native token price reference |
 
 ## Example Conversations
 
@@ -32,13 +75,13 @@ Aomi integrates DeFi data and trading through multiple API surfaces — **DefiLl
 ## How It Works
 
 1. User asks for a price, yield, or swap
-2. The assistant queries the relevant DeFi API
-3. For swaps: routes are compared across aggregators
-4. Best route is simulated before execution
+2. The assistant queries the relevant DeFi App
+3. For swaps, the assistant gets a quote first, then builds the transaction
+4. The transaction is simulated before execution
 5. User reviews and signs in their wallet
 
 ## Next Steps
 
-- [Polymarket](/examples/polymarket) — prediction market integration
-- [X APIs](/examples/x-apis) — social data integration
-- [Integration Guide](/guides/integration) — build your own integration
+- [Polymarket](/examples/polymarket): prediction market integration
+- [X APIs](/examples/x-apis): social data integration
+- [Integration Guide](/guides/integration): build your own integration

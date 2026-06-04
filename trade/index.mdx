@@ -1,6 +1,6 @@
 ---
 title: "Overview"
-description: "Trade on Aomi: an AI agent turns plain-English intent into wallet-signed transactions, simulated on a forked chain first, across EVM chains."
+description: "Trade on Aomi: an AI agent turns plain English intent into wallet signed transactions, simulated on a forked chain first, across EVM chains."
 ---
 
 Tell an Aomi agent what you want and it does the onchain work for you. "Swap 1 ETH for USDC." "Stake 0.5 ETH on Lido." "Bet 100 dollars on Polymarket." The agent finds the route, builds the transaction, simulates it on a forked chain, and stages it for your wallet to sign. You stay non-custodial the whole way.
@@ -37,12 +37,20 @@ The agent reaches more than 40 integrated protocols, including Uniswap, Aave, Li
 
 The fastest way to trade is the `aomi-transact` skill. Install it into Claude Code, Cursor, or Codex and ask in plain English. The skill drives the `aomi` CLI, which does the simulate and sign work for you.
 
+Want your first trade end to end? Follow the [quickstart](/getting-started/quickstart) to install the CLI and run one. To see the exact commands the agent runs, read [how execution works](/trade/execution). For every flag and command, see the [aomi CLI reference](/reference/cli).
+
 <CardGroup cols={2}>
+  <Card title="Quickstart" icon="rocket" href="/getting-started/quickstart">
+    Install the CLI and make your first trade.
+  </Card>
   <Card title="How execution works" icon="gears" href="/trade/execution">
     The simulate, sign, and broadcast lifecycle, step by step.
   </Card>
   <Card title="The aomi-transact skill" icon="robot" href="/skills">
     Install the skill and trade by chat.
+  </Card>
+  <Card title="aomi CLI reference" icon="terminal" href="/reference/cli">
+    Every command, flag, and environment variable.
   </Card>
 </CardGroup>
 

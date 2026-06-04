@@ -1,20 +1,21 @@
 ---
 title: X APIs
-description: Aomi tools for the X (Twitter) API v2 — user profile lookup, timelines, advanced post search, and trending topics for cross-referencing on-chain activity.
+description: Aomi tools for the X (Twitter) API v2 covering user profile lookup, timelines, advanced post search, and trending topics for cross-referencing onchain activity.
 ---
 
-Aomi integrates the **X (Twitter) API v2** for social intelligence — look up user profiles, read timelines, search posts with advanced operators, and track trending topics. All endpoints require a Bearer token from the [X Developer Portal](https://developer.x.com). Aomi wraps these as tools so your AI assistant can query social data and cross-reference it with on-chain activity.
+Aomi integrates the **X (Twitter) API v2** for social intelligence. Look up user profiles, read timelines, search posts with advanced operators, and track trending topics. All endpoints require a Bearer token from the [X Developer Portal](https://developer.x.com). Aomi wraps these as tools so your AI assistant can query social data and cross-reference it with onchain activity.
 
 ## Available Tools
 
+The X App registers exactly five read only tools.
+
 | Tool | Description |
 |------|-------------|
-| `GetUserProfile` | Look up a user by handle or ID |
-| `GetUserTimeline` | Fetch recent tweets from a user |
-| `SearchPosts` | Search posts with advanced operators |
-| `GetTrendingTopics` | Current trending topics by location |
-| `GetPostReplies` | Fetch replies to a specific post |
-| `GetUserMentions` | Recent mentions of a user |
+| `get_x_user` | Look up a user by handle |
+| `get_x_user_posts` | Fetch recent posts from a user |
+| `search_x` | Search posts with advanced operators |
+| `get_x_trends` | Current trending topics by location |
+| `get_x_post` | Fetch a single post by ID |
 
 ## Example Conversations
 
@@ -31,7 +32,7 @@ Aomi integrates the **X (Twitter) API v2** for social intelligence — look up u
 
 1. User asks about social data or trending topics
 2. The assistant calls the relevant X API v2 endpoint
-3. Results can be cross-referenced with on-chain data from other tools
+3. Results can be cross-referenced with onchain data from other tools
 4. The assistant synthesizes findings into a natural response
 
 ## Prerequisites
@@ -40,6 +41,6 @@ To use X API tools, you need a Bearer token from the [X Developer Portal](https:
 
 ## Next Steps
 
-- [DeFi Aggregators](/examples/defi-aggregators) — cross-chain swaps and liquidity
-- [Polymarket](/examples/polymarket) — prediction market integration
-- [Custom Tools](/guides/custom-tools) — build your own tools
+- [DeFi Aggregators](/examples/defi-aggregators): cross-chain swaps and liquidity
+- [Polymarket](/examples/polymarket): prediction market integration
+- [Custom Tools](/guides/custom-tools): build your own tools

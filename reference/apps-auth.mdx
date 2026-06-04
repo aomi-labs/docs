@@ -1,9 +1,9 @@
 ---
 title: Apps & Authentication
-description: How Aomi Apps, scoped API keys, and chat sessions work together — App composition, key isolation, authentication flow, and per-App configuration boundaries.
+description: How Aomi Apps, scoped App keys, and chat sessions work together. App composition, key isolation, authentication flow, and per-App configuration boundaries.
 ---
 
-Every Aomi-powered assistant runs inside an **App**. This page explains how Apps, API keys, and sessions work together.
+Every Aomi-powered assistant runs inside an **App**. This page explains how Apps, App keys, and sessions work together.
 
 ## What is an App?
 
@@ -16,28 +16,26 @@ An App is a self-contained AI assistant environment that encapsulates:
 | **Model config** | Default LLM and available alternatives |
 | **RAG docs** | Optional document store for domain knowledge |
 
-Each App is fully isolated — its tools and configuration have no visibility into other Apps.
+Each App is fully isolated. Its tools and configuration have no visibility into other Apps.
 
-## API Keys
+## App Keys
 
-API keys are issued by Aomi and scoped to one or more Apps.
+App keys are issued by Aomi and scoped to one or more Apps.
 
 ### Properties
 
-- **Scoped** — each key authorizes access to specific Apps
-- **Stored securely** — keys are hashed in the database
-- **Revocable** — keys can be deactivated without affecting the App
+- **Scoped**: each key authorizes access to specific Apps
+- **Stored securely**: keys are hashed in the database
+- **Revocable**: keys can be deactivated without affecting the App
 
 ### Usage
 
-Include the API key in the `X-API-Key` header:
+Include the App key in the `AOMI-APP-KEY` header. The chat message rides in the query string as `message`:
 
 ```bash
-curl -X POST https://api.aomi.dev/api/chat?app=mycoindex \
-  -H "X-API-Key: sk-mcd-a1b2c3d4e5f6" \
-  -H "X-Session-Id: 550e8400-e29b-41d4-a716-446655440000" \
-  -H "Content-Type: application/json" \
-  -d '{"text": "What is the price of ETH?"}'
+curl -X POST "https://api.aomi.dev/api/chat?message=What%20is%20the%20price%20of%20ETH%3F&app=mycoindex" \
+  -H "AOMI-APP-KEY: sk-mcd-a1b2c3d4e5f6" \
+  -H "X-Session-Id: 550e8400-e29b-41d4-a716-446655440000"
 ```
 
 ### Scoping
@@ -59,14 +57,14 @@ sequenceDiagram
     participant Backend as Aomi Backend
     participant DB as Database
 
-    Client->>Backend: POST /api/chat?app=mycoindex<br/>X-API-Key: sk-mcd-...<br/>X-Session-Id: session-uuid
-    Backend->>DB: Lookup API key
+    Client->>Backend: POST /api/chat?message=...&app=mycoindex<br/>AOMI-APP-KEY: sk-mcd-...<br/>X-Session-Id: session-uuid
+    Backend->>DB: Lookup App key
     DB-->>Backend: Key record (authorized Apps)
 
     alt Key valid and App authorized
         Backend->>Backend: Load/create session
         Backend->>Backend: Route to MyCoinDexApp
-        Backend-->>Client: SSE stream (200)
+        Backend-->>Client: JSON session snapshot (200)
     else Key invalid
         Backend-->>Client: 401 Unauthorized
     else App not authorized for key
@@ -80,18 +78,18 @@ Sessions represent conversation threads identified by a UUID in the `X-Session-I
 
 ### Properties
 
-- **ID** — client-generated UUID
-- **Messages** — full conversation history
-- **Wallet binding** — optional association with a wallet address
-- **Processing status** — idle, processing, or interrupted
+- **ID**: client-generated UUID
+- **Messages**: full conversation history
+- **Wallet binding**: optional association with a wallet address
+- **Processing status**: idle, processing, or interrupted
 
 ### Lifecycle
 
 Sessions use a three-tier load strategy:
 
-1. **Memory cache** — check if the session is active in memory
-2. **Database** — load persisted session from PostgreSQL
-3. **Create new** — if not found, create a fresh session
+1. **Memory cache**: check if the session is active in memory
+2. **Database**: load persisted session from PostgreSQL
+3. **Create new**: if not found, create a fresh session
 
 ### Wallet Binding
 
@@ -105,18 +103,17 @@ Chain:   Ethereum (1)
 
 ## Default App
 
-Aomi provides a `default` App accessible without an API key. Useful for public demos, evaluation, and testing. The default App has general-purpose tools but no custom configuration. For production, use a scoped API key with your own App.
+Aomi provides a `default` App accessible without an App key. Useful for public demos, evaluation, and testing. The default App has general-purpose tools but no custom configuration. For production, use a scoped App key with your own App.
 
 ## Headers Reference
 
 | Header | Required | Description |
 | --- | --- | --- |
-| `X-API-Key` | For non-default Apps | Your Aomi API key |
+| `AOMI-APP-KEY` | For non-default Apps | Your Aomi App key |
 | `X-Session-Id` | Yes | UUID identifying the conversation session |
-| `Content-Type` | For POST requests | `application/json` |
 
 ## Next Steps
 
-- [API Reference](/reference/api-reference) — full endpoint documentation
-- [Sessions](/reference/sessions) — session management deep-dive
-- [Quickstart](/getting-started/quickstart) — get a working integration in 5 minutes
+- [API Reference](/reference/api-reference): full endpoint documentation
+- [Sessions](/reference/sessions): session management deep dive
+- [Quickstart](/getting-started/quickstart): get a working integration in 5 minutes

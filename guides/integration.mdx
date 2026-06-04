@@ -1,9 +1,9 @@
 ---
 title: "Overview"
-description: "Full-stack Aomi integration walkthrough — wrapping APIs as tools, configuring an App with preamble and model, and deploying across web and Telegram channels."
+description: "Full-stack Aomi integration walkthrough. Wrap APIs as tools, configure an App with preamble and model, and deploy across web and Telegram channels."
 ---
 
-This guide walks through the full-stack integration process — from your existing APIs to a deployed Aomi App that your users can interact with across web, Telegram, and other channels.
+This guide walks through the full-stack integration process, from your existing APIs to a deployed Aomi App that your users can interact with across web, Telegram, and other channels.
 
 To work with us on an integration, [contact us](https://aomi.dev/contact).
 
@@ -60,11 +60,11 @@ flowchart LR
     NS --> CL3
 ```
 
-Each tool wraps one or more of your API endpoints. A one-to-one mapping is not required — you can aggregate multiple endpoints into a single tool so the LLM's context stays clean and semantically coherent.
+Each tool wraps one or more of your API endpoints. A one to one mapping is not required. You can aggregate multiple endpoints into a single tool so the LLM's context stays clean and semantically coherent.
 
 ### 1. Your APIs
 
-Aomi does not modify your APIs. The only requirement is that they are reachable over HTTP. Your backend owns all user state — the Aomi App retains conversation history but nothing about your users, balances, or sessions.
+Aomi does not modify your APIs. The only requirement is that they are reachable over HTTP. Your backend owns all user state. The Aomi App retains conversation history but nothing about your users, balances, or sessions.
 
 | Endpoint | Method | Description |
 | --- | --- | --- |
@@ -76,13 +76,13 @@ Aomi does not modify your APIs. The only requirement is that they are reachable 
 
 ### 2. Aomi Tool Layer
 
-Aomi wraps your endpoints as **tools** — typed functions the LLM can invoke during a conversation. Each tool has a name, description, and typed input parameters. Tools can execute concurrently.
+Aomi wraps your endpoints as **tools**, typed functions the LLM can invoke during a conversation. Each tool has a name, description, and typed input parameters. Tools can execute concurrently.
 
 ### 3. AomiApp Configuration
 
 Three settings define the App's behavior:
 
-**Preamble** — the system prompt that shapes the AI's personality, constraints, and rules. A well-written preamble keeps the AI on-task and prevents overstepping.
+**Preamble** is the system prompt that shapes the AI's personality, constraints, and rules. A well written preamble keeps the AI on task and prevents overstepping.
 
 ```text
 You are the MyCoinDex trading agent. You help users check
@@ -93,7 +93,7 @@ Show prices in USD unless the user requests otherwise.
 Never provide financial advice or price predictions.
 ```
 
-**Model Selection** — different models for different needs:
+**Model Selection** offers different models for different needs:
 
 | Provider | Models |
 | --- | --- |
@@ -101,7 +101,7 @@ Never provide financial advice or price predictions.
 | OpenAI | GPT-4o, GPT-4o Mini |
 | OpenRouter | Access to 100\+ models |
 
-**RAG Document Store** — if you have documentation, FAQs, or knowledge base articles, Aomi sets up RAG ingestion. The AI searches these documents when answering questions beyond what tools provide.
+**RAG Document Store**: if you have documentation, FAQs, or knowledge base articles, Aomi sets up RAG ingestion. The AI searches these documents when answering questions beyond what tools provide.
 
 ### 4. Deployed App
 
@@ -125,6 +125,6 @@ Model:      Claude Sonnet (default, switchable)
 
 ## Next Steps
 
-- [Agentic Application](/concepts/what-is-aomi) — how Apps and API keys fit together
-- [API Reference](/reference/api-reference) — full HTTP endpoint documentation
-- [Sessions](/reference/sessions) — how chat sessions are created and managed
+- [Agentic Application](/concepts/what-is-aomi): how Apps and API keys fit together
+- [API Reference](/reference/api-reference): full HTTP endpoint documentation
+- [Sessions](/reference/sessions): how chat sessions are created and managed

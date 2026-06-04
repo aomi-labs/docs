@@ -1,18 +1,18 @@
 ---
 title: API Reference
-description: HTTP API reference for the Aomi backend — authentication headers, session endpoints, message streaming, tool call payloads, and wallet request callbacks.
+description: HTTP API reference for the Aomi backend. Authentication headers, session endpoints, chat and state, real time updates, and control actions.
 ---
 
 This page documents the HTTP endpoints exposed by the Aomi backend. All endpoints are relative to your backend URL (e.g., `https://api.aomi.dev`).
 
 ## Authentication
 
-Most endpoints require two headers:
+Most endpoints take these headers:
 
 | Header | Description |
 | --- | --- |
 | `X-Session-Id` | UUID identifying the conversation session |
-| `X-API-Key` | Your Aomi API key (required for non-default apps) |
+| `AOMI-APP-KEY` | Your Aomi App key (required for non-default Apps) |
 
 ## Endpoints
 
@@ -30,18 +30,26 @@ POST /api/sessions
 | --- | --- | --- |
 | `X-Session-Id` | Yes | UUID for the new session |
 
+**Request Body (optional):**
+
+```json
+{
+  "public_key": "0x742d35Cc6634C0532925a3b844Bc9e7595f2bD68"
+}
+```
+
 **Response:**
 
 ```json
 {
   "session_id": "550e8400-e29b-41d4-a716-446655440000",
-  "created": true
+  "title": "New chat"
 }
 ```
 
 ### Get Session
 
-Fetch details for an existing session.
+Fetch one thread by ID.
 
 ```
 GET /api/sessions/{id}
@@ -58,128 +66,117 @@ GET /api/sessions/{id}
 ```json
 {
   "session_id": "550e8400-e29b-41d4-a716-446655440000",
-  "threads": [
-    {
-      "id": "thread-uuid",
-      "title": "ETH Price Discussion",
-      "created_at": "2025-01-15T10:30:00Z",
-      "updated_at": "2025-01-15T11:00:00Z"
-    }
-  ]
+  "title": "ETH Price Discussion"
 }
 ```
 
+To list every thread for a wallet, call `GET /api/sessions?public_key=...`. See [List Threads](#list-threads).
+
 ### Send Message (Chat)
 
-Send a message to the AI assistant. Returns a Server-Sent Events (SSE) stream.
+Send a message to the assistant. This returns a JSON snapshot of the updated session, not a stream. The message and its options ride in the query string. To stream the assistant's work as it happens, open the [updates channel](#subscribe-to-updates) and poll [session state](#get-session-state).
 
 ```
-POST /api/chat?app={app}
+POST /api/chat?message={message}&app={app}
 ```
 
 **Query Parameters:**
 
 | Parameter | Required | Description |
 | --- | --- | --- |
-| `app` | No | Target app (defaults to `default`) |
+| `message` | Yes | The user message text |
+| `app` | No | Target App (defaults to `default`) |
+| `public_key` | No | Wallet address to bind the session to |
+| `user_state` | No | JSON-encoded user state (wallet, chain, connection) |
+| `client_id` | No | Client identifier for scoped secrets |
 
 **Headers:**
 
 | Header | Required | Description |
 | --- | --- | --- |
 | `X-Session-Id` | Yes | Session UUID |
-| `X-API-Key` | For non-default apps | Your API key |
-| `Content-Type` | Yes | `application/json` |
+| `AOMI-APP-KEY` | For non-default Apps | Your App key |
 
-**Request Body:**
+**Response:** JSON snapshot of the session.
 
 ```json
 {
-  "text": "What is the current price of ETH?"
+  "messages": [
+    { "sender": "user", "content": "What is the current price of ETH?" },
+    { "sender": "agent", "content": "The current price of ETH is $3,500.00." }
+  ],
+  "system_events": [],
+  "title": "ETH price check",
+  "is_processing": false,
+  "user_state": null
 }
 ```
 
-**Response:** SSE stream (`text/event-stream`)
-
-```
-data: {"type":"text","content":"The current "}
-
-data: {"type":"text","content":"price of ETH is "}
-
-data: {"type":"tool_call","name":"GetTokenPrice","call_id":"call_1","args":{"symbol":"ETH"}}
-
-data: {"type":"tool_result","call_id":"call_1","name":"GetTokenPrice","result":{"price":3500.00}}
-
-data: {"type":"text","content":"$3,500.00."}
-
-data: {"type":"complete"}
-```
-
-**SSE Event Types:**
-
-| Type | Description | Fields |
+| Field | Type | Description |
 | --- | --- | --- |
-| `text` | Incremental text from the LLM | `content` |
-| `tool_call` | The assistant is calling a tool | `name`, `call_id`, `args` |
-| `tool_result` | Result from a tool execution | `call_id`, `name`, `result` |
-| `async_tool_result` | Result from a multi-step tool | `call_id`, `name`, `result` |
-| `complete` | Response generation finished | -- |
-| `error` | An error occurred | `message` |
+| `messages` | array | Conversation messages so far |
+| `system_events` | array | System events for the session |
+| `title` | string | Conversation title |
+| `is_processing` | boolean | Whether the assistant is still working |
+| `user_state` | object | Synced user state (wallet, chain, connection) |
 
 ### Get Session State
 
-Get the current state snapshot for a session. Useful for polling session status and receiving pending updates.
+Get the current state snapshot for a session. Poll this to watch `is_processing` and pick up new messages while the assistant works.
 
 ```
-GET /api/state?session_id={session_id}
+GET /api/state
 ```
+
+**Headers:**
+
+| Header | Required | Description |
+| --- | --- | --- |
+| `X-Session-Id` | Yes | Session UUID |
 
 **Query Parameters:**
 
 | Parameter | Required | Description |
 | --- | --- | --- |
-| `session_id` | Yes | Session UUID |
+| `user_state` | No | JSON-encoded user state to reconcile |
+| `client_id` | No | Client identifier for scoped secrets |
 
 **Response:**
 
 ```json
 {
-  "session_id": "550e8400-...",
-  "status": "idle",
   "messages": [],
+  "system_events": [],
+  "title": "ETH price check",
+  "is_processing": false,
   "user_state": {
-    "address": "0x742d...",
-    "chain_id": 1,
-    "is_connected": true
+    "connection": { "is_connected": true },
+    "evm": { "address": "0x742d...", "chain_id": 1 }
   }
 }
 ```
 
+Wallet fields are nested under `user_state`: the EVM address is `user_state.evm.address`, the chain is `user_state.evm.chain_id`, and connection status is `user_state.connection.is_connected`.
+
 ### Interrupt Generation
 
-Cancel an in-progress response generation.
+Cancel an in-progress response.
 
 ```
-POST /api/interrupt?session_id={session_id}
+POST /api/interrupt
 ```
 
-**Query Parameters:**
+**Headers:**
 
-| Parameter | Required | Description |
+| Header | Required | Description |
 | --- | --- | --- |
-| `session_id` | Yes | Session UUID |
+| `X-Session-Id` | Yes | Session UUID |
 
-**Response:**
-
-```json
-{
-  "interrupted": true
-}
-```
+**Response:** the same JSON session snapshot returned by [Send Message](#send-message-chat).
 
 ### Subscribe to Updates
 
-Subscribe to real-time updates for a session via SSE. This is a long-lived connection that receives system events, async tool results, and state changes.
+Open a long-lived Server-Sent Events (SSE) channel for a session. Use it to react to title changes and tool progress in real time. Open it with a header-based `fetch` and read the stream body, since the session ID travels in a header rather than a query parameter.
 
 ```
 GET /api/updates
@@ -190,77 +187,97 @@ GET /api/updates
 | Header | Required | Description |
 | --- | --- | --- |
 | `X-Session-Id` | Yes | Session UUID |
+| `Accept` | Yes | `text/event-stream` |
 
-**Response:** SSE stream with system events.
+**Response:** SSE stream. Each event is a JSON object carrying `type` and `session_id`.
 
-### Control Actions
+**Event Types:**
 
-Perform control actions on a session (e.g., select a model).
-
-```
-POST /api/control/{action}?session_id={session_id}
-```
-
-**Path Parameters:**
-
-| Parameter | Description |
+| Type | Description |
 | --- | --- |
-| `action` | The control action to perform (e.g., `model`) |
+| `title_changed` | The conversation title was updated (carries `new_title`) |
+| `tool_update` | A tool reported progress |
+| `tool_complete` | A tool finished |
+| `system_notice` | A system-level notice for the session |
+
+### List Threads
+
+List every thread bound to a wallet address.
+
+```
+GET /api/sessions?public_key={public_key}
+```
+
+**Headers:**
+
+| Header | Required | Description |
+| --- | --- | --- |
+| `X-Session-Id` | Yes | Session UUID |
 
 **Query Parameters:**
 
 | Parameter | Required | Description |
 | --- | --- | --- |
-| `session_id` | Yes | Session UUID |
+| `public_key` | Yes | Wallet address |
 
-**Request Body:** Varies by action.
-
-For model selection:
+**Response:** an array of threads.
 
 ```json
-{
-  "model": "claude-sonnet"
-}
+[
+  { "session_id": "550e8400-...", "title": "ETH Trading" },
+  { "session_id": "661f9511-...", "title": "Portfolio Review" }
+]
 ```
+
+### Set Model
+
+Set the model (rig) for a session.
+
+```
+POST /api/control/model?rig={rig}
+```
+
+**Headers:**
+
+| Header | Required | Description |
+| --- | --- | --- |
+| `X-Session-Id` | Yes | Session UUID |
+| `AOMI-APP-KEY` | For non-default Apps | Your App key |
+
+**Query Parameters:**
+
+| Parameter | Required | Description |
+| --- | --- | --- |
+| `rig` | Yes | Model identifier to switch to |
 
 **Response:**
 
 ```json
 {
-  "success": true
+  "success": true,
+  "rig": "claude-sonnet",
+  "baml": "...",
+  "created": false
 }
 ```
 
 ### List Available Models
 
-Get the list of models available for the current session.
+Get the models available for the current session.
 
 ```
 GET /api/control/models
 ```
 
-**Response:**
+**Response:** an array of model identifiers.
 
 ```json
-{
-  "models": [
-    {
-      "id": "claude-sonnet",
-      "name": "Claude Sonnet",
-      "provider": "anthropic"
-    },
-    {
-      "id": "gpt-4o",
-      "name": "GPT-4o",
-      "provider": "openai"
-    }
-  ]
-}
+["claude-sonnet", "gpt-4o"]
 ```
 
-### List Authorized Apps
+### List Apps
 
-Get the apps your API key is authorized to access.
+Get the Apps available to this session, each with the secret slots it declares.
 
 ```
 GET /api/control/apps
@@ -270,46 +287,33 @@ GET /api/control/apps
 
 | Header | Required | Description |
 | --- | --- | --- |
-| `X-API-Key` | Yes | Your API key |
+| `X-Session-Id` | Yes | Session UUID |
+| `AOMI-APP-KEY` | For non-default Apps | Your App key |
 
-**Response:**
+**Response:** an array of App descriptors. `secrets` is present only for Apps that declare slots.
 
 ```json
-{
-  "apps": [
-    {
-      "id": "mycoindex",
-      "name": "MyCoinDex"
-    },
-    {
-      "id": "default",
-      "name": "Default"
-    }
-  ]
-}
+[
+  {
+    "name": "mycoindex",
+    "secrets": [
+      { "name": "API_KEY", "description": "Vendor API key", "required": true }
+    ]
+  },
+  { "name": "default" }
+]
 ```
 
-## SSE Stream Format
+## Consuming the Updates Stream in JavaScript
 
-All SSE responses follow the standard format:
-
-```
-data: {json}\n\n
-```
-
-Each line starts with `data: ` followed by a JSON object and ends with two newlines. The JSON object always contains a `type` field that determines how to process the event.
-
-### Consuming SSE in JavaScript
+The updates channel ships the session ID in a header, so open it with `fetch` and read the response body. Do not use `EventSource` with a query parameter.
 
 ```ts
-const response = await fetch("/api/chat?app=mycoindex", {
-  method: "POST",
+const response = await fetch("/api/updates", {
   headers: {
-    "Content-Type": "application/json",
     "X-Session-Id": sessionId,
-    "X-API-Key": apiKey,
+    Accept: "text/event-stream",
   },
-  body: JSON.stringify({ text: "Hello" }),
 });
 
 const reader = response.body!.getReader();
@@ -323,23 +327,21 @@ while (true) {
   const lines = chunk.split("\n");
 
   for (const line of lines) {
-    if (line.startsWith("data: ")) {
-      const event = JSON.parse(line.slice(6));
+    if (line.startsWith("data:")) {
+      const event = JSON.parse(line.slice(5).trim());
 
       switch (event.type) {
-        case "text":
-          appendText(event.content);
+        case "title_changed":
+          setTitle(event.new_title);
           break;
-        case "tool_call":
-          showToolCall(event.name, event.args);
+        case "tool_update":
+          showToolProgress(event);
           break;
-        case "tool_result":
-          showToolResult(event.call_id, event.result);
+        case "tool_complete":
+          markToolDone(event);
           break;
-        case "complete":
-          break;
-        case "error":
-          console.error(event.message);
+        case "system_notice":
+          showNotice(event);
           break;
       }
     }
@@ -349,24 +351,16 @@ while (true) {
 
 ## Error Responses
 
-All error responses follow this format:
-
-```json
-{
-  "error": "Description of what went wrong"
-}
-```
-
 | Status Code | Meaning |
 | --- | --- |
 | `400` | Bad request (missing or invalid parameters) |
-| `401` | Unauthorized (invalid or missing API key) |
-| `403` | Forbidden (API key does not authorize this app) |
+| `401` | Unauthorized (invalid or missing App key) |
+| `403` | Forbidden (App key does not authorize this App) |
 | `404` | Not found (session or resource does not exist) |
 | `500` | Internal server error |
 
 ## Next Steps
 
-- [Sessions](/reference/sessions) — how sessions and threads are managed
-- [Building Apps](/reference/building-apps) — app configuration and deployment
-- [Quickstart](/getting-started/quickstart) — get a working integration in minutes
+- [Sessions](/reference/sessions): how sessions and threads are managed
+- [Building Apps](/reference/building-apps): app configuration and deployment
+- [Quickstart](/getting-started/quickstart): get a working integration in minutes

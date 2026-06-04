@@ -1,61 +1,133 @@
 ---
 title: Custom Tools
-description: Extend Aomi with custom tools using the Rust SDK — define functions with the #[tool] macro, expose APIs and on-chain actions, and register with your App.
+description: Extend Aomi with custom tools using the Rust SDK. Implement the DynAomiTool trait, register tools with the dyn_aomi_app! macro, and ship them as a plugin.
 ---
 
-Custom tools are how you extend Aomi with your own APIs, data sources, and on-chain actions. Tools are defined using the Rust SDK and registered with an Aomi App.
+Custom tools are how you extend Aomi with your own APIs, data sources, and onchain actions. You define each tool in the Rust SDK by implementing the `DynAomiTool` trait, then register your tools with the `dyn_aomi_app!` macro. The macro compiles your tool list into a manifest, a dispatch router, and the C ABI entry points the host loads at runtime.
+
+For the full app lifecycle (crate setup, building, and shipping), see [Building Apps](/reference/building-apps). This page focuses on the tool surface.
 
 ## Defining a Tool
 
-Tools are created using the `#[tool]` macro from the Aomi SDK:
+Each tool is a struct that implements `DynAomiTool`. You declare the app it belongs to, a typed argument struct, a name, and a description. The name and description are what the LLM uses to pick the tool; the argument struct is what the LLM fills in from natural language.
 
 ```rust
-use aomi_sdk::prelude::*;
+use aomi_sdk::{DynAomiTool, DynToolCallCtx};
+use schemars::JsonSchema;
+use serde::Deserialize;
+use serde_json::{json, Value};
 
-#[tool(
-    name = "get_token_price",
-    description = "Get the current price of a token by symbol"
-)]
-pub async fn get_token_price(
+#[derive(Clone, Default)]
+struct MyApp;
+
+#[derive(Debug, Deserialize, JsonSchema)]
+struct GetPriceArgs {
     symbol: String,
-) -> Result<TokenPrice, ToolError> {
-    let price = fetch_price_from_api(&symbol).await?;
-    Ok(TokenPrice { symbol, price })
+}
+
+struct GetPrice;
+
+impl DynAomiTool for GetPrice {
+    type App = MyApp;
+    type Args = GetPriceArgs;
+    const NAME: &'static str = "get_token_price";
+    const DESCRIPTION: &'static str = "Get the current price of a token by symbol.";
+
+    fn run(_app: &MyApp, args: GetPriceArgs, _ctx: DynToolCallCtx) -> Result<Value, String> {
+        Ok(json!({ "symbol": args.symbol, "price": 42.0 }))
+    }
 }
 ```
 
-Each tool has:
-- A **name** — used by the LLM to invoke the tool
-- A **description** — tells the LLM when to use the tool
-- **Typed parameters** — the LLM generates these from natural language
-- A **return type** — the result sent back to the LLM
+Each tool declares:
 
-## Multi-Step Tools
+- An **`App`** is the app struct the tool belongs to.
+- An **`Args`** struct holds the typed parameters the LLM generates. It must derive `Deserialize` and `JsonSchema`.
+- A **`NAME`** is the identifier the LLM uses to invoke the tool.
+- A **`DESCRIPTION`** tells the LLM when to use the tool.
+- A **`run`** function holds the logic. It returns a JSON `Value` on success or an error `String`.
 
-Tools can return intermediate results and request follow-up actions from the LLM, enabling complex multi-step workflows.
+The `DynToolCallCtx` argument carries per-call context: `session_id`, `call_id`, host-injected `state_attributes`, and resolved `secrets`. Read secrets with `resolve_secret_value` rather than touching the map directly.
+
+## Async Tools
+
+For long-running or streaming tools, set `IS_ASYNC = true` and implement `run_async` instead of `run`. You push intermediate updates through the `DynAsyncSink` and signal the terminal result with `complete`:
+
+```rust
+use aomi_sdk::{DynAomiTool, DynToolCallCtx, DynAsyncSink};
+use serde_json::json;
+
+impl DynAomiTool for StreamPrices {
+    type App = MyApp;
+    type Args = StreamArgs;
+    const NAME: &'static str = "stream_prices";
+    const DESCRIPTION: &'static str = "Stream price updates over time.";
+    const IS_ASYNC: bool = true;
+
+    fn run_async(
+        _app: &MyApp,
+        _args: StreamArgs,
+        _ctx: DynToolCallCtx,
+        sink: DynAsyncSink,
+    ) -> Result<(), String> {
+        sink.emit(json!({ "price": 41.5 }))?;
+        sink.complete(json!({ "price": 42.0 }))?;
+        Ok(())
+    }
+}
+```
+
+Intermediate `emit` calls must send bare values. The terminal `complete` call accepts either a bare value or a routed `ToolReturn`. Check `sink.is_canceled()` to bail out early when the host cancels the call.
+
+## Multistep Tools
+
+A tool can ask the host to run a follow-up step by returning a routed `ToolReturn` instead of a bare value. Override `run_with_routes` and build the route with `ToolReturn::with_route` and `RouteStep::on_return`:
+
+```rust
+use aomi_sdk::{RouteStep, ToolReturn};
+use serde_json::json;
+
+ToolReturn::with_route(
+    json!({ "status": "awaiting_signature" }),
+    RouteStep::on_return("evm_commit_message", json!({ "typed_data": "..." }))
+        .prompt("Suggested next step: call evm_commit_message with these args."),
+)
+```
+
+The host treats each route as advisory: `on_return` steps render into the next prompt the LLM sees, and out-of-band events (wallet callbacks, staged transaction completions) splice their results into the hinted args before the continuation prompt is injected. See [Host Interop](/reference/building-apps) for the host tool contract (`view_state`, `run_tx`, `stage_tx`, `simulate_batch`, `commit_tx`).
 
 ## Registering Tools
 
-Tools are added to an AomiApp using the builder pattern:
+Register every tool with the `dyn_aomi_app!` macro at your crate root. The macro generates the `DynAomiApp` implementation and the FFI exports:
 
 ```rust
-let app = CoreAppBuilder::new("myapp")
-    .add_tool(get_token_price)
-    .add_tool(execute_trade)
-    .add_tool(get_portfolio)
-    .build();
+aomi_sdk::dyn_aomi_app!(
+    app = MyApp,
+    name = "myapp",
+    version = "0.1.0",
+    preamble = "You help users check and trade tokens.",
+    tools = [GetPrice, StreamPrices],
+    namespaces = ["evm-core"],
+);
 ```
 
-## Tool Scheduler
+The arms are `app`, `name`, `version`, `preamble`, `tools`, optional `secrets`, and optional `namespaces`. `namespaces` defaults to `["evm-core"]` when omitted, which gives your tools the host's EVM wallet flows. Add `secrets = [...]` to declare per-app credentials the host gates app load on.
 
-The runtime includes a `ToolScheduler` that manages tool execution — parallel execution for independent tools, sequential execution for dependent ones, and automatic retry on transient failures.
+## Testing Tools
 
-## Instrumented Tools
+The `aomi_sdk::testing` module lets you unit-test a tool without loading the full FFI plugin. Build a context with `TestCtxBuilder`, then drive the tool with `run_tool` (sync) or `run_async_tool` (async):
 
-Tools can be wrapping with instrumentation for monitoring, logging, and tracing — useful for debugging and performance analysis.
+```rust
+use aomi_sdk::testing::{TestCtxBuilder, run_tool};
+use serde_json::json;
+
+let ctx = TestCtxBuilder::new("get_token_price").build();
+let result = run_tool::<GetPrice>(&MyApp, json!({ "symbol": "ETH" }), ctx);
+assert!(result.is_ok());
+```
 
 ## Next Steps
 
-- [SDK Reference](/reference/sdk-api) — full Rust SDK documentation
-- [Building Apps](/reference/building-apps) — complete app deployment guide
-- [Integration Guide](/guides/integration) — full platform walkthrough
+- [Building Apps](/reference/building-apps): full app lifecycle and host tool contract
+- [Evals & Testing](/guides/evals-testing): test your tools and agent behavior
+- [SDK Reference](/reference/sdk-api): full Rust SDK documentation

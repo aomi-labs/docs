@@ -3,6 +3,8 @@ title: "Building an App"
 description: "How an Aomi App is built. The standard crate file split, the aomi.toml manifest, the preamble, tools, and host namespaces. Authoring only; compiling and shipping link forward."
 ---
 
+<Info>Verified against aomi-sdk@main on 2026-06-04.</Info>
+
 This page is about **authoring** an Aomi App: how the crate is laid out, what goes in each file, and how you wire it together. An App is a Rust crate that compiles to a dynamic plugin the Aomi runtime hot loads. It wraps an external API as a small set of typed tools, ships a preamble that tells the model how to use them, and declares which host capabilities it needs.
 
 When you are ready to compile and ship, follow the forward links at the bottom of this page. This page does not cover the build or deploy steps.
@@ -17,7 +19,7 @@ The Aomi SDK lets you wrap any crypto API as a dynamic plugin. The runtime loads
 
 <CardGroup cols={2}>
   <Card title="DeFi protocols" icon="coins">
-    Wrap a DEX, lending market, or staking protocol as tools the chat can drive. See `defi`, `defillama`, `morpho`.
+    Wrap a DEX, lending market, or staking protocol as tools the chat can drive. See `defillama`, `morpho`.
   </Card>
 
   <Card title="Prediction markets" icon="chart-line">
@@ -278,7 +280,7 @@ Host capabilities are a public contract, not private infrastructure. Apps that e
 | `stage_tx` | Stage an EVM transaction for later simulation and signing. |
 | `simulate_batch` | Simulate one or more staged transactions before prompting a wallet. |
 | `commit_tx` | Ask the user wallet to sign and broadcast one staged transaction. |
-| `commit_eip712` | Ask the user wallet to sign EIP-712 typed data. |
+| `evm_commit_message` | Ask the user wallet to sign an EIP-712 typed-data message. |
 
 The transaction model is always **stage first, then simulate, then commit**. Describe the host capabilities you rely on in your tool descriptions and preamble. Do not refer to private namespaces, and do not assume a hidden fallback network. If a host does not implement a capability, it surfaces that absence rather than silently redirecting.
 

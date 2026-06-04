@@ -1,227 +1,92 @@
 ---
-title: "Quickstart"
-description: "Install the Aomi AI chat widget in a Next.js 15 app in minutes using shadcn — prerequisites, CLI command, environment variables, and first-run setup. "
+title: "Use the CLI"
+description: "Start using Aomi from your terminal with the @aomi-labs/client package and the aomi command: install, verify, and run your first chat and trade."
 ---
 
-Install and run the Aomi chat widget in a Next.js project with a single CLI command.
+The fastest way to use Aomi is the `aomi` command in your terminal. It ships in the **@aomi-labs/client** package, talks to a running Aomi backend, and lets you chat, simulate, and sign transactions without writing any code.
 
-## Prerequisites
+## Install
 
-- **Next.js 15** app with the App Router
-- **Tailwind CSS** configured
-- **shadcn/ui** initialized (`npx shadcn init` already run, `components.json` present)
+<Tabs>
+<Tab title="Global (npm)">
+```bash
+npm install -g @aomi-labs/client
+aomi --version
+```
+After a global install, run every command as `aomi <command>`.
+</Tab>
+<Tab title="Run once (npx)">
+```bash
+npx @aomi-labs/client --version
+```
+No install. Substitute `npx @aomi-labs/client` everywhere this guide writes `aomi`.
+</Tab>
+<Tab title="pnpm">
+```bash
+pnpm add @aomi-labs/client
+pnpm exec aomi --version
+```
+</Tab>
+</Tabs>
 
-Starting from scratch:
+## Verify
+
+Check the version, then send your first prompt.
 
 ```bash
-npx create-next-app@latest my-app --typescript --tailwind --app
-cd my-app
-npx shadcn init
+aomi --version            # needs >= 0.1.30
+aomi --prompt "what is the price of ETH?"
 ```
 
-## Install the Widget
+If you get a price back, the install works and you are talking to the backend.
 
+## Try a trade
+
+A trade is a short, three part loop: chat to build the transaction, simulate it, then sign it. Pass `--public-key` so the agent knows your wallet address and can build the transaction.
+
+<Steps>
+<Step title="Chat to queue the transaction">
 ```bash
-npx shadcn add https://aomi.dev/r/aomi-frame.json
+aomi chat "swap 1 ETH for USDC" --public-key 0xYourAddress
 ```
-
-This installs the `AomiFrame` component, all sub-components, and every dependency in one step.
-
-### What Gets Installed
-
-**npm packages:**
-
-| Package | Purpose |
-| --- | --- |
-| `@aomi-labs/react` | Headless runtime, hooks, API client |
-| `@assistant-ui/react` | Chat primitives |
-
-**Component files:**
-
-```text
-your-project/
-├── components/
-│   ├── aomi-frame.tsx                    ← Main shell
-│   ├── control-bar/
-│   │   ├── index.tsx                     ← ControlBar component
-│   │   ├── model-select.tsx              ← Model dropdown
-│   │   ├── app-select.tsx                ← App/agent dropdown
-│   │   ├── api-key-input.tsx             ← API key dialog
-│   │   ├── wallet-connect.tsx            ← Wallet button
-│   │   └── network-select.tsx            ← Network dropdown
-│   ├── assistant-ui/
-│   │   ├── thread.tsx                    ← Chat thread
-│   │   ├── thread-list.tsx               ← Thread list
-│   │   ├── threadlist-sidebar.tsx        ← Sidebar wrapper
-│   │   ├── tool-fallback.tsx             ← Tool display
-│   │   ├── markdown-text.tsx             ← Markdown renderer
-│   │   ├── tooltip-icon-button.tsx       ← Icon buttons
-│   │   └── attachment.tsx                ← File attachments
-│   ├── ui/
-│   │   ├── button.tsx                    ← shadcn primitive
-│   │   ├── sidebar.tsx                   ← shadcn primitive
-│   │   ├── popover.tsx                   ← shadcn primitive
-│   │   └── ...                           ← Other shadcn primitives
-│   └── wallet-tx-handler.tsx             ← Wallet transaction handler
-├── lib/
-│   └── utils.ts                          ← cn() utility
-└── package.json                          ← npm deps added
-```
-
-### Registry Architecture
-
-Components are pulled from three registries, all resolved automatically by the CLI:
-
-| Source | What | Why |
-| --- | --- | --- |
-| **aomi.dev/r** | Customized components (AomiFrame, Thread, ThreadList) | Aomi-specific features like wallet integration |
-| **r.assistant-ui.com** | Unchanged upstream components (markdown, tooltips) | Maintained by assistant-ui, receives upstream fixes |
-| **ui.shadcn.com** | Primitives (Button, Sidebar, Dialog) | Standard UI building blocks |
-
-```text
-npx shadcn add https://aomi.dev/r/aomi-frame.json
-        │
-        ▼
-   aomi.dev/r ──► r.assistant-ui.com
-        │                │
-        ▼                ▼
-   ui.shadcn.com      npm packages
-```
-
-Since components are copied into your project, you own the source code and can edit anything.
-
-## Set Environment Variables
-
-Create `.env.local`:
-
+When the agent needs a signature, the request is queued locally as `tx-1`.
+</Step>
+<Step title="List pending transactions">
 ```bash
-NEXT_PUBLIC_BACKEND_URL=https://api.aomi.dev
+aomi tx list
 ```
-
-For wallet support, add:
-
+You see `tx-1` with its destination, value, and chain.
+</Step>
+<Step title="Simulate before you sign">
 ```bash
-NEXT_PUBLIC_PARA_API_KEY=your_para_api_key
-NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID=your_walletconnect_project_id
+aomi tx simulate tx-1
 ```
-
-## Add AomiFrame to a Page
-
-```tsx
-import { AomiFrame } from "@/components/aomi-frame";
-
-export default function ChatPage() {
-  return (
-    <div style={{ height: "100vh" }}>
-      <AomiFrame
-        backendUrl={process.env.NEXT_PUBLIC_BACKEND_URL!}
-        height="100%"
-        width="100%"
-      />
-    </div>
-  );
-}
-```
-
-## Configure Your API Key
-
-### Option A: Via the ControlBar UI
-
-The widget includes a ControlBar with an API key input. Click the key icon, paste your API key, and select your app from the dropdown. The key is stored in `localStorage` for subsequent visits.
-
-### Option B: Programmatically
-
-Set the API key and app in code using the `useControl` hook:
-
-```tsx
-import { useControl } from "@aomi-labs/react";
-import { useEffect } from "react";
-
-function ConfigureOnMount() {
-  const { setState } = useControl();
-
-  useEffect(() => {
-    setState({
-      apiKey: "sk-your-api-key",
-      app: "mycoindex",
-    });
-  }, []);
-
-  return null;
-}
-```
-
-## Run Your App
-
+This runs the transaction on a forked chain so you see the outcome before any funds move.
+</Step>
+<Step title="Sign and submit">
 ```bash
-npm run dev
+aomi tx sign tx-1 --private-key 0xYourPrivateKey
 ```
+The CLI signs, submits, prints the hash, and tells the backend.
+</Step>
+</Steps>
 
-Open `http://localhost:3000`. You should see the full chat interface with:
+That is the whole flow. For the full command surface, see the [CLI reference](/reference/cli). For how a trade moves from prompt to onchain, see [Trade execution](/trade/execution).
 
-- A sidebar for thread management
-- A message composer at the bottom
-- A ControlBar with model and app selectors
-- Streaming AI responses when you send a message
+<Check>
+You can now use Aomi from your terminal: chat with the agent, simulate transactions, and sign them.
+</Check>
 
-When you type a message and send it:
+## Next steps
 
-1. The message appears in the chat thread.
-2. The assistant streams its response in real-time.
-3. Tool calls and their results appear inline.
-4. The composer is ready for the next message once the response completes.
-
-## Customizing the Layout
-
-Hide controls you don't need using the compound component API:
-
-```tsx
-<AomiFrame.Root height="100%" backendUrl={process.env.NEXT_PUBLIC_BACKEND_URL!}>
-  <AomiFrame.Header
-    withControl={true}
-    controlBarProps={{
-      hideWallet: true,
-      hideApiKey: true,
-    }}
-  />
-  <AomiFrame.Composer />
-</AomiFrame.Root>
-```
-
-## Namespace Configuration
-
-For shorter install commands, add a registry namespace to `components.json`:
-
-```json
-{
-  "registries": {
-    "aomi": "https://r.aomi.dev"
-  }
-}
-```
-
-Then install with:
-
-```bash
-npx shadcn add @aomi/aomi-frame
-```
-
-## Updating Components
-
-Re-run the install with `--overwrite` to pull the latest versions:
-
-```bash
-npx shadcn add https://aomi.dev/r/aomi-frame.json --overwrite
-```
-
-Review changes before committing:
-
-```bash
-git diff components/
-```
-
-## Next Steps
-
-- [Frontend Setup](/guides/frontend-setup) — widget customization and layout
-- [Integration Guide](/guides/integration) — full-stack platform walkthrough
-- [API Reference](/reference/api-reference) — HTTP API documentation
+<CardGroup cols={3}>
+<Card title="Build your own App" href="/build/quickstart" icon="cube">
+Scaffold an Agentic Application with the Rust SDK and ship it.
+</Card>
+<Card title="Trade by chat" href="/trade/index" icon="arrows-rotate">
+Learn the full trade flow: swaps, transfers, and simulation.
+</Card>
+<Card title="Add the chat widget" href="/guides/frontend-setup" icon="window">
+Drop the Aomi chat widget into a frontend.
+</Card>
+</CardGroup>

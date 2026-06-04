@@ -12,10 +12,11 @@
     "pages": [
       "index",
       {
-        "group": "Introduction",
+        "group": "Try Aomi",
         "icon": "rocket",
         "pages": [
         "getting-started/quickstart",
+        "reference/cli",
         "getting-started/playground"
       ]
       },
@@ -29,8 +30,7 @@
           "reference/sdk-api",
           "reference/cli-toolchain",
           "build/deploy",
-          "reference/cli",
-          "guides/cli-usage"
+          "build/common-errors"
         ]
       },
       {
@@ -125,7 +125,6 @@
         "pages": [
           "reference/index",
           "reference/simulation",
-          "reference/account-abstraction",
           "reference/runtime",
           "reference/api-reference",
           "reference/sessions",
@@ -143,6 +142,10 @@
     ]
   },
   "redirects": [
+    {
+      "source": "/guides/cli-usage",
+      "destination": "/reference/cli"
+    },
     {
       "source": "/guides/execution",
       "destination": "/trade/execution"
@@ -163,15 +166,15 @@
         "href": "https://chat.aomi.dev"
       },
       {
-        "label": "aomi (widget + backend)",
+        "label": "client cli",
         "href": "https://github.com/aomi-labs/aomi"
       },
       {
-        "label": "aomi-sdk (Rust SDK)",
+        "label": "rust sdk",
         "href": "https://github.com/aomi-labs/aomi-sdk"
       },
       {
-        "label": "skills (definitions)",
+        "label": "skills",
         "href": "https://github.com/aomi-labs/skills"
       }
     ],

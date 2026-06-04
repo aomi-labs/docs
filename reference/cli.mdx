@@ -1,6 +1,6 @@
 ---
-title: aomi CLI reference
-description: Reference for the aomi executable from @aomi-labs/client. Chat with an Aomi backend, persist sessions, inspect and sign wallet requests, manage models, apps, chains, and secrets.
+title: Client CLI
+description: The aomi command from @aomi-labs/client. Chat with a backend from your terminal, simulate and sign transactions, manage sessions and secrets, with common task recipes and the full command reference.
 ---
 
 The `aomi` command ships inside the **@aomi-labs/client** npm package. You use it to chat with an Aomi backend, keep a session across runs, inspect wallet requests, sign and submit transactions, and manage per session secrets.
@@ -8,7 +8,7 @@ The `aomi` command ships inside the **@aomi-labs/client** npm package. You use i
 <Warning>
 This is the **client** CLI. It talks to a running Aomi backend. It is not the builder toolchain.
 
-If you are building and shipping an Agentic Application, you want the Rust SDK tools `aomi-build`, `aomi-run`, and `aomi-git` instead. See [the builder CLI reference](/reference/cli-toolchain) for those. This page covers only the npm `aomi` client.
+If you are building and shipping an Agentic Application, you want the Rust SDK tools `aomi-build`, `aomi-run`, and `aomi-git` instead. See [the builder toolchain](/reference/cli-toolchain) for those. This page covers only the npm `aomi` client.
 </Warning>
 
 The package is published as `@aomi-labs/client` and registers one binary named `aomi`.
@@ -273,7 +273,7 @@ aomi tx list
 ```
 ```text
 Pending (1):
-  ⏳ tx-1  to: 0x3fC9...7FAD  value: 1000000000000000000  chain: 1
+  ⏳ tx-1  to: 0x3fC91A3afd70395Cd496C647d5a6CC9D4B2b7FAD  value: 1000000000000000000  chain: 1  (2:14:07 PM)
 ```
 </Step>
 <Step title="Sign and submit">
@@ -325,7 +325,7 @@ These global flags work on the root command and on the subcommands. Flags take p
 | `--api-key <key>` | `AOMI_API_KEY` | API key for non default apps |
 | `--app <name>` | `AOMI_APP` | Active app |
 | `--model <rig>` | `AOMI_MODEL` | Model to apply for the session |
-| `--new-session` | — | Create a fresh active session for this command |
+| `--new-session` | n/a | Create a fresh active session for this command |
 | `--chain <id>` | `AOMI_CHAIN_ID` | Active chain for chat and session context |
 | `--public-key <address>` | `AOMI_PUBLIC_KEY` | Wallet address, so the agent knows your wallet |
 | `--private-key <hex>` | `PRIVATE_KEY` | Hex signing key for `aomi tx sign` |
@@ -341,7 +341,7 @@ Root command only flags:
 | `-p`, `--prompt <prompt>` | Send a single prompt and exit |
 | `--show-tool` | Show tool output in prompt or REPL mode |
 | `--provider-key <provider:key>` | Save a BYOK provider key before running |
-| `-V`, `--version` | Print the installed CLI version |
+| `-v`, `--version` | Print the installed CLI version |
 
 `--verbose` (`-v`) is available on `aomi chat` to stream tool calls and responses live.
 
@@ -406,13 +406,60 @@ aomi tx list                # shows all transactions
 aomi session close          # clears the active local session pointer
 ```
 
+## Common tasks
+
+A few flows you will reach for often. Each uses the commands documented above.
+
+### Chat with your App locally
+
+Sanity check a preamble or a new tool before you deploy. The CLI talks to your App as deployed on the backend, so deploy a change first, then check it here.
+
+```bash
+aomi --app mycoindex                                        # open the REPL
+aomi --prompt "what is the price of ETH?" --app mycoindex   # or one shot
+```
+
+Add `--verbose` to watch which tools the model calls and what they return. Run `aomi session log` to read the whole exchange back, tool results included.
+
+### Compare models
+
+Run the same prompt across models without starting over.
+
+```bash
+aomi model list
+aomi model set gpt-5
+aomi chat "summarize my portfolio risk" --model claude-sonnet-4
+```
+
+### Debug a tool call
+
+When the model does not call the tool you expect, run the chat in verbose mode to see the tool calls, their arguments, and the raw results live.
+
+```bash
+aomi chat "what is the price of ETH?" --verbose
+```
+
+### Simulate before you sign
+
+When a chat asks the agent to act onchain, the transaction is queued locally. Simulate it before signing so no funds move until you are happy with the result. See [Transaction flow](#transaction-flow) for the full walkthrough.
+
+### Inspect or resume a session
+
+Each conversation is a session, kept locally so you can pick it up later.
+
+```bash
+aomi session list
+aomi session resume session-1
+aomi session status
+```
+
 ## Next steps
 
 <CardGroup cols={2}>
-<Card title="CLI usage guide" href="/guides/cli-usage" icon="book">
-A task focused walkthrough of common CLI flows.
+<Card title="Trade on Aomi" href="/trade/execution" icon="arrow-right-arrow-left">
+How the agent turns a prompt into a simulated, signed onchain trade.
 </Card>
-<Card title="Builder CLI" href="/reference/cli-toolchain" icon="wrench">
+<Card title="The builder toolchain" href="/reference/cli-toolchain" icon="wrench">
 The Rust toolchain for building and shipping Apps: `aomi-build`, `aomi-run`, `aomi-git`.
 </Card>
 </CardGroup>

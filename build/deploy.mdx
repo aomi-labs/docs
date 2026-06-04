@@ -5,17 +5,17 @@ description: The full shipping process for an Aomi App, from your first deploy t
 
 The quickstart gets you to a deployed App on the happy path. This page is the rest of the story: what every deploy field means, what the validation pipeline checks, how to read CI, and how activation actually works when you need more than the happy path.
 
-You write your App in your own repo. One command ships it. The platform's CI builds it and cuts a release. You ask ops to turn it on. The backend loads it without a restart. That is the whole loop, and the rest of this page is the detail behind each step.
+You write your App in your own repo. One command ships it. The platform's CI builds it and cuts a release. You activate it yourself with a per-app code. The backend loads it without a restart. That is the whole loop, and the rest of this page is the detail behind each step.
 
 ## The whole picture
 
 Here is the sequence in plain words.
 
-1. **You author** your App in your own source repo: a Rust `cdylib` crate plus an `aomi.toml`.
-2. **You deploy** with `aomi-git deploy`. It copies a snapshot of your source into a clone of the platform repo (`community-apps`), commits, and pushes to the `publish` branch.
-3. **CI runs** in the platform repo. It builds your cdylib and cuts a GitHub release tagged `apps-<slug>-<short-commit>`.
-4. **You request activation** with `aomi-git activate --request`. It posts your App and release tag to the ops Discord channel and pings the ops role.
-5. **Ops activate.** An ops member mints a token scoped to your exact release and runs `aomi-git activate`.
+1. **You get access, once.** The first time you ship to a platform, you run `aomi-git request --email <email> --git-account <github-user>`. Ops invite your GitHub account to the platform repo and email you a per-app activation code. This step runs once, not per deploy.
+2. **You author** your App in your own source repo: a Rust `cdylib` crate plus an `aomi.toml`.
+3. **You deploy** with `aomi-git deploy`. It copies a snapshot of your source into a clone of the platform repo (`community-apps`), commits, and pushes to the `publish` branch.
+4. **CI runs** in the platform repo. It builds your cdylib and cuts a GitHub release tagged `apps-<slug>-<short-commit>`.
+5. **You activate** with `aomi-git activate`, setting your per-app code as `AOMI_APP_ACTIVATION_TOKEN`. Your code is scoped to this one App, so it can never touch any other.
 6. **The backend hot loads** your release. It fetches the tarball, validates it, and swaps your App into the live catalog. No restart, no downtime.
 
 ```mermaid
@@ -29,17 +29,18 @@ sequenceDiagram
     participant Ops as platform ops
     participant BE as Aomi backend
 
+    You->>Ops: aomi-git request (once: email + github account)
+    Ops->>You: collaborator invite + per-app code (by email)
     You->>Src: write aomi.toml + src/
     You->>CLI: aomi-git deploy
     CLI->>Repo: clone (cached), stage apps/slug/, commit, push
     Repo->>CI: trigger
     CI->>Repo: upload release apps-slug-shortcommit
-    You->>Ops: aomi-git activate --request (Discord ping)
-    Ops->>BE: mint token scoped to release + aomi-git activate
+    You->>BE: aomi-git activate (with per-app code)
     BE->>BE: fetch + validate + load
 ```
 
-You do not need an activation token to contribute. Ops hold the tokens. You request one with a single command, and they run the activation.
+You activate your own App. The first time you ship to a platform, ops invite your GitHub account and email you a per-app activation code. After that, every release is yours to activate with one command.
 
 ## Your `aomi.toml` deploy fields
 
@@ -124,9 +125,16 @@ The output ends with your next steps:
 ```text
 Next steps:
   1. Track the build and release:
-       aomi-git status
-  2. Request activation from platform ops:
-       aomi-git activate --request
+       aomi-git status --path .
+     This polls CI and tells you when the release is ready to activate.
+
+  2. Activate the release once CI is green (with your per-app code):
+       aomi-git activate --path .
+     Set AOMI_APP_ACTIVATION_TOKEN (or pass --activation-token) to the
+     per-app code platform ops issued you.
+
+     First time? Request activation before deploying:
+       aomi-git request --email <you@example.com> --git-account <github-user>
 ```
 
 What this does, in order:
@@ -183,6 +191,8 @@ In short: stages 1 and 2 check that your files are ready, and stages 3 and 4 che
 
 **Stage 4, backend.** Asks: will the backend actually accept this release? It runs `server_tags_subset`, which fails if your `server_tags` are not a subset of the backend's `AOMI_SERVER_TAGS`. A failure here becomes a 409 error at activate time, so it is worth catching now. Match your declared tags to the backend you plan to activate against.
 
+The backend runs one more check of its own at activation time, `sdk_version_matches_host`. It rejects a bundle whose pinned `aomi-sdk` does not equal the backend's `required_sdk_version`. The deploy preflight cannot see this, since the version lives in the built release, so pin `aomi-sdk` to the platform's `required_sdk_version` (see `platform.json`) before you deploy.
+
 Each check carries a severity. An **error** check is a gate: if it fails, the stage fails and the deploy is blocked. A **warn** check is advisory: if it fails, the stage is downgraded to `warning` but you are not blocked. A stage that never runs because an upstream gate failed, or because it had no backend URL, is recorded as `skipped`.
 </Accordion>
 
@@ -198,10 +208,10 @@ Expected output while CI is still running:
 
 ```text
 Publication status
-  repo          : aomi-labs/community-apps
-  release_tag   : apps-my-bot-abc1234
-  branch        : publish
-  local state   : pushed=true deployed=true activated=false
+  repo              : aomi-labs/community-apps
+  app_release_tag   : apps-my-bot-abc1234
+  branch            : publish
+  local state       : pushed=true deployed=true activated=false
   ci            : [running] running - Publish Aomi Apps
                   https://github.com/aomi-labs/community-apps/actions/runs/...
   release       : pending (not built yet)
@@ -209,77 +219,78 @@ Publication status
 
 When CI finishes, the `ci` line turns to `[ok] green - Publish Aomi Apps` and `release` shows it is published and ready to activate.
 
-You are ready to request activation when `ci` shows green and `release` shows it is published and ready to activate. Pass a specific tag with `aomi-git status apps-<slug>-<commit>` to check one release; otherwise it uses the latest deploy's tag.
+You are ready to activate when `ci` shows green and `release` shows it is published and ready to activate. Pass a specific tag with `aomi-git status apps-<slug>-<commit>` to check one release; otherwise it uses the latest deploy's tag.
 
 You can still watch the raw pages if you prefer: the [Actions tab](https://github.com/aomi-labs/community-apps/actions) for CI and the release tag page for the asset. `aomi-git status` simply rolls both up.
 
 ## Activation
 
-You do not need the activation token. Once CI is green and the release tag exists, you hand off to ops with one command.
+You activate your own App. You hold a per-app activation code, scoped to this one App, so you run `aomi-git activate` yourself for every release. There is no per-release handoff to ops.
 
-### Request activation
+### Get access the first time
 
-```bash
-aomi-git activate --request
-```
-
-This reads your `.aomi/deployment.json` and posts an **Activation requested** message into the ops activation channel on Discord, pinging the **@ops** role. The message carries your App name, the repo, the **release tag**, and your target tags. Every request lands in one place instead of scattered DMs.
-
-Preview it first without posting:
+The first time you ship to a platform, run `aomi-git request` to ask for access. This runs once, not per deploy.
 
 ```bash
-aomi-git activate --request --dry-run
+aomi-git request --email you@example.com --git-account your-github-user
 ```
 
-The message it posts looks like this:
+This posts a request to the Aomi apps Discord, carrying your GitHub account, email, and App. Ops then do two things: they invite your GitHub account to the platform repo as a collaborator (so your `deploy` push is allowed), and they email you a per-app activation code. The code arrives by email out of band; it is never part of the request and never travels over Discord.
 
-```text
-@ops **Activation requested**
-- app: `my-bot`
-- repo: `aomi-labs/community-apps`
-- release: `apps-my-bot-abc1234`
-- target tags: `staging`
-Please activate when you have a chance.
-```
-
-An @ops member reads the release tag, mints an activation token **scoped to that exact release**, and runs `aomi-git activate`. Because the token is pinned to your one release, even a leaked token could not touch any other App. Ops then confirm your App at `https://staging-api.aomi.dev/api/control/apps/status`.
-
-### Public and private platforms use the same flow
-
-The request flow is identical whether you ship to a public platform like `community` or a private partner platform like `krexa`. You deploy, you run `aomi-git activate --request`, ops mint a scoped token and activate. The only difference is the platform repo behind the scenes and, for private repos, the `access_token` field described above.
-
-<Accordion title="If you hold an activation token (operators)">
-If you hold a token already, you activate directly from the source repo. `aomi-git activate` reads `.aomi/deployment.json` and pulls the release tag, platform, source repo, display name, visibility, and target tags from it, so you pass almost nothing.
+Preview the exact message first without posting:
 
 ```bash
-AOMI_APP_ACTIVATION_TOKEN=<scoped activation token> \
+aomi-git request --email you@example.com --git-account your-github-user --dry-run
+```
+
+<Note>
+This `request` step is community tier only. B2B partners deploy through a server-side proxy and do not get direct repo access, so they do not use `request`.
+</Note>
+
+### Activate the release
+
+Once CI is green and you hold your per-app code, activate the release yourself. Run `aomi-git activate` from your source repo. It reads `.aomi/deployment.json` and pulls the release tag, platform, source repo, display name, visibility, and target tags from it, so you pass almost nothing. Set your code as `AOMI_APP_ACTIVATION_TOKEN`.
+
+```bash
+AOMI_APP_ACTIVATION_TOKEN=<your per-app code> \
 AOMI_BACKEND_URL=https://staging-api.aomi.dev \
   aomi-git activate
 ```
 
-For a release whose `deployment.json` is not on hand, such as turning an older tag back on from a fresh machine, every field can be passed explicitly.
+The backend fetches your release tarball, validates it, and loads it. Because your code is pinned to this one App, even a leaked code could not touch any other App. Confirm your App is live at `https://staging-api.aomi.dev/api/control/apps/status`.
+
+Preview the request without sending any HTTP:
+
+```bash
+aomi-git activate --dry-run
+```
+
+For a release whose `deployment.json` is not on hand, such as turning an older tag back on from a fresh machine, pass every field explicitly.
 
 ```bash
 aomi-git activate apps-<slug>-<short-commit> \
   --backend https://staging-api.aomi.dev \
   --platform community \
-  --git aomi-labs/community-apps \
+  --source-repo aomi-labs/community-apps \
   --target-tag staging \
   --visibility public
 ```
-</Accordion>
+
+### Public and private platforms use the same flow
+
+The flow is the same whether you ship to a public platform like `community` or a private partner platform like `krexa`. You request access once, you deploy, you activate with your per-app code. The only difference is the platform repo behind the scenes and, for private repos, the `access_token` field described above.
 
 ## Iterating
 
 To ship a change, edit your code, commit, and run `aomi-git deploy` again. Each deploy produces a fresh release tagged with the new short-commit. The previous release stays on GitHub, so you always have a tag you know works to roll back to by turning it back on.
 
-Promoting from staging to prod means you deploy again, not ask for an operator favor. Edit `server_tags` in `aomi.toml` to `["prod"]` or `["staging", "prod"]`, run `aomi-git deploy` to cut a new release carrying the wider scope, then run `aomi-git activate --request` again against the prod backend. Ops can only activate to the tiers your build itself declared, so widening to prod requires you to deploy again first. That is by design.
+Promoting from staging to prod means you deploy again. Edit `server_tags` in `aomi.toml` to `["prod"]` or `["staging", "prod"]`, run `aomi-git deploy` to cut a new release carrying the wider scope, then run `aomi-git activate` again against the prod backend. A release can only be activated to the tiers its own build declared, so widening to prod requires you to deploy again first. That is by design.
 
 ## Troubleshooting
 
 | Error | Cause | Fix |
 |---|---|---|
-| `aomi-git: command not found` | The binary is not installed or not on your PATH. | Run `cargo install --git https://github.com/aomi-labs/aomi-sdk --features cli aomi-sdk`, then confirm `~/.cargo/bin` is on your PATH. |
+| `aomi-git: command not found` | The binary is not installed or not on your PATH. | Run `cargo install --git https://github.com/aomi-labs/aomi-sdk --features cli,dev-runtime aomi-sdk`, then confirm `~/.cargo/bin` is on your PATH. |
 | `aomi.toml [app].access_token must be \`$ENV_VAR_NAME\`` | You put a literal token in `aomi.toml`. | Use an env-var reference: `access_token = "$YOUR_VAR_NAME"`. Never commit secrets. For public community apps, omit the field. |
 | `git tree is dirty` | Uncommitted files in your source repo, often `.aomi/deployment.json` from a previous dry run. | Commit your changes, or add `.aomi/`, `target/`, and `Cargo.lock` to `.gitignore`. Use `--allow-dirty` only when intentional. |
 | `sdk_version mismatch` | Your `aomi-sdk` dependency does not match `platform.json`'s `required_sdk_version`. | Pin the exact version: `aomi-sdk = "=0.1.20"`. Check `platform.json` in community-apps for the current value. |
@@ -291,11 +302,16 @@ Promoting from staging to prod means you deploy again, not ask for an operator f
 
 ## Next
 
+Your App is live on the backend. The natural next step is the frontend: give people a way to chat with it.
+
 <CardGroup cols={2}>
-<Card title="The CLI toolchain" href="/reference/cli-toolchain">
+<Card title="Add the chat widget" href="/guides/widget-installation">
+Drop the React widget into a frontend so people can chat with your deployed App.
+</Card>
+<Card title="The builder toolchain" href="/reference/cli-toolchain">
 The full reference for the three Rust binaries: `aomi-build`, `aomi-run`, and `aomi-git`.
 </Card>
-<Card title="Test with the CLI" href="/guides/cli-usage">
-Check your App's behavior locally before you ship, with no backend.
+<Card title="Common errors" href="/build/common-errors">
+The errors you are most likely to hit, each with its fix.
 </Card>
 </CardGroup>

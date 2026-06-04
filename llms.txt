@@ -1,0 +1,38 @@
+# Aomi
+
+> Aomi is a blockchain harness for agentic AI. You build an App as a Rust plugin, Aomi hosts it on a runtime, and it acts on-chain for the user with simulate-before-sign safety and non-custodial signing. There are three builder surfaces: a Rust agent runtime, drop-in agent skills for coding agents, and a React widget.
+
+## Build on Aomi
+- [Overview](https://aomi.dev/docs/build/index): what an Aomi App is and the path to ship one.
+- [Quickstart](https://aomi.dev/docs/build/quickstart): zero to a deployed App.
+- [Building an App](https://aomi.dev/docs/reference/building-apps): the anatomy of an App and its host tools.
+- [The SDK](https://aomi.dev/docs/reference/sdk-api): the DynAomiTool trait and the dyn_aomi_app! macro.
+- [CLI toolchain](https://aomi.dev/docs/reference/cli-toolchain): aomi-build, aomi-run, and aomi-git.
+- [Deploy and activate](https://aomi.dev/docs/build/deploy): ship an App to the community platform.
+- [Common errors](https://aomi.dev/docs/build/common-errors): the errors a builder hits and the fixes.
+
+## Trade on Aomi
+- [Overview](https://aomi.dev/docs/trade/index): how Aomi executes on-chain trades.
+- [How execution works](https://aomi.dev/docs/trade/execution): the simulate-before-sign trade flow.
+
+## Aomi Skills
+- [Aomi Skills](https://aomi.dev/docs/skills/index): the aomi-build and aomi-transact agent skills.
+
+## Integrations
+- [Widget setup](https://aomi.dev/docs/guides/frontend-setup): install the React widget.
+- [Headless library](https://aomi.dev/docs/guides/headless-library): the @aomi-labs/react library and the AomiClient.
+- [Hooks](https://aomi.dev/docs/guides/headless/hooks): the headless hooks.
+- [Custom tools](https://aomi.dev/docs/guides/custom-tools): add your own tools with DynAomiTool.
+
+## Concepts
+- [What is Aomi](https://aomi.dev/docs/concepts/what-is-aomi): the model in one read.
+- [How it works](https://aomi.dev/docs/concepts/how-it-works): the request flow.
+- [Architecture](https://aomi.dev/docs/concepts/architecture): the public App and runtime model.
+- [Security](https://aomi.dev/docs/concepts/security): the safety posture.
+- [Glossary](https://aomi.dev/docs/concepts/glossary): the terms.
+
+## Reference
+- [HTTP API](https://aomi.dev/docs/reference/api-reference): the backend HTTP surface.
+- [Simulation](https://aomi.dev/docs/reference/simulation): simulate-before-sign.
+- [Sessions](https://aomi.dev/docs/reference/sessions): session and thread handling.
+- [Apps and authentication](https://aomi.dev/docs/reference/apps-auth): App keys and scoping.

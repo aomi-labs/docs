@@ -1,11 +1,11 @@
 ---
 title: "Simulation Reference"
-description: "Technical deep-dive into Aomi's simulation-first transaction pipeline — Anvil fork lifecycle, state diffing, token change previews, and safety guarantees."
+description: "Technical deep dive into Aomi's simulation first transaction pipeline. Anvil fork lifecycle, state diffing, token change previews, and safety guarantees."
 ---
 
 The simulation pipeline is the core safety mechanism of the Aomi platform. Every transaction is simulated on a forked network before it reaches the user's wallet.
 
-Aomi uses a **simulation-first** approach for all on-chain transactions. Before any transaction reaches your wallet for signing, it is executed against a forked copy of the current network state. You review the exact outcome — token changes, gas, contract calls — before approving.
+Aomi uses a **simulation first** approach for all onchain transactions. Before any transaction reaches your wallet for signing, it is executed against a forked copy of the current network state. You review the exact outcome, including token changes, gas, and contract calls, before approving.
 
 This is how the system prevents LLM-generated transactions from being sent without verification.
 
@@ -37,136 +37,33 @@ flowchart LR
     BROADCAST --> CONFIRM
 ```
 
-## Fork Management
+## How Simulation Works
 
-Simulation runs on Anvil forks — ephemeral instances of the network state that include pending state from the current session.
+Simulation runs on a forked copy of the network state, managed by the host runtime. The fork includes any pending state from the current session, so each transaction is checked against the world as it will actually look when the user signs.
 
-### ForkProvider
+You do not manage the fork yourself. The host owns the fork lifecycle and exposes the simulation step as part of its tool contract. Your App stages transactions and asks the host to simulate them; the host runs them against the fork and returns the outcome.
 
-The `aomi-anvil` crate manages Anvil forks for transaction simulation:
+## The Host Simulation Flow
 
-```mermaid
-flowchart TB
-    subgraph "ForkProvider"
-        ANVIL[Anvil Instance<br/>Managed process]
-        EXTERNAL[External RPC<br/>Existing endpoint]
-    end
+An App never broadcasts a transaction directly. It stages each transaction, asks the host to simulate the staged batch, and then asks the host to commit. The host tool contract for this flow is:
 
-    subgraph "Capabilities"
-        SNAP[Snapshots<br/>State capture]
-        RESET[Reset<br/>Revert to snapshot]
-        IMPERSONATE[Impersonation<br/>Act as any account]
-    end
-
-    ANVIL --> SNAP
-    ANVIL --> RESET
-    ANVIL --> IMPERSONATE
-
-    EXTERNAL --> SNAP
-```
-
-### Provider Types
-
-| Provider | Description |
+| Host tool | Purpose |
 | --- | --- |
-| `ForkProvider::Latest` | Fork from the latest block |
-| `ForkProvider::Block(number)` | Fork from a specific block |
-| `ForkProvider::Timestamp(ts)` | Fork from a block near the given timestamp |
+| `view_state` | Encode calldata from ABI arguments and run a read only `eth_call`. |
+| `run_tx` | Simulate a single state changing call without staging it. |
+| `stage_tx` | Stage an EVM transaction in `user_state.pending_txs` for later simulation and signing. The host attaches an authoritative `pending_tx_id`. |
+| `simulate_batch` | Simulate one or more staged transactions by `pending_tx_id` before prompting a wallet. Returns pass or fail, any revert reason, and gas or decoded call context. |
+| `commit_tx` | Ask the user wallet to sign and broadcast one staged transaction. Returns the `transaction_hash`. |
 
-### Initialization
+The order is always the same: **stage first, then `simulate_batch`, then commit**. Because each staged transaction sees the state changes from the ones before it, an approve-then-swap pair simulates correctly as a batch.
 
-```rust
-use aomi_anvil::{
-    init_fork_provider, fork_endpoint, ForkProvider,
-    AnvilParams, ForksConfig,
-};
-
-// Initialize from configuration
-let config = ForksConfig::from_yaml("config.yaml")?;
-init_fork_providers(config).await?;
-
-// Or initialize a single fork
-let params = AnvilParams {
-    fork_url: "https://eth-mainnet.g.alchemy.com/v2/YOUR_KEY".into(),
-    fork_block_number: Some(18_500_000),
-    chain_id: Some(1),
-    port: Some(8545),
-};
-
-init_fork_providers(vec![params]).await?;
-
-// Get the endpoint
-let rpc_url = fork_endpoint()?;
-println!("Fork running at: {}", rpc_url);
-```
-
-### Provider Types (Rust API)
-
-```rust
-// Managed Anvil instance (spawns a local process)
-let provider = ForkProvider::spawn(params).await?;
-assert!(provider.is_managed());
-
-// External RPC (no process management)
-let provider = ForkProvider::external("http://localhost:8545").await?;
-assert!(!provider.is_managed());
-
-// Common interface
-println!("Endpoint: {}", provider.endpoint());
-println!("Block: {}", provider.block_number());
-```
-
-### Snapshots
-
-Snapshots capture the full network state at a point in time and allow reverting after a simulation run.
-
-```mermaid
-sequenceDiagram
-    participant Test
-    participant Fork
-    participant State
-
-    Test->>Fork: Create snapshot
-    Fork->>State: Capture current state
-    State-->>Fork: snapshot_id
-
-    Test->>Fork: Execute transactions
-    Fork->>State: Modify state
-
-    Test->>Fork: Revert to snapshot
-    Fork->>State: Restore captured state
-
-    Note over Fork,State: State reverted to snapshot
-```
-
-```rust
-use aomi_anvil::{fork_snapshot, ForkSnapshot};
-
-// Capture current state
-let snapshot: ForkSnapshot = fork_snapshot()?;
-println!("Snapshot at block: {}", snapshot.block_number());
-
-// Execute some transactions
-execute_test_transactions().await?;
-
-// Revert to snapshot (reinitialize fork)
-shutdown_and_reinit_all().await?;
-```
-
-Snapshots allow reverting to a known state after simulation, enabling multiple simulations without recreating the fork:
-
-```rust
-let snapshot_id = fork.snapshot().await?;
-// run simulation
-fork.revert(snapshot_id).await?;
-// fork is now back to the snapshotted state
-```
+For the full host capability contract, see [Building Apps](/reference/building-apps).
 
 ## Transaction Simulation
 
-### SimulateContractCall Tool
+### Simulating a Staged Batch
 
-The `SimulateContractCall` tool is the primary mechanism for pre-signing simulation:
+The host simulates the transactions you staged with `stage_tx`. It runs them in order against the fork and reports the result of each one:
 
 ```mermaid
 flowchart LR
@@ -202,92 +99,11 @@ flowchart LR
     TRACE --> CHANGES
 ```
 
-```rust
-use aomi_tools::cast::SimulateContractCall;
-
-#[derive(Debug, Deserialize, JsonSchema)]
-pub struct SimulateParams {
-    /// Target contract address
-    pub to: String,
-
-    /// Encoded calldata (hex)
-    pub data: String,
-
-    /// Value to send in ETH
-    #[serde(default)]
-    pub value: String,
-
-    /// Sender address to simulate from
-    pub from: String,
-
-    /// Network to simulate on
-    #[serde(default = "default_network")]
-    pub network: String,
-}
-
-#[tool(description = "Simulate a contract call without broadcasting")]
-pub async fn simulate_contract_call(
-    params: SimulateParams,
-) -> Result<SimulationResult, ToolError> {
-    let client = external_clients().await.cast_client(&params.network)?;
-
-    let result = client.simulate(
-        &params.from,
-        &params.to,
-        &params.data,
-        &params.value,
-    ).await?;
-
-    Ok(SimulationResult {
-        success: result.success,
-        return_data: result.output,
-        gas_used: result.gas_used,
-        logs: result.logs,
-    })
-}
-```
-
-### Simulation Result
-
-```rust
-struct SimulationResult {
-    success: bool,
-    return_data: Value,
-    gas_used: U256,
-    state_changes: Vec<StateChange>,
-    logs: Vec<Log>,
-}
-```
+For each staged transaction, the host returns the simulation outcome: whether it succeeded, the revert reason if it failed, the gas used, and any decoded call context the host can provide. The agent reads these results before deciding whether to commit.
 
 ### Batch Simulation
 
-Multiple transactions can be simulated in batch, returning results for each. The LLM can compare outcomes and choose the optimal path.
-
-```rust
-// Simulate multiple transactions in sequence
-let fork_url = fork_endpoint()?;
-let provider = ProviderBuilder::new().on_http(fork_url.parse()?);
-
-let mut results = Vec::new();
-
-for tx in transactions {
-    // Impersonate sender
-    provider.anvil_impersonate_account(tx.from).await?;
-
-    // Execute transaction
-    let result = provider.send_transaction(tx.clone()).await?;
-    let receipt = result.get_receipt().await?;
-
-    results.push(SimulationResult {
-        tx_hash: receipt.transaction_hash,
-        success: receipt.status(),
-        gas_used: receipt.gas_used,
-    });
-}
-
-// Revert all changes
-shutdown_and_reinit_all().await?;
-```
+When you stage more than one transaction, `simulate_batch` runs them in order against the same fork. Each transaction sees the state changes from the ones before it, so a dependent pair such as approve-then-swap simulates exactly as it will execute onchain. The host returns a pass or fail result per transaction, and the agent can compare outcomes before committing.
 
 ## Wallet Approval Flow
 
@@ -329,41 +145,20 @@ The flow in summary:
 5. Transaction submitted to real network
 6. Wallet signs locally
 
-## Multi-Network Support
+## Multi Network Support
 
-Simulation is supported across all configured networks:
+Simulation works across every network the host runs. When you stage a transaction you pass its `chain_id`, and the host simulates it against a fork of that network. An App can stage transactions on different chains without managing any fork infrastructure itself.
 
-```yaml
-# config.yaml
-networks:
-  ethereum:
-    rpc_url: "https://eth-mainnet.g.alchemy.com/v2/${ALCHEMY_KEY}"
-    chain_id: 1
+## When Simulation Fails
 
-  base:
-    rpc_url: "https://base-mainnet.g.alchemy.com/v2/${ALCHEMY_KEY}"
-    chain_id: 8453
+When `simulate_batch` reports a failure, the result includes the reason so the agent can react instead of prompting a wallet for a transaction that would fail:
 
-  arbitrum:
-    rpc_url: "https://arb-mainnet.g.alchemy.com/v2/${ALCHEMY_KEY}"
-    chain_id: 42161
-
-  testnet:
-    rpc_url: "http://localhost:8545"
-    chain_id: 31337
-```
-
-## Error Handling
-
-| Error | Cause | Recovery |
+| Outcome | Cause | What happens next |
 | --- | --- | --- |
-| `SimulationReverted` | Contract reverted or transaction would fail on-chain | Fix parameters or check calldata and retry |
-| `ForkCreationFailed` | RPC unavailable or rate limited | Retry with backoff |
-| `InsufficientFunds` | Not enough ETH or tokens for the operation | Fund the account or notify user |
-| `Unauthorized` | Sender lacks permission | Verify wallet/approval |
-| `ForkNotInitialized` | `init_fork_providers` not called | Initialize before use |
-| `GasEstimationFailed` | Complex transaction | Provide manual gas limit |
-| `RpcError` | Network issues | Retry or switch RPC |
+| Reverted | The contract reverted or the transaction would fail onchain | The agent surfaces the revert reason and does not commit |
+| Insufficient funds | Not enough ETH or tokens for the operation | The agent asks the user to fund the account or adjusts the transaction |
+| Gas estimation failed | The transaction is too complex to estimate automatically | The agent retries with an explicit gas limit |
+| RPC error | The upstream network endpoint was unavailable | The host retries or the agent reports the failure |
 
 ## Security Best Practices
 
@@ -388,6 +183,6 @@ flowchart LR
 
 ## Next Steps
 
-- [Non-Custodial Automation](/concepts/non-custodial-wallets) — wallet security model
-- [Account Abstraction](/reference/account-abstraction) — session keys and gas sponsorship
-- [Execution](/trade/execution) — transaction lifecycle from simulation to settlement
+- [Non-Custodial Automation](/concepts/non-custodial-wallets): wallet security model
+- [Building Apps](/reference/building-apps): host tool contract for staging and committing
+- [Execution](/trade/execution): transaction lifecycle from simulation to settlement

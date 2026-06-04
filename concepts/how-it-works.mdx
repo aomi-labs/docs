@@ -1,9 +1,9 @@
 ---
 title: How It Works
-description: Walkthrough of the Aomi pipeline from REST APIs to deployed AI assistant — tool wrapping, preamble configuration, model selection, and client integration.
+description: Walkthrough of the Aomi pipeline from REST APIs to deployed AI assistant: tool wrapping, preamble configuration, model selection, and client integration.
 ---
 
-This page walks through the full lifecycle of an Aomi-powered assistant — from your existing APIs to a deployed product your users can talk to. **MyCoinDex**, a fictional crypto exchange, is the running example.
+This page walks through the full lifecycle of an Aomi-powered assistant, from your existing APIs to a deployed product your users can talk to. **MyCoinDex**, a fictional crypto exchange, is the running example.
 
 ## The Pipeline
 
@@ -50,7 +50,7 @@ MyCoinDex exposes standard HTTP endpoints. Aomi does not modify them.
 
 ## 2. APIs Become AI Tools
 
-Aomi wraps each endpoint as a **tool** — a typed function the LLM can invoke. Each tool has a name, description, and typed parameters.
+Aomi wraps each endpoint as a **tool**, a typed function the LLM can invoke. Each tool has a name, description, and typed parameters.
 
 When a user asks "What's ETH trading at?", the model calls `GetTokenPrice` with `{ symbol: "ETH" }`. The tool hits `/prices/eth`, returns the result, and the model composes a response. Tools can execute concurrently.
 
@@ -76,7 +76,7 @@ Show prices in USD unless the user requests otherwise.
 | OpenAI | GPT-4o, GPT-4o Mini |
 | OpenRouter | 100+ models |
 
-Models can be changed at runtime — no redeployment needed.
+Models can be changed at runtime. No redeployment needed.
 
 ### RAG Document Store (Optional)
 
@@ -99,7 +99,7 @@ Each app is fully isolated.
 MyCoinDex receives an API key scoped to their app:
 
 ```
-X-API-Key: sk-mcd-a1b2c3d4e5f6
+AOMI-APP-KEY: sk-mcd-a1b2c3d4e5f6
 X-Session-Id: 550e8400-e29b-41d4-a716-446655440000
 ```
 
@@ -113,7 +113,7 @@ sequenceDiagram
     participant LLM
     participant Tool as MyCoinDex API
     User->>Frontend: "What's my ETH position worth?"
-    Frontend->>Aomi: POST /api/chat?app=mycoindex\nX-API-Key: sk-mcd-...\nX-Session-Id: session-uuid\n{"text": "What's my ETH position worth?"}
+    Frontend->>Aomi: POST /api/chat?app=mycoindex\nAOMI-APP-KEY: sk-mcd-...\nX-Session-Id: session-uuid\n{"text": "What's my ETH position worth?"}
     Aomi->>LLM: Messages + available tools
     LLM-->>Aomi: ToolCall: GetPortfolio(userId)
     Aomi->>Tool: GET /portfolio/user123
@@ -138,10 +138,10 @@ sequenceDiagram
 2. Frontend sends HTTP POST to `/api/chat?app=mycoindex` with the API key.
 3. Backend validates the API key and loads the session.
 4. Backend sends message + history + tools to the selected LLM.
-5. LLM decides to call tools — requests `GetPortfolio` and `GetTokenPrice`.
+5. LLM decides to call tools and requests `GetPortfolio` and `GetTokenPrice`.
 6. Backend executes tool calls against MyCoinDex's APIs.
 7. Tool results go back to the LLM for interpretation.
-8. LLM streams its response — each text chunk forwards as an SSE event.
+8. LLM streams its response, and each text chunk forwards as an SSE event.
 9. Frontend renders incrementally.
 10. Complete event signals the response is finished.
 
@@ -168,18 +168,18 @@ data: {"type":"complete"}
 | Capability | Details | Managed By |
 | --- | --- | --- |
 | **AI assistant** | Understands your product, calls your APIs | Aomi |
-| **Streaming chat** | Real-time responses via SSE | Aomi |
+| **Streaming chat** | Real time responses via SSE | Aomi |
 | **Tool execution** | LLM calls your APIs as needed during conversations | Aomi |
 | **Session management** | Persistent threads, history, and state | Aomi |
 | **Multi-model support** | Switch between Claude, GPT-4o, and others at runtime | Aomi |
-| **Wallet integration** | Optional Web3 wallet connect for on-chain actions | Aomi |
+| **Wallet integration** | Optional Web3 wallet connect for onchain actions | Aomi |
 | **Scaling and availability** | Hosted infrastructure, no GPUs or LLM keys to manage | Aomi |
-| **Your API endpoints** | Standard HTTP — no modifications required | You |
+| **Your API endpoints** | Standard HTTP, no modifications required | You |
 | **Frontend integration** | Widget, headless, or Telegram | You |
 | **API key security** | Store securely, never expose client-side | You |
 
 ## Next Steps
 
-- [Reference / Apps & Auth](/reference/apps-auth) — how API keys, apps, and sessions fit together.
-- [API Reference](/reference/api-reference) — full HTTP endpoint documentation.
-- [Sessions](/reference/sessions) — how chat sessions are created and managed.
+- [Reference / Apps & Auth](/reference/apps-auth): how API keys, apps, and sessions fit together.
+- [API Reference](/reference/api-reference): full HTTP endpoint documentation.
+- [Sessions](/reference/sessions): how chat sessions are created and managed.
