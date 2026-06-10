@@ -37,7 +37,7 @@ Integration walkthroughs for builders:
 | `guides/headless/build-custom-ui.mdx` | Tutorial: message list, input, thread switcher |
 | `guides/cli-usage.mdx` | aomi chat, app, model, chain, session commands |
 | `guides/custom-tools.mdx` | Rust SDK tool macro, registration, scheduler |
-| `guides/evals-testing.mdx` | EvalCase, assertions, running tests in CI |
+| `guides/evals-testing.mdx` | Testing layers — tool unit tests, test.json e2e journeys, smoke tests, AomiBench |
 | `guides/execution.mdx` | Transaction lifecycle — Anvil forks, simulation, wallet integration |
 | `guides/script-generation.mdx` | ForgeExecutor, ExecutionPlan, SourceFetcher, ScriptAssembler |
 | `guides/troubleshooting.mdx` | Common CLI, execution, UI, and API issues |
@@ -75,7 +75,7 @@ Full API, CLI, SDK, and protocol reference:
 | `reference/cli.mdx` | Full CLI reference — commands, secrets, signing modes, session state, all flags |
 | `reference/simulation.mdx` | Anvil forks, ForkProvider, batch simulation |
 | `reference/account-abstraction.mdx` | Session keys, gas sponsorship, ERC-4337 |
-| `reference/runtime.mdx` | Session manager, reconstructor, SSE streaming |
+| `reference/runtime.mdx` | App turn lifecycle, model/tool loop, transaction harness, wallet callbacks, SSE streaming |
 
 ### 6. Resources
 
