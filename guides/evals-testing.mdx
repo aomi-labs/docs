@@ -1,111 +1,251 @@
 ---
-title: Evals & Testing
-description: Unit-test Aomi tools with the aomi_sdk::testing module. Build a tool call context, run sync and async tools, and assert on their results without loading the full plugin.
+title: Evals and testing
+description: Learn how to test tool behavior, App conversations, wallet flows, and AomiBench-style outcomes.
 ---
 
-The `aomi_sdk::testing` module lets you unit-test your tools without loading the full FFI plugin. You build a tool call context, invoke the tool with typed arguments, and assert on what it returns. Tests run as ordinary `cargo test` cases, so they fit straight into your CI.
+Good tests do more than check for a plausible answer. They prove the App did the right thing for the user.
 
-## Overview
+Start close to your code. Test each custom tool on its own, then test full App conversations with realistic prompts. For wallet and transaction-heavy integrations, Aomi can also run forked-chain validation and AomiBench internally.
 
-```mermaid
-flowchart LR
-    BUILD[TestCtxBuilder] --> CTX[DynToolCallCtx]
-    ARGS[JSON args] --> RUN[run_tool / run_async_tool]
-    CTX --> RUN
-    RUN --> RESULT[ToolReturn]
-    RESULT --> ASSERT[Assertions]
-```
+<Note>
+You do not need AomiBench to build or launch an App. It is Aomi's internal evaluation system for model comparison, safety validation, and research.
+</Note>
 
-## Building a Test Context
+## Testing layers
 
-`TestCtxBuilder` constructs the `DynToolCallCtx` the host normally passes into a tool. It uses generated defaults for the session and call IDs, and lets you override them or inject state attributes and resolved secrets:
+| Layer | Who runs it | What it checks |
+| --- | --- | --- |
+| Tool unit tests | You | A tool parses inputs, calls the right API, returns useful JSON, and handles errors. |
+| App e2e tests | You, with Aomi | The App handles realistic prompts and reaches the expected tools or wallet state. |
+| Forked-chain validation | Aomi | Wallet flows run against local forked chain state before real funds are involved. |
+| AomiBench | Aomi | Models, Apps, skills, wallet flows, and safety rules pass deterministic checks. |
+
+Use the smallest layer that proves the behavior you care about.
+
+- A tool unit test proves your tool works.
+- An App e2e test proves the model can find and use that tool.
+- Forked-chain validation proves transaction flows behave against chain state.
+- AomiBench proves the runtime, model, App, and safety checks hold across many scenarios.
+
+## What to test before launch
+
+Before you ship an App, you should have:
+
+- Unit tests for important custom tools.
+- At least one realistic `test.json` journey.
+- A smoke test against the deployed App.
+- Clear success criteria for any wallet or transaction flow.
+
+For simple read-only Apps, this can stay small. For Apps that stage transactions, write tests around the exact safety rules users rely on: quote-only prompts should not create pending transactions, and transaction prompts should simulate before asking for a signature.
+
+## Model provider keys
+
+Not every test needs a model provider key.
+
+| Test path | Provider key required? |
+| --- | --- |
+| Tool unit tests with `cargo test` | No |
+| Local App e2e tests with `test.json` | Yes, currently `ANTHROPIC_API_KEY`. Aomi can run these with you during integration. |
+| `aomi-run` local App testing | Yes, for the provider you choose |
+| Deployed App smoke tests through staging or production | No builder-owned provider key. The backend handles model routing. |
+| AomiBench | No builder-owned provider key |
+
+<Warning>
+Local App e2e tests call a real model directly. They do not use the staging or production backend. If `ANTHROPIC_API_KEY` is missing, invalid, or out of credits, the local e2e run fails before the App calls any tools.
+</Warning>
+
+For a deployed App, test through the backend. You may need an App API key for private Apps, but you do not need to provide your own model provider key.
+
+## Tool unit tests
+
+Use Rust SDK testing helpers to test a custom tool without loading the full App plugin.
+
+The `aomi_sdk::testing` module provides:
+
+- `TestCtxBuilder` to create the tool call context.
+- `run_tool` for synchronous tools.
+- `run_async_tool` for streaming tools.
+- `.attribute(...)` and `.secret(...)` helpers to simulate host-provided state and resolved secrets.
 
 ```rust
-use aomi_sdk::testing::TestCtxBuilder;
+use aomi_sdk::testing::{run_tool, TestCtxBuilder};
+use serde_json::json;
 
-// Minimal context — defaults for session_id and call_id
 let ctx = TestCtxBuilder::new("get_token_price").build();
+let result = run_tool::<GetPrice>(&MyApp, json!({ "symbol": "ETH" }), ctx);
 
-// With overrides, a state attribute, and a resolved secret
-let ctx = TestCtxBuilder::new("get_token_price")
-    .session_id("session-123")
-    .call_id("call-1")
-    .attribute("user", serde_json::json!({ "org_id": 42 }))
-    .secret("API_KEY", "sk-test-...")
-    .build();
+assert!(result.is_ok());
 ```
 
-The `secret` value simulates what the host injects from the per-app vault before each call, so you can test code paths that read secrets through `resolve_secret_value`.
+These are plain Rust tests, so run them with `cargo test`:
 
-## Running a Synchronous Tool
+<CodeGroup>
+```bash App crate
+cargo test
+```
 
-`run_tool` deserializes your JSON args into the tool's `Args` type, invokes the tool, and returns a `ToolReturn`. The `ToolReturn` carries the tool's `value` plus any routes it emitted:
+```bash SDK repo
+cargo test -p aomi-sdk --test tool_core --test route_builder
+```
+</CodeGroup>
 
-```rust
-use aomi_sdk::testing::{TestCtxBuilder, run_tool};
-use serde_json::json;
+These tests cover tool descriptors, argument parsing, returned values, routed tool plans, and stage-simulate-commit route shapes. They are the fastest way to find issues in tool code before you involve a model.
 
-#[test]
-fn get_price_returns_a_value() {
-    let ctx = TestCtxBuilder::new("get_token_price").build();
-    let result = run_tool::<GetPrice>(&MyApp, json!({ "symbol": "ETH" }), ctx);
+## App e2e tests
 
-    let output = result.expect("tool should succeed");
-    assert_eq!(output.value["symbol"], "ETH");
-    assert!(output.routes.is_empty());
+Use App e2e tests when you need to check a realistic user journey, not only one tool call.
+
+Each App can carry a `test.json` file. It describes:
+
+- the user story
+- optional wallet seed state
+- one or more user prompts
+- expected App tools per turn
+- optional wallet callbacks
+- final user state assertions
+
+This is useful for questions like:
+
+- Does the App choose the expected tool?
+- Does it recover from a vague prompt?
+- Does it stop when the user asks only for a quote?
+- Does it leave the right pending wallet request?
+- Does it clear pending requests after a wallet callback?
+
+When an e2e assertion fails, the runner stops on the first failure. It prints the turn transcript and the tools it observed, so you can see whether the issue came from the prompt, the tool choice, or the tool result.
+
+The local e2e runner uses `ANTHROPIC_API_KEY`. It does not use `api.aomi.dev`. To test a deployed App against staging or production, run a smoke test through the backend instead.
+
+For a read-only App, a realistic `test.json` can stay small:
+
+```json
+{
+  "user_story": "Find the biggest lending protocol on Ethereum and show its current TVL and recent trend.",
+  "turns": [
+    {
+      "prompt": "Which lending protocols have the most TVL right now on Ethereum?",
+      "expected_tools": {
+        "any_of": ["defillama_list_protocols"]
+      }
+    },
+    {
+      "prompt": "Great, give me a deep dive on the top one. Include current TVL, per-chain breakdown, and recent history.",
+      "expected_tools": {
+        "must_call": ["defillama_get_protocol_tvl"]
+      }
+    }
+  ],
+  "final_assertion": {
+    "no_errors": true,
+    "max_turns": 6
+  }
 }
 ```
 
-Tests that only care about the payload can read `output.value`. Tests that exercise multistep routing can assert on `output.routes`.
+See [Builder toolchain](/reference/cli-toolchain#the-end-to-end-test) for the `test.json` runner and full shape.
 
-## Running an Async Tool
+### Chain context
 
-`run_async_tool` drives a tool that sets `IS_ASYNC = true`. It returns a tuple: every intermediate `sink.emit(...)` value in order, plus the terminal `sink.complete(...)` payload as a `ToolReturn`:
+App e2e tests do not choose a write RPC inside `test.json`. Use `wallet_seed` to set the user's chain context.
 
-```rust
-use aomi_sdk::testing::{TestCtxBuilder, run_async_tool};
-use serde_json::json;
-
-#[test]
-fn stream_prices_emits_then_completes() {
-    let ctx = TestCtxBuilder::new("stream_prices").build();
-    let (updates, terminal) =
-        run_async_tool::<StreamPrices>(&MyApp, json!({ "symbol": "ETH" }), ctx)
-            .expect("async tool should finish");
-
-    assert_eq!(updates.len(), 1);
-    assert_eq!(terminal.value["price"], 42.0);
+```json
+{
+  "wallet_seed": {
+    "address": "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045",
+    "chain_id": 1,
+    "is_connected": true
+  }
 }
 ```
 
-Intermediate updates are always bare values. When the tool completes with a routed `ToolReturn`, `terminal.routes` is populated; otherwise `terminal.value` holds the raw completion value and `terminal.routes` is empty.
+The runtime environment supplies the provider configuration. This keeps the test story focused on user intent, expected tools, and wallet state. It also keeps RPC details out of public App specs.
 
-## Running the Tests
+## Deployed smoke tests
 
-These are plain Rust tests in your app crate. Run them with `cargo test`:
+After deployment, run a short smoke test through the backend. This checks the deployed App, backend routing, model routing, authentication, and client-facing behavior together.
+
+Use this path for staging or production checks:
 
 ```bash
-# Run every test in the crate
-cargo test
-
-# Run a single test
-cargo test get_price_returns_a_value
-
-# Show println output
-cargo test -- --nocapture
+aomi --backend-url https://api.aomi.dev --app defillama --prompt "Which lending protocols have the most TVL right now?"
 ```
 
-## Best Practices
+For private Apps, also pass `--api-key` or set `AOMI_API_KEY`.
 
-| Practice | Why |
-| --- | --- |
-| Test each tool in isolation | A failing tool test points straight at the tool |
-| Cover the error path | Assert that bad input returns an `Err`, not a panic |
-| Use `TestCtxBuilder::secret` | Exercise secret-reading code without a live vault |
-| Assert on `routes` for multistep tools | Confirm the tool hands off the right follow-up step |
+You do not need a model provider key for deployed smoke tests. The backend handles model routing.
 
-## Next Steps
+## Forked-chain validation
 
-- [Custom Tools](/guides/custom-tools): define tools with `DynAomiTool`
-- [Building Apps](/reference/building-apps): full app lifecycle and host tool contract
-- [SDK Reference](/reference/sdk-api): full Rust SDK documentation
+Aomi uses local forked environments internally when wallet and chain behavior need deeper validation.
+
+For EVM flows, Aomi can start local Anvil forks for selected chains, pre-fund test wallets, keep fork state across runs, and point the runtime at those local providers. This is useful for transaction staging, simulation, signing flows, and dependent actions such as approve-then-swap.
+
+You do not need to set this up yourself. If your integration needs forked-chain validation, Aomi will run it during integration or release.
+
+## AomiBench
+
+AomiBench runs realistic user stories through the full runtime, then checks deterministic evidence. It is not a public runner or a builder requirement.
+
+This is the execution-based approach behind [AomiBench v0.1](https://aomi.dev/research/aomibench-v0-1). The key idea is simple: the transcript is not enough. A good result must leave observable evidence in the tools, wallet state, callbacks, and chain state.
+
+Aomi uses AomiBench to answer questions like:
+
+- Which model performs best for onchain execution?
+- Did a model change improve or regress wallet behavior?
+- Does an App still follow its safety contract after tool changes?
+- Do read-only tasks avoid pending transactions?
+- Do transaction tasks simulate before signing?
+- Do callbacks, wallet events, balances, and logs prove the outcome?
+
+AomiBench can compare models against the same fixed scaffold. It can also run the same scenario multiple times to catch flaky behavior. Required checks gate pass or fail. Warning checks capture diagnostics such as tool budgets and extra safety signals.
+
+It focuses on outcomes that matter to users and builders:
+
+- The App selects the right tools for the task.
+- Read-only requests do not create pending transactions.
+- Transaction flows simulate before signing.
+- Wallet requests match the user's intent.
+- Callbacks and wallet events happen in the expected order.
+- Final balances, logs, or tool responses support the answer.
+- Review-first tasks stop before committing transactions.
+
+## Good testing patterns
+
+### Read-only flows
+
+Use read-only flows for balances, quotes, portfolio views, and protocol lookups.
+
+Check that the App returns useful data and does not create wallet requests. If the answer depends on onchain state, verify that the App actually read that state.
+
+### Transaction flows
+
+Use transaction flows for swaps, transfers, deposits, approvals, and liquidity actions.
+
+Check that the App explains the action, simulates it, and requests a signature only after the user has enough context. The final result should match the requested action.
+
+### Review-first flows
+
+Use review-first flows when the right behavior is to stop before signing.
+
+Check that the App shows the quote, simulation, or plan without committing the transaction. This is useful for sensitive actions and workflows where the user asked to inspect options first.
+
+## What to share with Aomi
+
+If Aomi is helping validate your App, share the user journeys that define success. Keep them concrete and specific to your users.
+
+Strong examples name the App's job, the user's prompt, the expected behavior, and the safety rule:
+
+- **Treasury App:** "Do we have enough Base USDC to cover next week's payroll?" The App should read the payroll schedule and the treasury wallet balance, then return the shortfall or surplus. It should not create a wallet request.
+- **Perps risk App:** "Show my Hyperliquid positions that are within 10% of liquidation." The App should read the user's open positions, calculate liquidation distance, and rank the riskiest positions first. It should not place or cancel orders.
+- **Liquidity App:** "Move 5,000 USDC into the best Morpho vault for our risk policy." The App should compare allowed vaults, explain the selected vault, simulate the deposit, and request a signature only after the user confirms.
+- **Invoice payment App:** "Pay invoice INV-1042 from the operations wallet." The App should match the invoice, verify the recipient address and amount, simulate the transfer, and stop if the invoice data conflicts with the user's prompt.
+- **Support App:** "Why did customer 1842's bridge fail?" The App should look up the customer's recent bridge attempts, identify the failed route or callback, and explain the user-facing status. It should not expose internal notes or unrelated account data.
+
+Avoid examples that only test Aomi's harness, such as generic balance checks or generic swap prompts. Those are useful for runtime validation, but they do not prove that your App handles your users' real workflows.
+
+## Next steps
+
+- [Custom tools](/guides/custom-tools): define and test tool behavior
+- [Builder toolchain](/reference/cli-toolchain): run App e2e tests
+- [Simulation](/reference/simulation): understand how Aomi simulates transactions
+- [Building Apps](/reference/building-apps): build and package an App
