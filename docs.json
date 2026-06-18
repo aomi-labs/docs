@@ -143,6 +143,10 @@
   },
   "redirects": [
     {
+      "source": "/build/overview",
+      "destination": "/build"
+    },
+    {
       "source": "/guides/cli-usage",
       "destination": "/reference/cli"
     },
