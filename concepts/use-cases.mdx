@@ -19,7 +19,7 @@ Build a system that continuously monitors user positions across markets and auto
 
 Let users define trading logic without writing scripts: "buy when odds fall below 30% and sell at 55%." The agent watches continuously and executes when conditions are met. Position guards handle the monitoring loop, and the [Aomi CLI](/reference/cli) handles execution.
 
-### Alert and Execution Bot
+### Alert and Execution Agent
 
 Instead of simple notifications, build agents that act. A user sets "alert me and buy $50 if this crosses 60%", and the agent both notifies and prepares the transaction, cutting the delay between signal and action. Uses [SSE streaming](/reference/runtime#streaming-and-session-snapshots) for real time triggers.
 
@@ -29,7 +29,7 @@ A user says "move my funds to the highest safe APY" and the agent evaluates opti
 
 ### Cross-Platform Arbitrage
 
-The same agent layer across Polymarket and [Kalshi](/concepts/skills) surfaces arbitrage automatically when the same event is priced differently on both platforms. Aomi's native Kalshi plugin handles the regulated market side. See the [apps catalog](/concepts/skills) for available integrations.
+One agent layer across several prediction markets surfaces arbitrage automatically when the same event is priced differently on each platform. See the [apps catalog](/concepts/skills) for the integrations available today.
 
 ### Research and Signal Agent
 
@@ -67,7 +67,7 @@ Build a system where strategies are shared and executed through agents. A user s
 
 Embed the widget into your game client and let players trade in-game assets using natural language. A player says "sell my sword for the best price", and the agent routes through the right marketplace and executes on confirmation. Adding new marketplaces is additive, not a rewrite.
 
-An example is **molinar**, an AI companion in a Roblox-style world where players make things by talking. Integrated with Aomi SDK so users transact onchain without ever knowing they're on a blockchain.
+An example is **molinar**, an AI companion in a Roblox-style world where players make things by talking. It integrates Aomi so users transact onchain without ever knowing they are on a blockchain.
 
 ### NFT and Asset Trading Agent
 
@@ -79,11 +79,11 @@ Users define conditions like "buy this NFT if the floor drops 10%" and the agent
 
 ### CI/CD Onchain Attestation
 
-When a build passes, Aomi triggers an onchain attestation, proof that code was audited, tested, and deployed at a specific commit hash. Immutable, verifiable, trustless. See the [execution guide](/trade/execution) for the simulation and signing pipeline.
+When a build passes, Aomi triggers an onchain attestation, proof that code was audited, tested, and deployed at a specific commit hash. The record is immutable and anyone can verify it. See the [execution guide](/trade/execution) for the simulation and signing pipeline.
 
 ### Contributor Badges
 
-Every merged PR that meets quality standards mints a contributor badge onchain. Developers build a verifiable reputation that lives in their wallet, not on a centralized platform. Uses [account abstraction](/reference/account-abstraction) for gasless minting.
+Every merged PR that meets quality standards mints a contributor badge onchain. Developers build a verifiable reputation that lives in their wallet, not on a centralized platform.
 
 ### Code Bounty Automation
 
@@ -99,7 +99,7 @@ The agent monitors allocations, suggests rebalancing, or executes predefined str
 
 ### DAO Tooling
 
-Members vote on proposals through Aomi. Votes are onchain. Execution is automatic when the threshold is met, with no multisig coordination and no manual execution. See [account abstraction](/reference/account-abstraction) for batched operations.
+Members vote on proposals through Aomi. Votes are onchain. Execution is automatic when the threshold is met, with no multisig coordination and no manual execution.
 
 ### Onchain Role Management
 

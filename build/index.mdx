@@ -25,8 +25,8 @@ graph LR
 
 1. **Write** your tools in a Rust crate with `aomi.toml` and `src/lib.rs`.
 2. **Build** it with `cargo build --release`.
-3. **Deploy** with `aomi-git deploy`. CI builds your plugin and cuts a release.
-4. **Activate** with `aomi-git activate`, using the per-app code ops issued you. Your App loads onto the live runtime.
+3. **Deploy** with `aomi-build deploy`. The backend builds your plugin and cuts a release.
+4. **Activate** with `aomi-build activate`, using your activation token. Your App loads onto the live runtime.
 
 The [Quickstart](/build/quickstart) walks all four end to end in about ten minutes.
 
@@ -43,7 +43,7 @@ The [Quickstart](/build/quickstart) walks all four end to end in about ten minut
     The Rust plugin SDK you build your tools against.
   </Card>
   <Card title="The builder toolchain" href="/reference/cli-toolchain">
-    The three binaries: `aomi-build`, `aomi-run`, `aomi-git`.
+    The two binaries: `aomi-build` and `aomi-run`.
   </Card>
   <Card title="Deploy and activate" href="/build/deploy">
     The full shipping process when the quickstart is not enough.

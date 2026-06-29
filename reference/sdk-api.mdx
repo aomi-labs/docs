@@ -3,7 +3,7 @@ title: SDK reference
 description: Rust reference for the Aomi plugin SDK. Build an App as a cdylib plugin with typed tools, the DynAomiTool trait, the dyn_aomi_app! macro, secrets, host namespaces, and the runtime hot load model.
 ---
 
-<Info>Verified against aomi-sdk@main on 2026-06-04.</Info>
+<Info>Verified against aomi-sdk@08b21f9 on 2026-06-29.</Info>
 
 The Aomi SDK is a Rust crate for building **Apps**. An App is a dynamic plugin that the Aomi runtime hot loads at runtime as a shared library (`cdylib`) over a stable C ABI. You write typed tools in Rust, compile to a `.so` (Linux) or `.dylib` (macOS), and the runtime loads it without a restart.
 
@@ -87,15 +87,19 @@ The crate must build as a `cdylib`, and it depends on `aomi-sdk`.
 crate-type = ["cdylib"]
 
 [dependencies]
-aomi-sdk = "=0.1.20"
+aomi-sdk = "=3.0.0"
 schemars = "1"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 ```
 
 <Note>
-Pin `aomi-sdk` exactly (`=0.1.20`), not with a caret range. The runtime gates plugin loading on an exact SDK version match, so the pin must equal the platform's `required_sdk_version` (see `platform.json` in the platform repo). A mismatch fails CI before your App ever loads.
+Pin `aomi-sdk` exactly (`=3.0.0`), not with a caret range. The runtime gates plugin loading on an exact SDK version match, so the pin must equal the platform's `required_sdk_version` (see `platform.json` in the platform repo). A mismatch fails before your App ever loads.
 </Note>
+
+<Warning>
+Pin the platform requirement, not the crate's own version. The `aomi-sdk` crate ships at `3.0.1`, but the community platform requires `=3.0.0`. Match `platform.json`'s `required_sdk_version`, today `=3.0.0`, not the crate's latest.
+</Warning>
 
 <Note>
 `aomi-sdk` exports `schemars` and `serde_json` again from inside itself, so your tool code can reach them through the crate (for example `aomi_sdk::schemars::JsonSchema`) without managing version alignment yourself.
@@ -376,6 +380,6 @@ The reference template at `sdk/examples/app-template-http` in the `aomi-labs/aom
 The full workflow for authoring, structuring, and publishing an App.
 </Card>
 <Card title="CLI toolchain" icon="terminal" href="/reference/cli-toolchain">
-`aomi-build` to scaffold and compile plugins, and `aomi-git` to deploy them.
+`aomi-build` to scaffold, compile, and deploy plugins, and `aomi-run` to exercise them locally.
 </Card>
 </CardGroup>

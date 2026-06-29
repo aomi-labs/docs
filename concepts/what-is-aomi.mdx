@@ -1,23 +1,35 @@
 ---
 title: What is Aomi?
-description: Aomi's core building blocks: Agentic Applications, the wallet-aware transaction runtime, embeddable chat widget, and exposing your product as AI tools.
+description: The one minute mental model for Aomi: the three surfaces (Runtime, Skills, widget), the App model, and the guardrails built into every transaction.
 ---
 
-Aomi is the blockchain harness for agentic AI. It gives you three core building blocks:
+Aomi is the blockchain harness for agentic AI. The core idea is simple. Agency is an emergent property of applications, not models. You do not get safe onchain behavior from a smarter model. You get it from the application around the model: typed tools, simulation before signing, and a wallet that stays in the user's hands.
 
-- A **wallet-aware transaction runtime** for reading balances, simulating execution, and signing transactions
-- An **embeddable chat widget** plus a headless React library for product UIs
-- An **app model** for exposing your product or protocol as callable AI tools
+## The three surfaces
+
+Aomi gives you three surfaces. You can use one or all three.
+
+- **Runtime**: the hosted execution environment that reads balances, simulates transactions, runs the model loop, and routes signing to the user's wallet. You ship an App and the Runtime runs it.
+- **Skills**: drop in Agent Skills that teach AI coding tools (Claude Code, Cursor, Gemini CLI, Copilot) how to drive Aomi. See [Skills](/concepts/skills).
+- **widget**: the `<AomiFrame />` chat component plus the [headless library](/guides/headless-library) for fully custom UIs. See [Widget Installation](/guides/widget-installation).
+
+## Guardrails built for crypto
+
+Aomi puts the guardrails inside the application, not around it.
+
+- **Type safety on transactions**: each tool is a typed Rust function. The shape of every onchain action is checked when the App is built, not at runtime.
+- **simulate before signing**: every transaction runs on a fork of the live network first. The user sees exact token changes, gas, and contract calls before approving. See [How It Works](/concepts/how-it-works).
+- **non-custodial**: Aomi never holds keys or funds. Signing happens locally in the user's wallet. See [Non-Custodial Automation](/concepts/non-custodial-wallets).
 
 ## Agentic Application
 
-An **Agentic Application** (App) defines the isolated environment in which an AI agent operates: the tools it can invoke, the data sources it can access, the model it runs on, and the system prompt that shapes its behavior.
+An **Agentic Application** (App) is the isolated environment an agent runs in: the tools it can invoke, the data sources it can read, the model it runs on, and the system prompt that shapes its behavior.
 
 When you interact with Aomi, you are always operating within an App. The active App determines the agent's full capability surface. Switching Apps changes the agent entirely.
 
 ### For Users
 
-The App you're in determines what the assistant can do. An agent running in a DeFi App may have access to swap aggregators, liquidity pools, and live price feeds. The same platform running a different App might query social APIs or prediction markets instead.
+The App you are in determines what the assistant can do. An agent running in a DeFi App may have swap aggregators, liquidity pools, and live price feeds. The same platform running a different App might query social APIs or prediction markets instead.
 
 <iframe
   width="100%"
@@ -38,31 +50,16 @@ Apps are the unit of agent deployment on the Aomi platform. Each App encapsulate
 - **Model**: the underlying LLM (e.g., `claude-sonnet`, `gpt-4o`)
 - **API key**: scoped credentials, isolated per App
 
-Running multiple Apps means running multiple independent agents. A trading agent, a research agent, and a support bot can operate on the same platform without sharing configuration or credentials.
+Running multiple Apps means running multiple independent agents. A trading App, a research App, and a support App can run on the same platform without sharing configuration or credentials.
 
 ### The Default App
 
-A `default` App is available in all environments without requiring an API key. It provides a baseline agent suitable for testing your integration before deploying a scoped App.
+A `default` App is available in all environments without an API key. It gives you a baseline agent for testing your integration before you deploy a scoped App.
 
-### Authentication
-
-Apps are protected by API keys scoped to that App. Pass your key via the `AOMI-APP-KEY` header, or enter it in the API key field of the control bar.
-
-| Status | Meaning |
-|--------|---------|
-| `401 Unauthorized` | No API key provided |
-| `403 Forbidden` | Key does not authorize this App |
-
-## Safety Defaults
-
-- Read by default
-- Simulate before sign
-- Credentials never round-trip
-
-The platform is designed with safety as a foundation. Before any transaction reaches a user's wallet, Aomi forks the current network state and simulates the transaction. Users see exact token changes, gas costs, and contract calls before signing anything.
+Apps are protected by API keys scoped to that App. Authorized and agentic signing is supported, so an agent can act for a user within the limits the App sets, while the wallet still signs locally. For how keys, Apps, and sessions fit together, see [Apps & Auth](/reference/apps-auth).
 
 ## Next Steps
 
-- [Architecture](/concepts/architecture): platform design and pipeline
+- [How It Works](/concepts/how-it-works): the flow from message to signed transaction
+- [Architecture](/concepts/architecture): the component view of an App and the Runtime
 - [Quickstart](/getting-started/quickstart): get started in minutes
-- [Integration Guide](/guides/integration): full-stack walkthrough

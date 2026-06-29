@@ -3,7 +3,7 @@ title: "Building an App"
 description: "How an Aomi App is built. The standard crate file split, the aomi.toml manifest, the preamble, tools, and host namespaces. Authoring only; compiling and shipping link forward."
 ---
 
-<Info>Verified against aomi-sdk@main on 2026-06-04.</Info>
+<Info>Verified against aomi-sdk@08b21f9 on 2026-06-29.</Info>
 
 This page is about **authoring** an Aomi App: how the crate is laid out, what goes in each file, and how you wire it together. An App is a Rust crate that compiles to a dynamic plugin the Aomi runtime hot loads. It wraps an external API as a small set of typed tools, ships a preamble that tells the model how to use them, and declares which host capabilities it needs.
 
@@ -336,14 +336,18 @@ edition = "2024"
 crate-type = ["cdylib"]
 
 [dependencies]
-aomi-sdk   = "=0.1.20"          # match platform.json's required_sdk_version
+aomi-sdk   = "=3.0.0"          # match platform.json's required_sdk_version
 serde      = { version = "1", features = ["derive"] }
 serde_json = "1"
 ```
 
 <Note>
-  `=0.1.20` is the pin the `community-apps` platform expects today. Always confirm against `platform.json`'s `required_sdk_version` in the platform repo before you deploy; a mismatch fails CI with an `sdk_version mismatch` error.
+  `=3.0.0` is the pin the `community-apps` platform expects today. Always confirm against `platform.json`'s `required_sdk_version` in the platform repo before you deploy; a mismatch fails with an `sdk_version mismatch` error.
 </Note>
+
+<Warning>
+  Pin the platform requirement, not the crate's own version. The `aomi-sdk` crate ships at `3.0.1`, but the community platform requires `=3.0.0`. Pin what `platform.json` names under `required_sdk_version`, today `=3.0.0`, not the crate's latest. A build pinned to anything else is rejected at activation.
+</Warning>
 
 ## Authoring guidelines
 
@@ -363,8 +367,8 @@ You have authored the crate. Now compile it, test it, and ship it.
     Use the `aomi-build` CLI to compile your plugin and `aomi-run` to exercise it locally before you ship.
   </Card>
 
-  <Card title="Deploy and activate" icon="rocket" href="/reference/cli-toolchain">
-    Use `aomi-git deploy` to stage your source into the platform repo, then request activation so the backend loads it.
+  <Card title="Deploy and activate" icon="rocket" href="/build/deploy">
+    Use `aomi-build deploy` to send your source to the backend, then `aomi-build activate` so the backend loads it.
   </Card>
 
   <Card title="SDK Reference" icon="book" href="/reference/sdk-api">

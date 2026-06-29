@@ -77,33 +77,11 @@ See: [Client CLI](/reference/cli)
 
 ## E
 
-### ERC-4337
+### EIP-712
 
-The Ethereum account abstraction standard. Aomi supports ERC-4337 for session keys, gas sponsorship, and batched user operations.
+A standard for signing typed structured data. Aomi requests EIP-712 signatures for actions like permit approvals, where the user signs a message rather than sending a transaction.
 
-See: [Account Abstraction](/reference/account-abstraction)
-
-### ERC-6900
-
-The modular account standard. Extends ERC-4337 with pluggable modules for custom validation, execution, and payment logic.
-
-See: [Account Abstraction](/reference/account-abstraction)
-
-### EIP-1271
-
-The signature validation standard for smart contract wallets. Aomi supports EIP-1271 for contract-based account signing.
-
-See: [Account Abstraction](/reference/account-abstraction)
-
----
-
-## G
-
-### Gas Sponsorship
-
-A feature of account abstraction where transaction gas costs are paid by a sponsoring account (paymaster) instead of the end user. Useful for onboarding users who don't hold ETH.
-
-See: [Account Abstraction](/reference/account-abstraction)
+See: [Non-Custodial Wallets](/concepts/non-custodial-wallets)
 
 ---
 
@@ -203,12 +181,6 @@ A conversation thread identified by a UUID. Sessions maintain their own message 
 
 See: [Sessions Reference](/reference/sessions)
 
-### Session Key
-
-An ephemeral, limited-permission key used in account abstraction. Session keys allow the AI to execute approved operations without requiring user interaction for every transaction.
-
-See: [Account Abstraction](/reference/account-abstraction)
-
 ### Simulation-First
 
 The core safety principle of Aomi: every onchain transaction is simulated on a forked network before it reaches the user's wallet. Users review exact outcomes before signing.
@@ -236,16 +208,6 @@ See: [Simulation Reference](/reference/simulation)
 A typed function that an LLM can invoke during a conversation. Tools wrap APIs, onchain actions, or data sources. Each tool has a name, description, and typed input parameters.
 
 See: [Integration Guide](/guides/integration), [Custom Tools](/guides/custom-tools)
-
----
-
-## U
-
-### User Operation
-
-An ERC-4337 user operation (UserOp). Bundles transaction intent, signature, and metadata into a single object that can be sent to an entry point contract for execution.
-
-See: [Account Abstraction](/reference/account-abstraction)
 
 ---
 

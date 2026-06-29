@@ -20,19 +20,18 @@ An App is a Rust crate the runtime loads as a plugin. You write the tools, the p
     No Rust yet? Install it from [rustup.rs](https://rustup.rs).
   </Step>
 
-  <Step title="Check git and the GitHub CLI">
-    `aomi-git` uses `git` to push your App and your `gh` login to reach the platform repo.
+  <Step title="Check git">
+    Your source lives in a git repo. The backend reads that repo through the Aomi GitHub App you connect later.
 
     ```bash
     git --version
-    gh auth status
     ```
 
-    If `gh` says you are not logged in, run `gh auth login`.
+    No git yet? Install it from [git-scm.com](https://git-scm.com).
   </Step>
 
   <Step title="Install the toolchain">
-    This installs the builder binaries. The `cli` feature builds `aomi-build` and `aomi-git`, the tool that ships your App. Add `dev-runtime` to also get `aomi-run`, which lets you chat with your App locally before you ship.
+    There is one CLI: `aomi-build`. The `cli` feature builds it. Add `dev-runtime` to also get `aomi-run`, which lets you chat with your App locally before you ship.
 
     <CodeGroup>
     ```bash macOS / Linux
@@ -47,7 +46,7 @@ An App is a Rust crate the runtime loads as a plugin. You write the tools, the p
     There is no `--version` flag, so confirm the install with `--help`:
 
     ```bash
-    aomi-git --help
+    aomi-build --help
     ```
   </Step>
 </Steps>
@@ -79,7 +78,7 @@ Your App is three small files. Make a folder and add them.
   </Step>
 
   <Step title="Cargo.toml">
-    Your App compiles to a `cdylib`. Pin `aomi-sdk` to the exact version the platform requires, today `=0.1.20`.
+    Your App compiles to a `cdylib`. Pin `aomi-sdk` to the exact version the platform requires, today `=3.0.0`.
 
     ```toml Cargo.toml
     [package]
@@ -91,7 +90,7 @@ Your App is three small files. Make a folder and add them.
     crate-type = ["cdylib"]
 
     [dependencies]
-    aomi-sdk   = "=0.1.20"
+    aomi-sdk   = "=3.0.0"
     schemars   = "1"
     serde      = { version = "1", features = ["derive"] }
     serde_json = "1"
@@ -100,6 +99,10 @@ Your App is three small files. Make a folder and add them.
     <Note>
     The exact version lives in `platform.json` in the community-apps repo, under `required_sdk_version`. The runtime loads a plugin only if it was built against that version.
     </Note>
+
+    <Warning>
+    Pin the platform requirement `=3.0.0`, not the crate's own version. The `aomi-sdk` crate ships at `3.0.1`, but the community platform requires `=3.0.0`. Match the platform's `required_sdk_version` in `platform.json`, not whatever the crate prints. A build pinned to anything else is rejected at activation.
+    </Warning>
   </Step>
 
   <Step title="src/lib.rs">
@@ -162,7 +165,7 @@ Your App is three small files. Make a folder and add them.
     Expected output:
 
     ```text
-    Compiling aomi-sdk v0.1.20
+    Compiling aomi-sdk v3.0.0
     Compiling hello-aomi v0.1.0
     Finished `release` profile [optimized] target(s) in 12.6s
     ```
@@ -175,61 +178,53 @@ Your App is three small files. Make a folder and add them.
     printf '/target\n/.aomi\nCargo.lock\n' > .gitignore
     git init && git add . && git commit -m "init hello-aomi"
     ```
+
+    Push this commit to the GitHub repo you will connect in the next step.
+  </Step>
+
+  <Step title="Connect your repo">
+    The first time you ship, connect your source repo. This installs the Aomi GitHub App and saves your activation token. Run it once, not per deploy.
+
+    ```bash
+    AOMI_BACKEND_URL=https://staging-api.aomi.dev aomi-build connect
+    ```
+
+    It prints a browser URL to install the Aomi GitHub App on your repo. Install it, then paste back the `installation_id` GitHub shows you. The backend reads your source through this install on every deploy.
   </Step>
 
   <Step title="Check the plan">
-    A dry run shows the plan and runs the checks. It pushes nothing.
+    A dry run shows the plan and runs the checks. It deploys nothing.
 
     ```bash
-    AOMI_BACKEND_URL=https://staging-api.aomi.dev aomi-git deploy --dry-run
+    AOMI_BACKEND_URL=https://staging-api.aomi.dev aomi-build deploy --dry-run
     ```
 
-    Every Preflight line should read `[ok]`:
-
-    ```text
-    Preflight
-      [ok]   workspace git_clean
-      [ok]   manifest  platform_declared, git_declared
-      [ok]   platform  backend_reachable, platform_resolved, branch_matches_contract
-      [ok]   backend   server_tags_subset
-    ```
-
-    If a line fails, fix what it names in your `aomi.toml` and run the dry run again.
+    The dry run previews the deployment manifest and runs the preflight checks. Fix anything it flags in your `aomi.toml`, then run it again.
   </Step>
 
   <Step title="Deploy">
     ```bash
-    aomi-git deploy
+    AOMI_BACKEND_URL=https://staging-api.aomi.dev aomi-build deploy
     ```
 
-    This pushes your source to the community platform and starts CI. CI builds your plugin and cuts a release tagged `apps-hello-aomi-<short-commit>`.
+    This sends a deploy request to the backend. The backend reads your source through the connected GitHub App, opens a pull request, and CI builds your plugin and cuts a release tagged `apps-<installation-id>-<repo-key>-hello-aomi-<short-commit>`.
   </Step>
 
   <Step title="Watch CI">
     ```bash
-    aomi-git status
+    aomi-build status
     ```
 
-    When the `ci` line reads `[ok] green` and `release` says it is ready to activate, you are set. A build takes a few minutes.
-  </Step>
-
-  <Step title="Get access (first time only)">
-    The first time you ship to a platform, ask ops for access. This runs once, not per deploy.
-
-    ```bash
-    aomi-git request --email you@example.com --git-account your-github-user
-    ```
-
-    This posts a request to the Aomi apps Discord. Ops then do two things: they invite your GitHub account to the platform repo as a collaborator, and they email you a per-app activation code. The code arrives by email, never over Discord.
+    When the release is built and ready to activate, you are set. A build takes a few minutes.
   </Step>
 
   <Step title="Activate your release">
-    Once CI is green and you hold your per-app code, you activate the release yourself. Set the code as `AOMI_APP_ACTIVATION_TOKEN`.
+    Once CI is green, activate the release yourself. Set your activation token as `AOMI_APP_ACTIVATION_TOKEN`.
 
     ```bash
-    AOMI_APP_ACTIVATION_TOKEN=<your per-app code> \
+    AOMI_APP_ACTIVATION_TOKEN=<your-activation-token> \
     AOMI_BACKEND_URL=https://staging-api.aomi.dev \
-      aomi-git activate
+      aomi-build activate
     ```
 
     The backend fetches your release, validates it, and loads it. Within a few minutes your `greet` tool appears in the agent for new chats.
@@ -239,7 +234,7 @@ Your App is three small files. Make a folder and add them.
 ## What you have now
 
 <Check>
-You have a deployed Aomi App on the live runtime. You wrote three files, deployed with `aomi-git deploy`, and activated the release with your per-app code. Your `greet` tool now runs inside real chats.
+You have a deployed Aomi App on the live runtime. You wrote three files, deployed with `aomi-build deploy`, and activated the release with your activation token. Your `greet` tool now runs inside real chats.
 </Check>
 
 To go further:

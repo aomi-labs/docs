@@ -1,40 +1,9 @@
 ---
 title: How It Works
-description: Walkthrough of the Aomi pipeline from REST APIs to deployed AI assistant: tool wrapping, preamble configuration, model selection, and client integration.
+description: The Aomi request flow end to end, from a user message through tool calls and simulation to a signed transaction, using a worked example.
 ---
 
-This page walks through the full lifecycle of an Aomi-powered assistant, from your existing APIs to a deployed product your users can talk to. **MyCoinDex**, a fictional crypto exchange, is the running example.
-
-## The Pipeline
-
-```mermaid
-flowchart TB
-    subgraph "1. Your APIs"
-        API1[GET /prices/eth]
-        API2[POST /trades]
-        API3[GET /portfolio/user123]
-    end
-    subgraph "2. Aomi Tool Layer"
-        T1[GetTokenPrice]
-        T2[ExecuteTrade]
-        T3[GetPortfolio]
-    end
-    subgraph "3. AomiApp Configuration"
-        PREAMBLE[Preamble]
-        MODEL[Model Selection]
-        RAG[RAG Docs]
-    end
-    subgraph "4. Deployed App"
-        NS[mycoindex]
-    end
-    subgraph "5. Client Integration"
-        WIDGET[Widget / Headless / Telegram]
-    end
-    API1 --> T1; API2 --> T2; API3 --> T3
-    T1 --> PREAMBLE; T2 --> PREAMBLE; T3 --> PREAMBLE
-    MODEL --> NS; RAG --> NS; PREAMBLE --> NS
-    NS --> WIDGET
-```
+This page follows one request from start to finish: a user message, the tool calls it triggers, the simulation step, and the wallet signature. **MyCoinDex**, a fictional crypto exchange, is the running example. For the component view of how an App and the Runtime fit together, see [Architecture](/concepts/architecture).
 
 ## 1. Your APIs
 
@@ -162,6 +131,28 @@ data: {"type":"complete"}
 | `tool_call` | The model is invoking a tool |
 | `tool_result` | Result returned from a tool execution |
 | `complete` | Response finished |
+
+## 7. When a Tool Produces a Transaction
+
+The flow above reads data. A write follows the same path until the tool builds a transaction. Then the safety steps take over. A tool never holds a key and never signs. It returns a transaction for the Runtime to simulate and the user's wallet to sign.
+
+```mermaid
+flowchart LR
+    INTENT[User asks to trade] --> TOOL[Tool builds tx params]
+    TOOL --> SIM[Simulate on a fork]
+    SIM --> REVIEW[User reviews exact outcome]
+    REVIEW -->|Approve| SIGN[Wallet signs locally]
+    REVIEW -->|Reject| CANCEL[Cancelled]
+    SIGN --> SUBMIT[Submitted to chain]
+```
+
+1. The model calls a write tool, for example `ExecuteTrade`.
+2. The tool builds the transaction parameters and returns them. It does not sign.
+3. The Runtime simulates the transaction on a fork of the live network.
+4. The user sees the exact token changes, gas, and contract calls. This is the simulate step.
+5. If the user approves, the wallet signs locally and the transaction is submitted. If the user rejects, nothing is sent.
+
+For the safety properties of this flow, see [Security](/concepts/security). For the simulation internals, see the [Simulation Reference](/reference/simulation).
 
 ## What You Get
 

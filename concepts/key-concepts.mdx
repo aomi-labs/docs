@@ -1,59 +1,44 @@
 ---
 title: Key Concepts
-description: Core Aomi concepts: Agentic Applications, non-custodial automation with simulation-first signing, and the three frontend integration paths for builders.
+description: The load-bearing Aomi terms used across the docs, in brief: App, tool, namespace, simulate, non-custodial, Runtime, widget, and the headless library.
 ---
 
-Two concepts are central to how Aomi works, and both are worth understanding before you dive in.
+These are the terms the rest of the docs lean on. Learn these and the other pages read faster. For the full A to Z list, see the [Glossary](/concepts/glossary).
 
-## Agentic Application
+## App
 
-The isolated agent environment that defines what the AI can do and access. Each App has:
+Short for **Agentic Application**. The unit of deployment on Aomi. An App is the isolated environment an agent runs in, and it bundles four things: the tools it can call, the preamble that shapes its behavior, the model it runs on, and a scoped API key. Switching Apps changes the agent entirely. See [What is Aomi?](/concepts/what-is-aomi).
 
-- **Tools**: the functions the agent can call (your APIs, onchain actions, data sources)
-- **Preamble**: the system prompt that shapes agent behavior and constraints
-- **Model**: the LLM powering the agent (Claude, GPT-4o, or others)
-- **API key**: scoped credentials, isolated per App
+## Tool
 
-Both users and builders interact within an App. Switching Apps changes the agent's tools, context, and behavior entirely. Running multiple Apps means running multiple independent agents.
+A typed function the model can call during a conversation. A tool wraps an API, an onchain action, or a data source. Each tool has a name, a description, and typed input parameters, so the shape of every call is checked at build time. See [Custom Tools](/guides/custom-tools).
 
-## Non-Custodial Automation
+## Namespace
 
-Aomi never holds your private keys or funds. Every transaction is simulated on a forked network before it reaches your wallet, so you can review the exact onchain outcome before approving.
+A set of host tools an App asks for. The default namespace is `evm-core`, which gives an App the EVM read and write primitives: read onchain state, stage and simulate a transaction, and request a wallet signature. The host injects the namespace's tools alongside the App's own. See [Architecture](/concepts/architecture).
 
-This simulation-first approach is the key safety mechanism. Users see exact token changes, gas costs, and contract calls before signing anything. The AI constructs and proposes transactions; the wallet signs them locally.
+## simulate
 
-## Integration Paths
+To run a transaction on a fork of the live network before it reaches the user's wallet. The user sees exact token changes, gas, and contract calls, then approves or rejects. This is the core safety step. See [How It Works](/concepts/how-it-works).
 
-Builders have three ways to integrate Aomi:
+## non-custodial
 
-| Path | Best For |
-|------|----------|
-| **Widget (shadcn)** | Quick integration, standard chat UI, projects using shadcn/ui |
-| **Headless Library** | Fully custom designs, non-standard layouts, maximum control |
-| **Telegram Bot** | Reaching users on Telegram without frontend deployment |
+A model where Aomi never holds keys or funds. Every transaction is signed locally in the user's wallet after the simulate step. The private key never leaves the user's device. See [Non-Custodial Automation](/concepts/non-custodial-wallets).
 
-Both frontend paths use the same core `@aomi-labs/react` package. The widget is built on top of the headless library.
+## Runtime
 
-## For Users
+The hosted execution environment. It manages sessions, runs the model loop, runs the simulation pipeline, and streams responses. You ship an App and the Runtime runs it. See [Architecture](/concepts/architecture).
 
-Access Aomi through any supported channel:
+## widget
 
-- **Web App** at chat.aomi.dev: full chat interface
-- **Telegram**: @aomi_sendit_bot
-- **Discord**: coming soon
-- **iOS**: coming soon
+The `<AomiFrame />` chat component, installed into your project. It gives you a ready-made chat interface and the wallet UI. See [Widget Installation](/guides/widget-installation).
 
-## For Builders
+## headless library
 
-Integrate Aomi into your product:
-
-- Quickstart: get a working widget in minutes
-- Integration Guide: full-stack walkthrough with examples
-- API Reference: complete HTTP API documentation
-- CLI: validate prompts, inspect sessions, simulate execution
+The `@aomi-labs/react` package. It provides the runtime logic, state, and hooks with no UI opinions, so you can build a fully custom interface. The widget is built on top of it. See [Headless Library](/guides/headless-library).
 
 ## Next Steps
 
-- [Quickstart](/getting-started/quickstart): get started in minutes
-- [Integration Guide](/guides/integration): learn the full platform pipeline
-- [Architecture](/concepts/architecture): platform design deep-dive
+- [Glossary](/concepts/glossary): every term, A to Z
+- [What is Aomi?](/concepts/what-is-aomi): the one minute mental model
+- [Architecture](/concepts/architecture): how these pieces fit together
