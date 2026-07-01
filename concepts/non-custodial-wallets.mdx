@@ -3,7 +3,7 @@ title: Non-Custodial Automation
 description: How Aomi keeps funds safe with local key control, Anvil-forked transaction simulation before signing, and explicit per-transaction user approval.
 ---
 
-Aomi is **non-custodial**: it never holds your private keys or funds. You remain in full control of your wallet at all times. Every transaction is simulated on a forked network before it reaches your wallet, so you can review the exact onchain outcome before approving.
+Aomi is **non-custodial**: it never holds your private keys or funds. You stay in full control of your wallet at all times. Every transaction is simulated on a forked network before it reaches your wallet, so you review the exact onchain outcome before approving.
 
 <iframe
   className="aspect-video w-full rounded-lg border"
@@ -14,64 +14,44 @@ Aomi is **non-custodial**: it never holds your private keys or funds. You remain
   allowFullScreen
 />
 
-## How Signing Works
+## How signing works
 
-Wallet connection and account management run through [Para](https://www.getpara.com). Transaction signing still happens locally in your connected wallet through wagmi-compatible connectors. Aomi constructs and proposes transactions; your wallet signs them. The private key never leaves your device.
+Wallet connection and account management run through [Para](https://www.getpara.com). Signing still happens locally in your connected wallet through wagmi-compatible connectors. Aomi constructs and proposes transactions; your wallet signs them. The private key never leaves your device.
 
 ```
 Aomi Agent → constructs tx → simulates → presents result → your wallet signs
 ```
 
-## Transaction Simulation: The Safety Guardrail
+## Simulation: the safety guardrail
 
-Before any transaction reaches your wallet for approval, Aomi **simulates it on a forked network**. This is a deliberate guardrail for AI-generated transactions. The LLM cannot send anything to your wallet without first passing through simulation.
+Before any transaction reaches your wallet, Aomi **simulates it on a forked network**. This is a deliberate guardrail for AI-generated transactions: the model cannot send anything to your wallet without first passing through simulation.
 
-### What simulation does
+It runs in four steps:
 
-1. Aomi forks the current network state using [Anvil](https://book.getfoundry.sh/anvil/)
-2. The transaction is executed against the fork, not the real chain
-3. The exact outcome is captured: token balance changes, gas cost, contract calls made
-4. The result is shown to you before you're asked to sign
+1. Aomi forks the current network state with [Anvil](https://book.getfoundry.sh/anvil/).
+2. The transaction runs against the fork, not the real chain.
+3. The exact outcome is captured: token balance changes, gas cost, and every contract call.
+4. The result is shown to you before you are asked to sign.
 
-### What you'll see
+So before your wallet prompt appears you see the tokens sent and received, the gas estimate, the contracts involved, and your net balance change. The simulation itself costs no gas and changes nothing on the real network, and a batch of transactions can be simulated together.
 
-Before your wallet prompt appears, you'll see a simulation result showing:
+This matters because LLMs can generate incorrect transaction parameters. Simulation catches wrong amounts, unexpected contract calls, and reverts before they become irreversible onchain. You always have the final say. For the technical pipeline, see the [Simulation Reference](/reference/simulation).
 
-- **Tokens sent / received**: exact amounts and token addresses
-- **Gas estimate**: expected cost in ETH
-- **Contracts called**: which protocols are involved
-- **Net balance change**: what your wallet will look like after the transaction
+## Authorized and agentic signing
 
-Only after you review and confirm the simulation result does Aomi send the transaction to your wallet for signing.
+Aomi supports authorized signing, so an agent can act for a user within the limits the App sets. The wallet still signs locally and the simulate step still runs first. The non-custodial guarantee does not change: Aomi never holds keys.
 
-### Why this matters
+## Supported chains
 
-LLMs can generate incorrect transaction parameters. Simulation catches problems like wrong amounts, unexpected contract calls, and reverts before they become irreversible onchain. You always have the final say.
+Simulation and transaction execution are supported on Ethereum Mainnet, Base, Arbitrum One, and the major testnets such as Sepolia. You choose which chains your frontend exposes when you configure the wallet providers below.
 
-## Supported Chains
+## Wallet setup
 
-Simulation and transaction execution is supported on:
-
-- Ethereum Mainnet
-- Base
-- Arbitrum One
-- Major testnets (Sepolia, etc.)
-
-## Wallet Integration
-
-Aomi widgets use the Para + wagmi provider tree directly. The registry install gives you the wallet UI plus `RuntimeTxHandler`; you provide the Para and wagmi providers in your host app.
-
-### Setup
-
-#### Install Dependencies
-
-If you installed the widget through `npx shadcn add https://aomi.dev/r/aomi-frame.json`, the wallet UI is already included. Use the setup below when you want to wire Para-based auth and external wallets in your host app.
+Aomi widgets use the Para plus wagmi provider tree. If you installed the widget through `npx shadcn add https://aomi.dev/r/aomi-frame.json`, the wallet UI is already included. Use this setup when you want to wire Para-based auth and external wallets in your own host app.
 
 ```bash
 npm install @getpara/react-sdk @getpara/evm-wallet-connectors wagmi viem @tanstack/react-query
 ```
-
-#### Configure Para
 
 ```tsx
 "use client";
@@ -91,11 +71,7 @@ const localhost = defineChain({
   id: 31337,
   name: "Localhost",
   nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
-  rpcUrls: {
-    default: {
-      http: ["http://127.0.0.1:8545"],
-    },
-  },
+  rpcUrls: { default: { http: ["http://127.0.0.1:8545"] } },
 });
 
 const useAnvilForWallet = process.env.NEXT_PUBLIC_ANVIL_FOR_WALLET === "true";
@@ -119,30 +95,11 @@ export function Providers({ children }: { children: React.ReactNode }) {
               | undefined) ?? Environment.BETA,
         }}
         config={{ appName: "Your App" }}
-        paraModalConfig={{
-          disableEmailLogin: true,
-          oAuthMethods: ["GOOGLE"],
-        }}
         externalWalletConfig={{
-          appDescription: "Your app description",
           appUrl: "https://your-app.com",
-          wallets: [
-            "WALLETCONNECT",
-            "METAMASK",
-            "COINBASE",
-            "RAINBOW",
-            "RABBY",
-          ],
-          walletConnect: {
-            projectId: walletConnectProjectId!,
-          },
-          evmConnector: {
-            config: {
-              chains: networks,
-              transports,
-              ssr: true,
-            },
-          },
+          wallets: ["WALLETCONNECT", "METAMASK", "COINBASE", "RAINBOW", "RABBY"],
+          walletConnect: { projectId: walletConnectProjectId! },
+          evmConnector: { config: { chains: networks, transports, ssr: true } },
         }}
       >
         {children}
@@ -152,195 +109,23 @@ export function Providers({ children }: { children: React.ReactNode }) {
 }
 ```
 
-### Supported Chains
+To switch networks programmatically, call wagmi's `useSwitchChain`. The widget's auth bridge syncs the change to the Aomi runtime automatically; you can also set it manually with `setUser({ chainId })` from `@aomi-labs/react`.
 
-Configure which chains are available by passing them to Para's EVM connector:
+## Wire it into your app
 
-```tsx
-import { mainnet, polygon, arbitrum, base, optimism } from "wagmi/chains";
+The setup above is the wallet layer. The pieces that consume it, the connect button, the transaction and EIP-712 request handler, and the wallet utilities, live in the frontend guides:
 
-externalWalletConfig={{
-  evmConnector: {
-    config: {
-      chains: [mainnet, polygon, arbitrum, base, optimism],
-      transports: {
-        [mainnet.id]: http(),
-        [polygon.id]: http(),
-        [arbitrum.id]: http(),
-        [base.id]: http(),
-        [optimism.id]: http(),
-      },
-    },
-  },
-}}
-```
-
-The `NetworkSelect` component in the widget (or `getChainInfo` / `SUPPORTED_CHAINS` in the headless library) will reflect the configured chains.
-
-### Transaction Signing Flow
-
-When the AI assistant determines a transaction is needed, the following flow occurs:
-
-```
-1. LLM emits wallet_tx_request tool call
-2. Backend sends wallet_tx_request event via SSE
-3. Frontend receives event via useWalletHandler
-4. UI prompts user to review and sign
-5. User signs with their wallet (wagmi)
-6. Frontend sends wallet:tx_complete event back to backend
-7. Backend injects transaction result into LLM context
-8. LLM continues the conversation with the result
-```
-
-#### In the Widget
-
-The widget includes `RuntimeTxHandler` automatically. When a transaction request arrives, it executes through wagmi inside your Para provider tree and prompts the user to sign.
-
-#### In the Headless Library
-
-Handle transaction requests manually:
-
-```tsx
-import { useWalletHandler, useAomiRuntime } from "@aomi-labs/react";
-import { useSendTransaction, useSignTypedData } from "wagmi";
-
-function WalletRequestHandler() {
-  const { currentThreadId } = useAomiRuntime();
-  const { pendingRequests, startProcessing, resolveRequest, rejectRequest } =
-    useWalletHandler({ sessionId: currentThreadId });
-
-  const { sendTransactionAsync } = useSendTransaction();
-  const { signTypedDataAsync } = useSignTypedData();
-
-  const handleRequest = async (request: WalletRequest) => {
-    startProcessing(request.id);
-
-    try {
-      if (request.kind === "transaction") {
-        const payload = request.payload as WalletTxPayload;
-        const hash = await sendTransactionAsync({
-          to: payload.to,
-          value: BigInt(payload.value ?? "0"),
-          data: payload.data,
-        });
-        resolveRequest(request.id, { txHash: hash });
-      }
-
-      if (request.kind === "eip712_sign") {
-        const payload = request.payload as WalletEip712Payload;
-        const signature = await signTypedDataAsync(payload.typedData);
-        resolveRequest(request.id, { signature });
-      }
-    } catch (error) {
-      rejectRequest(request.id, error.message);
-    }
-  };
-
-  return (
-    <div>
-      {pendingRequests.map((req) => (
-        <div key={req.id}>
-          <p>Transaction request: {req.kind}</p>
-          <button onClick={() => handleRequest(req)}>Approve</button>
-          <button onClick={() => rejectRequest(req.id, "User rejected")}>
-            Reject
-          </button>
-        </div>
-      ))}
-    </div>
-  );
-}
-```
-
-## EIP-712 Typed Data Signing
-
-The AI can also request EIP-712 typed data signatures (used for gasless transactions, permit approvals, etc.). The flow is identical to transaction signing but uses `signTypedData` instead of `sendTransaction`.
-
-## Network Switching
-
-### In the Widget
-
-The `NetworkSelect` component provides a dropdown for switching chains. When the user selects a network, it calls `useSwitchChain` from wagmi and updates the Aomi runtime.
-
-### Programmatically
-
-```tsx
-import { useSwitchChain } from "wagmi";
-import { useUser } from "@aomi-labs/react";
-
-function NetworkSwitcher() {
-  const { switchChain } = useSwitchChain();
-  const { setUser } = useUser();
-
-  const handleSwitch = async (chainId: number) => {
-    await switchChain({ chainId });
-    // The widget auth bridge auto-syncs, but you can also set manually:
-    setUser({ chainId });
-  };
-}
-```
-
-## ConnectButton Component (Widget)
-
-The widget's `ConnectButton` component handles the full lifecycle:
-
-1. Renders a connect/manage account button
-2. On connect: opens the Para auth modal
-3. On successful connection: syncs address, chainId, and connection status to `useUser`
-4. When already connected: opens the Para account modal
-
-```tsx
-import { ConnectButton } from "@/components/control-bar";
-
-<ConnectButton
-  connectLabel="Connect Wallet"
-  onConnectionChange={(isConnected) => {
-    console.log("Wallet connected:", isConnected);
-  }}
-/>;
-```
-
-## Utilities
-
-The headless library provides wallet-related utilities:
-
-```tsx
-import {
-  formatAddress,
-  getNetworkName,
-  getChainInfo,
-  SUPPORTED_CHAINS,
-} from "@aomi-labs/react";
-
-formatAddress("0x1234567890abcdef1234567890abcdef12345678");
-// "0x1234...5678"
-
-getNetworkName(1);
-// "Ethereum"
-
-getChainInfo(137);
-// { name: "Polygon", ticker: "POL", ... }
-
-SUPPORTED_CHAINS;
-// [{ chainId: 1, name: "Ethereum", ... }, ...]
-```
-
-## Simulation Details
-
-Simulation runs on a forked network using [Anvil](https://book.getfoundry.sh/anvil/):
-
-- No gas costs for simulation
-- No state changes on the real network
-- Exact output visible before signing
-- Multiple transactions can be simulated in batch
-- Error detection before execution
-
-## Authorized and Agentic Signing
-
-Aomi supports authorized signing, so an agent can act for a user within the limits the App sets. The wallet still signs locally and the simulate step still runs first. The non-custodial guarantee does not change: Aomi never holds keys.
+<CardGroup cols={2}>
+<Card title="Widget installation" href="/guides/widget-installation">
+Drop in `<AomiFrame />` with the wallet UI and the `ConnectButton` already wired.
+</Card>
+<Card title="Headless library" href="/guides/headless-library">
+Handle transaction and EIP-712 requests, and use the wallet utilities, in a fully custom interface.
+</Card>
+</CardGroup>
 
 ## Next Steps
 
 - [What is Aomi?](/concepts/what-is-aomi): understand Apps and API keys
 - [Security](/concepts/security): the full safety model and threat model
-- [Simulation Reference](/reference/simulation): technical deep-dive on the simulation pipeline
+- [Simulation Reference](/reference/simulation): the technical deep dive on simulation
