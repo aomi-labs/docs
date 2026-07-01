@@ -103,7 +103,6 @@
           "concepts/non-custodial-wallets",
           "concepts/security",
           "concepts/skills",
-          "concepts/use-cases",
           "concepts/glossary"
         ]
       },
@@ -156,6 +155,10 @@
     {
       "source": "/concepts/key-concepts",
       "destination": "/concepts/glossary"
+    },
+    {
+      "source": "/concepts/use-cases",
+      "destination": "/concepts/what-is-aomi"
     }
   ],
   "logo": {
