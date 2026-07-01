@@ -7,7 +7,7 @@ The quickstart gets you to a deployed App on the happy path. This page is the re
 
 There are two deploy paths, and they do the same thing:
 
-- **The portal.** A no-code path in your browser. Click Dry run, Deploy, Activate. This is the recommended path for your first deploy.
+- **The portal.** A no-code path in your browser. Click Preflight, Deploy, Activate. This is the recommended path for your first deploy.
 - **The CLI.** `aomi-build connect`, then `aomi-build deploy`, then `aomi-build activate`. This is the scriptable path once you know the flow.
 
 Either way the model is the same. You write your App in your own repo. You connect that repo to Aomi once. A deploy request goes to the backend. The backend reads your source through the connected Aomi GitHub App, opens a pull request, and CI builds your cdylib and cuts a release. You activate the release, and the backend loads it without a restart.
@@ -35,32 +35,56 @@ The CLI never clones the platform repo or pushes branches. The backend owns that
 
 ## Deploy from the portal
 
-The portal is the no-code path and the recommended way to ship your first App. These steps are verified working as of 2026-06-29: Dry run, Deploy, and CI all succeed.
+The portal is the no-code path and the recommended way to ship your first App. Three buttons carry you from your repo to a live agent: **Preflight**, then **Deploy**, then **Activate**. Each screen is shown below. These steps are verified working: Preflight, Deploy, and CI all succeed.
 
 <Steps>
-  <Step title="Open the settings page">
-    Go to `https://chat.aomi.dev/settings`.
+  <Step title="Open the Deploy settings">
+    Go to `https://chat.aomi.dev/settings` and open the **Deploy** tab. You land on "Deploy an example agent".
+
+    <Frame caption="chat.aomi.dev/settings, the Deploy tab, signed out">
+      <img src="/images/deploy-settings-signin.png" alt="The Aomi Deploy settings page with a Sign in with GitHub button" />
+    </Frame>
   </Step>
   <Step title="Sign in with GitHub">
-    Click "Sign in with GitHub". Authorize the Aomi Build GitHub App and grant it access to the repository that holds your App.
+    Click **Sign in with GitHub** and authorize the Aomi Build GitHub App on the repository that holds your App. This is what lets the backend read your source and build it for you. You do this once per repo, not per deploy.
   </Step>
   <Step title="Find your repository">
-    After sign in, your repository appears under "Source Repositories" with an installation id and three actions: Dry run, Deploy, and Activate.
+    After sign in, your repo appears under **Source Repositories** with its installation id and three actions: **Preflight**, **Deploy**, and **Activate**. Every repo the Aomi Build app is installed on shows up here.
+
+    <Frame caption="Your connected repos, each with Preflight, Deploy, and Activate">
+      <img src="/images/deploy-source-repositories.png" alt="The Source Repositories list showing a connected repo with Preflight, Deploy, and Activate buttons" />
+    </Frame>
   </Step>
-  <Step title="Dry run">
-    Click "Dry run". This previews the deployment manifest and runs the preflight checks. It changes nothing. Confirm the checks pass.
+  <Step title="Preflight">
+    Click **Preflight**. This previews the exact deployment manifest and runs the preflight checks. It changes nothing on the platform. The card fills in the **Source** commit, the **Build** target, and the **Release** tag your App will publish under. When it reads "Preflight is ready", the checks passed and you can deploy.
+
+    <Frame caption="Preflight ready: the manifest previewed and the checks passed">
+      <img src="/images/deploy-preflight-ready.png" alt="The Preflight ready state showing source, build, and release details" />
+    </Frame>
   </Step>
   <Step title="Deploy">
-    Click "Deploy". The backend builds your App as a cdylib, CI runs, and a release is published. When it finishes you see "Build is ready for activation".
+    Click **Deploy**. The backend opens a pull request against `community-apps`, and CI compiles your App to a cdylib and cuts a release. The card shows a live build bar plus **Open CI** and **Open PR** links so you can watch it happen. This step takes a couple of minutes.
+
+    <Frame caption="Deploy in progress: CI building your App into a release">
+      <img src="/images/deploy-building.png" alt="The Deploy step building, with a CI progress bar and Open CI link" />
+    </Frame>
   </Step>
   <Step title="Activate">
-    Click "Activate" to load your App into the live runtime. This is the final step that makes your App live.
+    When the build finishes you see **"Build is ready for activation"** and the **Activate** button turns on. Click it to load your App into the live runtime. This is the final step, and it is what makes your App selectable in the chat.
+
+    <Frame caption="Build ready: CI passed, and Activate is now enabled">
+      <img src="/images/deploy-ready-to-activate.png" alt="The build ready for activation, CI passed, with the Activate button enabled" />
+    </Frame>
   </Step>
 </Steps>
 
 <Note>
-Activation is the final gate. Your App must pass the platform's checks first, including the SDK version pin. Once it passes and you activate, your App is live in the runtime.
+Activation is the final gate. Your App must pass the platform's checks first, including the SDK version pin (`aomi-sdk` must equal the platform's `required_sdk_version`). Once it passes and you activate, your App is live.
 </Note>
+
+<Tip>
+If Deploy gets stuck on "Waiting for platform CI", refresh the page (the deployment id is in the URL, so you keep your place). If the build is done, Activate turns on. If a deploy fails with a version error, your `aomi-sdk` pin does not match the platform, see the SDK row in [Troubleshooting](#troubleshooting).
+</Tip>
 
 ## Deploy from the CLI
 
@@ -269,6 +293,37 @@ Promoting from staging to prod means you deploy again. Edit `server_tags` in `ao
 | `activation endpoint returned 502` | The release does not exist yet, a CI race, or the backend cannot reach GitHub. | Wait for CI to finish and the release to publish, then retry. |
 | `activation endpoint returned 409` | Your target tags are not a subset of the backend's `AOMI_SERVER_TAGS`. | Match your `server_tags` to the backend you are activating against. |
 | No source repository in the portal | The Aomi GitHub App is not installed on your repo. | Run `aomi-build connect`, or in the portal sign in with GitHub and grant the Aomi Build app access to your repository. |
+
+## Find and test your App
+
+Once your App is active it shows up as a selectable agent in the Aomi chat. Here is how to open it and put it through its paces, using Goal Digger, a World Cup betting agent, as the example.
+
+<Steps>
+  <Step title="Open the chat">
+    Go to `https://chat.aomi.dev` and sign in.
+
+    <Frame caption="chat.aomi.dev, where your deployed App runs">
+      <img src="/images/chat-home.png" alt="The Aomi chat home screen" />
+    </Frame>
+  </Step>
+  <Step title="Pick your App from the agent picker">
+    At the bottom of the chat is the agent picker, the dropdown showing the current agent's name. Open it and select your App. In the example that is Goal Digger.
+  </Step>
+  <Step title="Put it to work">
+    Ask it what it can do, then give it a real task. For Goal Digger:
+
+    - `list your tools` shows the full tool surface.
+    - `simulate Spain vs Germany` runs its 50,000-simulation match engine.
+    - `who wins the World Cup?` returns tournament odds.
+    - `best World Cup bet on Polymarket right now?` finds the biggest edge versus the live market price.
+
+    <Frame caption="Goal Digger listing its tools in the chat">
+      <img src="/images/goal-digger-toolkit.png" alt="Goal Digger's tool kit listed in the Aomi chat" />
+    </Frame>
+  </Step>
+</Steps>
+
+That is the whole loop: you wrote an App, deployed it from the portal, activated it, and now anyone can select it in the chat and use it.
 
 ## Next
 
