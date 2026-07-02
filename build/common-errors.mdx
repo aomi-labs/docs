@@ -18,15 +18,19 @@ These are the failures contributors hit most often. Each accordion title is the 
     aomi-sdk = "=X.Y.Z"   # match the version aomi-run prints at startup
     ```
 
-    When you go to ship, pin instead to the platform's `required_sdk_version` (see `platform.json` in the platform repo) so CI and the backend accept the build. The community platform pins a specific version, such as `=0.1.20`, which can differ from whatever `aomi-run` you have installed.
+    When you go to ship, pin instead to the platform's `required_sdk_version` (see `platform.json` in the platform repo) so CI and the backend accept the build. The community platform pins `=3.0.0` today, which can differ from whatever `aomi-run` you have installed.
+
+    <Warning>
+    Pin the platform requirement, not the crate's own version. The `aomi-sdk` crate ships at `3.0.1`, but the community platform requires `=3.0.0`. For a ship build, match `platform.json`'s `required_sdk_version` exactly: `aomi-sdk = "=3.0.0"`.
+    </Warning>
   </Accordion>
 
   <Accordion title="aomi-run: command not found (after installing the toolchain)">
     <Warning>
-    Installing with `--features cli` alone builds only `aomi-build` and `aomi-git`. The `cli` feature does not include `aomi-run`.
+    Installing with `--features cli` alone builds only `aomi-build`. The `cli` feature does not include `aomi-run`.
     </Warning>
 
-    Install with both features so the `dev-runtime` feature builds `aomi-run`:
+    There are two binaries: `aomi-build` (the `cli` feature) and `aomi-run` (the `dev-runtime` feature). Install with both features so the `dev-runtime` feature builds `aomi-run`:
 
     ```bash
     cargo install --git https://github.com/aomi-labs/aomi-sdk --features cli,dev-runtime aomi-sdk
@@ -35,13 +39,12 @@ These are the failures contributors hit most often. Each accordion title is the 
 
   <Accordion title="No --version flag on the binaries">
     <Warning>
-    None of the three binaries (`aomi-build`, `aomi-run`, `aomi-git`) accept `--version`. Running it errors instead of printing a version.
+    Neither binary (`aomi-build` and `aomi-run`) accepts `--version`. Running it errors instead of printing a version.
     </Warning>
 
     Use `--help` to confirm an install and see the available commands:
 
     ```bash
-    aomi-git --help
     aomi-build --help
     aomi-run --help
     ```
@@ -51,5 +54,5 @@ These are the failures contributors hit most often. Each accordion title is the 
 ## Next
 
 <Card title="The CLI toolchain" href="/reference/cli-toolchain">
-The full reference for the three Rust binaries: `aomi-build`, `aomi-run`, and `aomi-git`.
+The full reference for the two Rust binaries: `aomi-build` and `aomi-run`.
 </Card>

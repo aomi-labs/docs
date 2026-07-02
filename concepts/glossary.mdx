@@ -3,13 +3,15 @@ title: Glossary
 description: A-Z reference of Aomi platform terms: agentic applications, simulation, tools, wallet model, frontend libraries, SDK traits, and protocols.
 ---
 
+Every Aomi term used across the docs, A to Z. If you are new, start with the load-bearing ones and the rest reads faster: **App**, **tool**, **namespace**, **simulate**, **non-custodial**, **Runtime**, **widget**, and the **headless library**.
+
 ## A
 
 ### Agentic Application
 
 An isolated agent environment that defines what the AI can do and access. Each App has its own tools, preamble, model, and API key. Switching Apps changes the agent entirely.
 
-See: [Key Concepts](/concepts/key-concepts), [Building Apps](/reference/building-apps), [Apps & Auth](/reference/apps-auth)
+See: [What is Aomi?](/concepts/what-is-aomi), [Building Apps](/reference/building-apps), [Apps & Auth](/reference/apps-auth)
 
 ### Anvil Fork
 
@@ -33,7 +35,7 @@ See: [Apps & Auth](/reference/apps-auth), [Security](/concepts/security)
 
 Short for Agentic Application. The unit of deployment on Aomi: a configured agent with a specific tool set, preamble, model, and API key.
 
-See: [Agentic Application](/concepts/key-concepts)
+See: [Agentic Application](/concepts/what-is-aomi)
 
 ### App Isolation
 
@@ -77,33 +79,11 @@ See: [Client CLI](/reference/cli)
 
 ## E
 
-### ERC-4337
+### EIP-712
 
-The Ethereum account abstraction standard. Aomi supports ERC-4337 for session keys, gas sponsorship, and batched user operations.
+A standard for signing typed structured data. Aomi requests EIP-712 signatures for actions like permit approvals, where the user signs a message rather than sending a transaction.
 
-See: [Account Abstraction](/reference/account-abstraction)
-
-### ERC-6900
-
-The modular account standard. Extends ERC-4337 with pluggable modules for custom validation, execution, and payment logic.
-
-See: [Account Abstraction](/reference/account-abstraction)
-
-### EIP-1271
-
-The signature validation standard for smart contract wallets. Aomi supports EIP-1271 for contract-based account signing.
-
-See: [Account Abstraction](/reference/account-abstraction)
-
----
-
-## G
-
-### Gas Sponsorship
-
-A feature of account abstraction where transaction gas costs are paid by a sponsoring account (paymaster) instead of the end user. Useful for onboarding users who don't hold ETH.
-
-See: [Account Abstraction](/reference/account-abstraction)
+See: [Non-Custodial Wallets](/concepts/non-custodial-wallets)
 
 ---
 
@@ -203,12 +183,6 @@ A conversation thread identified by a UUID. Sessions maintain their own message 
 
 See: [Sessions Reference](/reference/sessions)
 
-### Session Key
-
-An ephemeral, limited-permission key used in account abstraction. Session keys allow the AI to execute approved operations without requiring user interaction for every transaction.
-
-See: [Account Abstraction](/reference/account-abstraction)
-
 ### Simulation-First
 
 The core safety principle of Aomi: every onchain transaction is simulated on a forked network before it reaches the user's wallet. Users review exact outcomes before signing.
@@ -239,16 +213,6 @@ See: [Integration Guide](/guides/integration), [Custom Tools](/guides/custom-too
 
 ---
 
-## U
-
-### User Operation
-
-An ERC-4337 user operation (UserOp). Bundles transaction intent, signature, and metadata into a single object that can be sent to an entry point contract for execution.
-
-See: [Account Abstraction](/reference/account-abstraction)
-
----
-
 ## W
 
 ### Widget
@@ -261,6 +225,5 @@ See: [Widget Installation](/guides/widget-installation), [Frontend Setup](/guide
 
 ## Next Steps
 
-- [Key Concepts](/concepts/key-concepts): the core ideas in brief
 - [Architecture](/concepts/architecture): how everything fits together
 - [Security](/concepts/security): platform security model and threat model

@@ -15,10 +15,10 @@
         "group": "Try Aomi",
         "icon": "rocket",
         "pages": [
-        "getting-started/quickstart",
-        "reference/cli",
-        "getting-started/playground"
-      ]
+          "getting-started/quickstart",
+          "reference/cli",
+          "getting-started/playground"
+        ]
       },
       {
         "group": "Build on Aomi",
@@ -103,8 +103,6 @@
           "concepts/non-custodial-wallets",
           "concepts/security",
           "concepts/skills",
-          "concepts/use-cases",
-          "concepts/key-concepts",
           "concepts/glossary"
         ]
       },
@@ -153,6 +151,14 @@
     {
       "source": "/guides/portal",
       "destination": "/trade/portal"
+    },
+    {
+      "source": "/concepts/key-concepts",
+      "destination": "/concepts/glossary"
+    },
+    {
+      "source": "/concepts/use-cases",
+      "destination": "/concepts/what-is-aomi"
     }
   ],
   "logo": {

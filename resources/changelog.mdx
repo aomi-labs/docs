@@ -5,7 +5,7 @@ description: "Aomi platform changelog: track major surface area changes, SDK and
 
 Track significant changes to the Aomi platform, SDK, widget, and runtime. For day-to-day fixes, see the [GitHub releases](https://github.com/aomi-labs).
 
-<Note>Documentation version: **v1.1** (updated 2026-06-04).</Note>
+<Note>Documentation version: **v1.2** (updated 2026-06-29).</Note>
 
 ## In development
 
@@ -13,6 +13,27 @@ Track significant changes to the Aomi platform, SDK, widget, and runtime. For da
 - **iOS app.** Native mobile experience ([status](/getting-started/ios)).
 - **Agent discovery surfaces.** Make Apps visible across the network.
 - **Stable markdown mirrors.** Documentation parity across channels.
+
+---
+
+## 2026-06 · Build path rewrite (Docs v1.2)
+
+The Build path now matches the live platform.
+
+**Changed**
+
+- **SDK pin is now `=3.0.0`.** Every Build page pinned the old `=0.1.20`, which fails CI today. The pin you put in your `Cargo.toml` is the platform `required_sdk_version`, currently `=3.0.0`. The crate itself is `3.0.1`; you still pin the platform requirement.
+- **One CLI: `aomi-build`.** The old `aomi-git` binary is gone. Deploy, status, activate, and connect are now subcommands of `aomi-build`. Installing with `--features cli` gives `aomi-build`; add `dev-runtime` to also get `aomi-run`.
+- **Hosted deploy model.** `aomi-build deploy` is a thin relay to the backend. The backend reads your source through the connected Aomi GitHub App, opens a pull request, and CI publishes the release. The CLI no longer clones or pushes the platform repo.
+
+**Added**
+
+- **Deploy from the portal.** A no-code walkthrough at [Deploy and activate](/build/deploy): sign in at the settings page, then Dry run, Deploy, and Activate.
+- **Verified on stamps** on the Build reference pages, showing the exact `aomi-sdk` commit each page was checked against.
+
+**Fixed**
+
+- Concepts section tightened so each page has one job, with the contradictory and not-yet-shipped claims removed.
 
 ---
 
