@@ -1,14 +1,14 @@
 ---
-title: Deploy and activate
-description: The full shipping process for an Aomi App, from your first deploy through CI, release, and activation on the live backend.
+title: Deploy and activate on Dashboard
+description: Ship an Aomi App from your browser with the no-code deploy dashboard. Preflight, Deploy, Activate, plus what every deploy field means and how the validation pipeline works.
 ---
 
-The quickstart gets you to a deployed App on the happy path. This page is the rest of the story: the two ways to deploy, what every deploy field means, what the validation pipeline checks, and how activation actually works.
+The quickstart gets you to a deployed App on the happy path. This page is the rest of the story: the no-code dashboard path, what every deploy field means, what the validation pipeline checks, and how activation actually works.
 
 There are two deploy paths, and they do the same thing:
 
-- **The portal.** A no-code path in your browser. Click Preflight, Deploy, Activate. This is the recommended path for your first deploy.
-- **The CLI.** `aomi-build connect`, then `aomi-build deploy`, then `aomi-build activate`. This is the scriptable path once you know the flow.
+- **The dashboard.** A no-code path in your browser. Click Preflight, Deploy, Activate. This page covers it, and it is the recommended path for your first deploy.
+- **The CLI.** `aomi-build connect`, then `aomi-build deploy`. The scriptable path once you know the flow. It has its own page: [Deploy and activate on aomi CLI](/build/deploy-cli).
 
 Either way the model is the same. You write your App in your own repo. You connect that repo to Aomi once. A deploy request goes to the backend. The backend reads your source through the connected Aomi GitHub App, opens a pull request, and CI builds your cdylib and cuts a release. You activate the release, and the backend loads it without a restart.
 
@@ -88,42 +88,11 @@ If Deploy gets stuck on "Waiting for platform CI", refresh the page (the deploym
 
 ## Deploy from the CLI
 
-The CLI path runs the same three actions as the portal: `connect` once, then `deploy`, then `activate`. Run them from your **source repo**, the crate that holds your `aomi.toml` and `src/lib.rs`.
+Prefer the terminal? The CLI runs the same flow as the dashboard: `connect` once, then `deploy`, then `activate`, all from your source repo. It has its own page with the full walkthrough and the real output at every step.
 
-<Steps>
-  <Step title="Connect your repo (first time only)">
-    `aomi-build connect` installs the Aomi GitHub App on your source repo and saves your activation token. Run it once, not per deploy.
-
-    ```bash
-    AOMI_BACKEND_URL=https://staging-api.aomi.dev aomi-build connect
-    ```
-
-    It prints a browser URL to install the Aomi GitHub App. Install it, then paste back the `installation_id` GitHub shows you.
-  </Step>
-  <Step title="Dry run">
-    ```bash
-    AOMI_BACKEND_URL=https://staging-api.aomi.dev aomi-build deploy --dry-run
-    ```
-
-    This previews the deployment manifest and runs the preflight checks. It deploys nothing. Fix anything it flags, then run it again. `--dry-run` is an alias of `--preflight`.
-  </Step>
-  <Step title="Deploy">
-    ```bash
-    AOMI_BACKEND_URL=https://staging-api.aomi.dev aomi-build deploy
-    ```
-
-    This POSTs a deploy request to the backend. The backend reads your source through the connected GitHub App, opens a pull request, and CI builds your cdylib and cuts a release tagged `apps-<installation-id>-<repo-key>-<app>-<short-commit>`.
-  </Step>
-  <Step title="Activate">
-    ```bash
-    AOMI_APP_ACTIVATION_TOKEN=<your-activation-token> \
-    AOMI_BACKEND_URL=https://staging-api.aomi.dev \
-      aomi-build activate
-    ```
-
-    The backend fetches your release, validates it, and loads it. It reads the release tags from `.aomi/deployment.json`, so you usually pass nothing else.
-  </Step>
-</Steps>
+<Card title="Deploy and activate on aomi CLI" href="/build/deploy-cli" icon="terminal">
+The scriptable path: install the CLI, connect your repo, and deploy with `aomi-build`.
+</Card>
 
 ## Your `aomi.toml` deploy fields
 
