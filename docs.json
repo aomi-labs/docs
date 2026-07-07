@@ -29,7 +29,6 @@
           "reference/building-apps",
           "reference/sdk-api",
           "reference/cli-toolchain",
-          "build/deploy",
           "build/deploy-cli",
           "build/common-errors"
         ]
@@ -141,6 +140,10 @@
     ]
   },
   "redirects": [
+    {
+      "source": "/build/deploy",
+      "destination": "/build/deploy-cli"
+    },
     {
       "source": "/guides/cli-usage",
       "destination": "/reference/cli"
