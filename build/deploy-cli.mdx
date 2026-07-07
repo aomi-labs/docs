@@ -5,8 +5,6 @@ description: Ship an Aomi App from your own GitHub repo to live, using the aomi-
 
 This guide takes an App from your own GitHub repo to live on Aomi, using the `aomi-build` CLI. You work in your own repo the whole time. You never open a PR against `aomi-labs/community-apps`, and you never need write access to it. The backend does that part for you through the Aomi GitHub App.
 
-Prefer clicking to typing? The [dashboard path](/build/deploy) does the same thing in your browser.
-
 The whole flow is four commands:
 
 ```text
@@ -297,6 +295,37 @@ That order is why the same code path works locally, where the value comes from a
 Only bundle a key in code if you are fine with it being public. A public App's source and its built release are readable. Never hardcode a credential you would not put in a public repo.
 </Warning>
 
+## Find and test your App
+
+Once your App is active it shows up as a selectable agent in the Aomi chat. Here is how to open it and put it through its paces, using Goal Digger, a World Cup betting agent, as the example.
+
+<Steps>
+  <Step title="Open the chat">
+    Go to `https://chat.aomi.dev` and sign in.
+
+    <Frame caption="chat.aomi.dev, where your deployed App runs">
+      <img src="/images/chat-home.png" alt="The Aomi chat home screen" />
+    </Frame>
+  </Step>
+  <Step title="Pick your App from the agent picker">
+    At the bottom of the chat is the agent picker, the dropdown showing the current agent's name. Open it and select your App. In the example that is Goal Digger.
+  </Step>
+  <Step title="Put it to work">
+    Ask it what it can do, then give it a real task. For Goal Digger:
+
+    - `list your tools` shows the full tool surface.
+    - `simulate Spain vs Germany` runs its 50,000-simulation match engine.
+    - `who wins the World Cup?` returns tournament odds.
+    - `best World Cup bet on Polymarket right now?` finds the biggest edge versus the live market price.
+
+    <Frame caption="Goal Digger listing its tools in the chat">
+      <img src="/images/goal-digger-toolkit.png" alt="Goal Digger's tool kit listed in the Aomi chat" />
+    </Frame>
+  </Step>
+</Steps>
+
+That is the whole loop: you wrote an App, deployed it, activated it, and now anyone can select it in the chat and use it.
+
 ## When something goes wrong
 
 | You see | It means | Do this |
@@ -318,9 +347,6 @@ When you ask for help, send three clean blocks, each a command plus its output: 
 ## Next
 
 <CardGroup cols={2}>
-<Card title="Deploy on the dashboard" href="/build/deploy">
-The same flow with three buttons in your browser: Preflight, Deploy, Activate.
-</Card>
 <Card title="The builder toolchain" href="/reference/cli-toolchain">
 The full reference for the two Rust binaries: `aomi-build` and `aomi-run`.
 </Card>
