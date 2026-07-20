@@ -30,6 +30,7 @@
           "reference/sdk-api",
           "reference/cli-toolchain",
           "build/deploy-cli",
+          "build/frontend-vercel",
           "build/common-errors"
         ]
       },
