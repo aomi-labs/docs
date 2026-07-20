@@ -1,0 +1,181 @@
+---
+title: Deploy a frontend on Vercel
+description: Give your deployed Aomi App its own public URL. Add the AomiFrame widget to a Next.js app, then ship it to Vercel.
+---
+
+Your App already runs on Aomi. This page gives it a frontend of your own: a public URL, your branding, your domain.
+
+The frontend is a thin shell. It does not run your App, hold your keys, or talk to any chain. It renders a chat and points at the Aomi runtime, which loads your deployed App and does the work.
+
+<Note>
+You do not need a frontend to use or demo your App. Once it is active it already appears in the agent picker on `chat.aomi.dev`. Build this when you want your own branded URL.
+</Note>
+
+## Before you start
+
+- **An App that is deployed and activated.** See [Deploy and activate on aomi CLI](/build/deploy-cli). Confirm it is live:
+
+  ```bash
+  aomi-build deploy status
+  ```
+
+  You want `active=true`, `artifact_ready=true`, and `loaded` on your App. If `artifact_ready` is false, redeploy before you build a frontend against it.
+
+- **Node 20 or newer**, and a package manager (`pnpm` or `npm`).
+- **A Vercel account.**
+
+## Step 1: Create a Next.js app
+
+Skip this if you already have one.
+
+```bash
+npx create-next-app@latest my-app
+cd my-app
+```
+
+Take the defaults. The widget is a shadcn component, so App Router and TypeScript are the smoothest path.
+
+## Step 2: Add the AomiFrame widget
+
+```bash
+npx shadcn@latest add https://aomi.dev/r/aomi-frame.json
+```
+
+`AomiFrame` is the whole chat experience in one component: thread list, control bar, message composer, and the runtime wiring. It also handles sign in, so people who visit your page authenticate the same way they do on `chat.aomi.dev`.
+
+This pulls a large dependency tree, including the wallet stack. On a slow connection it takes a few minutes.
+
+## Step 3: Point it at the backend
+
+Create `.env.local`:
+
+```bash
+NEXT_PUBLIC_BACKEND_URL=https://api.aomi.dev
+```
+
+`AomiFrame` resolves the backend in this order: the `backendUrl` prop, then `NEXT_PUBLIC_BACKEND_URL`, then `http://localhost:8080`.
+
+Passing the prop explicitly is the most predictable choice, because it works even if an environment variable is missing on your host.
+
+## Step 4: Render the widget
+
+Replace the contents of `app/page.tsx`:
+
+```tsx
+"use client";
+
+import { AomiFrame } from "@/components/aomi-frame";
+
+export default function Page() {
+  return (
+    <main style={{ height: "100dvh" }}>
+      <AomiFrame backendUrl="https://api.aomi.dev" height="100dvh" />
+    </main>
+  );
+}
+```
+
+`AomiFrame` takes `width`, `height`, `className`, `style`, `walletPosition`, and `backendUrl`.
+
+If your App only reads data and simulates, and never asks anyone to sign a transaction, hide the wallet controls:
+
+```tsx
+<AomiFrame backendUrl="https://api.aomi.dev" walletPosition={null} />
+```
+
+## Step 5: Run it locally
+
+```bash
+pnpm install
+pnpm dev
+```
+
+Open `http://localhost:3000`, pick your App in the picker, and send it a message. Confirm you get a real answer back before you deploy. Then check the production build:
+
+```bash
+pnpm build
+```
+
+## Step 6: Deploy to Vercel
+
+```bash
+npm i -g vercel
+vercel
+```
+
+The first run asks a few questions. Accept the defaults: create a new project, keep the suggested name, use `./` as the directory, and do not override the build settings. Next.js is detected automatically.
+
+Then ship it:
+
+```bash
+vercel --prod
+```
+
+Vercel prints your live URL.
+
+If you used `NEXT_PUBLIC_BACKEND_URL` instead of the `backendUrl` prop, add it in the Vercel dashboard under **Settings**, **Environment Variables**, then redeploy so the production build picks it up. If you passed the prop, there is nothing to configure.
+
+## Show only your App
+
+By default the widget shows the full Aomi chat, so a visitor can switch to any App. To keep your page focused on one App, wrap the widget in the runtime provider and filter:
+
+```tsx
+"use client";
+
+import { AomiRuntimeProvider } from "@aomi-labs/react";
+import { AomiFrame } from "@/components/aomi-frame";
+
+export default function Page() {
+  return (
+    <AomiRuntimeProvider
+      backendUrl="https://api.aomi.dev"
+      appPlatforms={["community"]}
+    >
+      <AomiFrame height="100dvh" />
+    </AomiRuntimeProvider>
+  );
+}
+```
+
+`AomiRuntimeProvider` accepts `backendUrl`, `applicationId`, `appPlatforms`, and `clientOptions`. Use `applicationId` when you want one specific App, and `appPlatforms` to narrow the list to a platform.
+
+## Calling your App from your own backend
+
+The widget is the supported way to put a chat on a page, because it carries sign in with it. If instead you want to call your App from a service you control, create an app key:
+
+1. Go to `chat.aomi.dev/settings` and open **App Keys**.
+2. Give the key a label, select the Apps it may access, and create it.
+3. Copy the key. It is shown only once.
+
+Send it as the `AOMI-APP-KEY` header to `/api/thread/chat`.
+
+<Warning>
+An app key is a credential. Keep it on your server, in an environment variable, and never ship it to the browser. Anything in your frontend bundle is public.
+</Warning>
+
+## Troubleshooting
+
+| You see | What it means | What to do |
+|---|---|---|
+| `Module not found: '@base-ui/react'`, `class-variance-authority`, `clsx`, or `tailwind-merge` | The widget's UI dependencies are not installed. | `pnpm add @base-ui/react class-variance-authority clsx tailwind-merge` |
+| `Module not found: 'ox'` | A transitive dependency of the wallet stack is not hoisted. | `pnpm add ox` |
+| The build fails on type errors inside the widget files | Type mismatches in vendored component code, not in your app. | Set `typescript: { ignoreBuildErrors: true }` in `next.config.mjs`. Your own code is still type checked in the editor. |
+| Your App is missing from the picker | It is not loaded on the backend. | Run `aomi-build deploy status`. If `artifact_ready=false`, the platform SDK version moved. Run `aomi-build sdk fix`, then deploy again. |
+| The chat renders but answers never arrive | You are not signed in, or the backend URL is wrong. | Sign in from the control bar, and confirm `backendUrl` points at `https://api.aomi.dev`. |
+
+## Next
+
+<CardGroup cols={2}>
+<Card title="Deploy and activate on aomi CLI" href="/build/deploy-cli">
+Ship the App itself, then come back and give it a frontend.
+</Card>
+<Card title="The builder toolchain" href="/reference/cli-toolchain">
+The full reference for `aomi-build` and `aomi-run`.
+</Card>
+<Card title="Common errors" href="/build/common-errors">
+The errors you are most likely to hit, each with its fix.
+</Card>
+<Card title="Add the chat widget" href="/guides/widget-installation">
+More ways to embed and customize the widget.
+</Card>
+</CardGroup>
