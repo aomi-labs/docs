@@ -78,7 +78,7 @@ Your App is three small files. Make a folder and add them.
   </Step>
 
   <Step title="Cargo.toml">
-    Your App compiles to a `cdylib`. Pin `aomi-sdk` to the exact version the platform requires, today `=3.0.0`.
+    Your App compiles to a `cdylib`. Pin `aomi-sdk` to the exact version the platform requires, today `=3.0.3`.
 
     ```toml Cargo.toml
     [package]
@@ -90,7 +90,7 @@ Your App is three small files. Make a folder and add them.
     crate-type = ["cdylib"]
 
     [dependencies]
-    aomi-sdk   = "=3.0.0"
+    aomi-sdk   = "=3.0.3"
     schemars   = "1"
     serde      = { version = "1", features = ["derive"] }
     serde_json = "1"
@@ -101,7 +101,7 @@ Your App is three small files. Make a folder and add them.
     </Note>
 
     <Warning>
-    Pin the platform requirement `=3.0.0`, not the crate's own version. The `aomi-sdk` crate ships at `3.0.1`, but the community platform requires `=3.0.0`. Match the platform's `required_sdk_version` in `platform.json`, not whatever the crate prints. A build pinned to anything else is rejected at activation.
+    Pin the platform requirement `=3.0.3`, not the crate's own version. The `aomi-sdk` crate ships at `3.0.3`, but the community platform requires `=3.0.3`. Match the platform's `required_sdk_version` in `platform.json`, not whatever the crate prints. A build pinned to anything else is rejected at activation.
     </Warning>
   </Step>
 
@@ -165,7 +165,7 @@ Your App is three small files. Make a folder and add them.
     Expected output:
 
     ```text
-    Compiling aomi-sdk v3.0.0
+    Compiling aomi-sdk v3.0.3
     Compiling hello-aomi v0.1.0
     Finished `release` profile [optimized] target(s) in 12.6s
     ```

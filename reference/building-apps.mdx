@@ -336,17 +336,17 @@ edition = "2024"
 crate-type = ["cdylib"]
 
 [dependencies]
-aomi-sdk   = "=3.0.0"          # match platform.json's required_sdk_version
+aomi-sdk   = "=3.0.3"          # match platform.json's required_sdk_version
 serde      = { version = "1", features = ["derive"] }
 serde_json = "1"
 ```
 
 <Note>
-  `=3.0.0` is the pin the `community-apps` platform expects today. Always confirm against `platform.json`'s `required_sdk_version` in the platform repo before you deploy; a mismatch fails with an `sdk_version mismatch` error.
+  `=3.0.3` is the pin the `community-apps` platform expects today. Always confirm against `platform.json`'s `required_sdk_version` in the platform repo before you deploy; a mismatch fails with an `sdk_version mismatch` error.
 </Note>
 
 <Warning>
-  Pin the platform requirement, not the crate's own version. The `aomi-sdk` crate ships at `3.0.1`, but the community platform requires `=3.0.0`. Pin what `platform.json` names under `required_sdk_version`, today `=3.0.0`, not the crate's latest. A build pinned to anything else is rejected at activation.
+  Pin the platform requirement, not the crate's own version. The `aomi-sdk` crate ships at `3.0.3`, but the community platform requires `=3.0.3`. Pin what `platform.json` names under `required_sdk_version`, today `=3.0.3`, not the crate's latest. A build pinned to anything else is rejected at activation.
 </Warning>
 
 ## Authoring guidelines
