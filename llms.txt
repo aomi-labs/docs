@@ -7,7 +7,7 @@
 - [Quickstart](https://aomi.dev/docs/build/quickstart): zero to a deployed App.
 - [Building an App](https://aomi.dev/docs/reference/building-apps): the anatomy of an App and its host tools.
 - [The SDK](https://aomi.dev/docs/reference/sdk-api): the DynAomiTool trait and the dyn_aomi_app! macro.
-- [CLI toolchain](https://aomi.dev/docs/reference/cli-toolchain): aomi-build, aomi-run, and aomi-git.
+- [CLI toolchain](https://aomi.dev/docs/reference/cli-toolchain): aomi-build and aomi-run.
 - [Deploy and activate](https://aomi.dev/docs/build/deploy): ship an App to the community platform.
 - [Common errors](https://aomi.dev/docs/build/common-errors): the errors a builder hits and the fixes.
 
