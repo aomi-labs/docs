@@ -5,6 +5,10 @@ description: Ship an Aomi App from your own GitHub repo to live, using the aomi-
 
 This guide takes an App from your own GitHub repo to live on Aomi, using the `aomi-build` CLI. You work in your own repo the whole time. You never open a PR against `aomi-labs/community-apps`, and you never need write access to it. The backend does that part for you through the Aomi GitHub App.
 
+<Info>
+**Verified 2026-07-14** against a live community deploy on `https://api.aomi.dev`. Command output on this page is real, not illustrative. Version numbers move: always trust `aomi-build sdk check` over any number written here.
+</Info>
+
 The whole flow is four commands:
 
 ```text
@@ -87,16 +91,16 @@ When your pin matches, you see:
 ```text
 Required aomi-sdk: 3.0.3
 Manifest: /path/to/my-app/Cargo.toml
-Dependency: exact 3.0.1
-Lockfile: matches 3.0.1
+Dependency: exact 3.0.3
+Lockfile: matches 3.0.3
 SDK check passed.
 ```
 
 When it is stale, it tells you exactly what is wrong and stops:
 
 ```text
-  - Cargo.toml pins aomi-sdk 3.0.0, but this backend requires 3.0.1.
-  - Cargo.lock resolves aomi-sdk 3.0.0, but this backend requires 3.0.1.
+  - Cargo.toml pins aomi-sdk 3.0.2, but this backend requires 3.0.3.
+  - Cargo.lock resolves aomi-sdk 3.0.2, but this backend requires 3.0.3.
 
 Fix: aomi-build sdk fix --path /path/to/my-app/Cargo.toml
 Error: SDK check failed
@@ -110,15 +114,19 @@ aomi-build sdk fix --backend https://api.aomi.dev
 
 ```text
     Updating crates.io index
-    Updating aomi-sdk v3.0.0 -> v3.0.3
+    Updating aomi-sdk v3.0.2 -> v3.0.3
 Required aomi-sdk: 3.0.3
 Manifest: /path/to/my-app/Cargo.toml
-Dependency: exact 3.0.1
-Lockfile: matches 3.0.1
+Dependency: exact 3.0.3
+Lockfile: matches 3.0.3
 SDK check passed.
 ```
 
-Do not skip this. A version mismatch fails the platform build, not your local one, so it is easy to miss until the deploy dies. As of July 2026 the required version is `3.0.1`; always let `sdk check` tell you the current number rather than hardcoding it.
+Do not skip this. A version mismatch fails the platform build, not your local one, so it is easy to miss until the deploy dies.
+
+<Warning>
+The version numbers above are only an example of the output shape. **The required version moves often**, sometimes more than once a week. Never hardcode it and never copy a number out of this page: run `aomi-build sdk check` and use whatever it reports. See [When the platform bumps the SDK](#when-the-platform-bumps-the-sdk) for what happens to an App that is already live when the number moves.
+</Warning>
 
 ## Step 4: commit and push
 
@@ -237,6 +245,43 @@ aomi-build deploy --platform community --repo you/my-app --target-tag prod
 
 The CLI remembers your backend, token, and source from the first run.
 
+## When the platform bumps the SDK
+
+This is the most common reason a working App stops working, and it happens without you touching anything.
+
+The platform pins a required `aomi-sdk` version. When that requirement moves, every release built against the old version **stops being loadable**. Your App disappears from the App picker in chat with no warning and no error message.
+
+The tell is in `aomi-build deploy status`:
+
+```text
+  - my-app (apps-...-my-app-...)
+      backend   : active=true artifact_ready=false not loaded
+```
+
+`active=true` still looks healthy, which is what makes this easy to miss. The signal is **`artifact_ready=false`** and **`not loaded`**. Confirm it with:
+
+```bash
+aomi-build sdk check --backend https://api.aomi.dev
+```
+
+If it reports a required version higher than your pin, that is the cause.
+
+The fix is a normal redeploy against the new version:
+
+```bash
+aomi-build sdk fix --backend https://api.aomi.dev
+cargo build --release
+git add Cargo.toml Cargo.lock && git commit -m "Bump aomi-sdk" && git push
+aomi-build source sync --platform community --repo you/my-app
+aomi-build deploy --platform community --repo you/my-app --target-tag prod
+```
+
+Your App is back once you see `active=true artifact_ready=true loaded=true`.
+
+<Note>
+This applies to every deployed App, not just yours. If you deployed once and walked away, check `aomi-build deploy status` before assuming your App is still live.
+</Note>
+
 ## Activate by hand
 
 `aomi-build deploy` activates for you. You only run activate yourself if you stopped after the build, or you are activating a specific release:
@@ -337,6 +382,8 @@ That is the whole loop: you wrote an App, deployed it, activated it, and now any
 | Deploy hangs at "waiting" after CI is green | Old CLI without the CI fallback. | Reinstall the CLI (Step 1). As a one off, kill the process and run `aomi-build deploy activate` by hand. |
 | `deploy needs an app source id` | The backend cannot find your connected repo. | Pass `--repo you/my-app`, or run `aomi-build source sync --platform community --repo you/my-app`. |
 | Status shows `activate: false` | Activate never ran or failed. | Run [Activate by hand](#activate-by-hand). |
+| App vanished from the picker; status shows `artifact_ready=false not loaded` while `active=true` | The platform bumped the required SDK, so your release no longer loads. | Redeploy against the new version. See [When the platform bumps the SDK](#when-the-platform-bumps-the-sdk). |
+| Deploy endpoint returns `502 Bad Gateway` | The deploy call failed while resolving your source inline. | Run `aomi-build source sync --platform community --repo you/my-app` first, then deploy again. |
 | Deploy uses old code | You did not push your latest commit. | `git push`, deploy again. |
 | Everything true except `loaded` | The runtime did not load the plugin. | Run `aomi-build deploy status --json` and share the deployment id and release tag with the team. |
 
