@@ -31,6 +31,7 @@
           "reference/cli-toolchain",
           "build/deploy-cli",
           "build/frontend-vercel",
+          "build/telegram-bot",
           "build/common-errors"
         ]
       },
