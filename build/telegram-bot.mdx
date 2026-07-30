@@ -5,10 +5,10 @@ description: Turn your deployed Aomi App into a Telegram bot people can chat wit
 
 Your App already runs on Aomi. This page gives it a Telegram bot: a chat people open in Telegram and talk to, in a direct message or a group. The bot runs your deployed App, so it can answer questions, read live data, and walk a user through a transaction with simulate before sign.
 
-Aomi hosts the bot for you. You create a bot in Telegram, hand Aomi the token, and Aomi wires it up. You do not run a server.
+Aomi hosts the bot for you. You create a bot in Telegram, hand Aomi the token, and Aomi wires it up. You do not run a server. One bot can serve one App or several, so a single bot can front your whole catalog.
 
 <Info>
-**Verified 2026-07-14** against the live Bots settings on `chat.aomi.dev` and the shipped `aomi-telegram` bot. We use Goal Digger as the running example; swap in your own App name anywhere you see `goal-digger-live`.
+**Verified 2026-07-30** against the live Integrations page on `build.aomi.dev` and the shipped `aomi-telegram` bot. We use Goal Digger as the running example; swap in your own App name anywhere you see `goal-digger-live`.
 </Info>
 
 ## Before you start
@@ -32,20 +32,21 @@ Keep that token private. It is the full key to your bot. If it ever leaks, send 
 
 ## Step 2: register the bot on Aomi
 
-This is where you point the bot at your App.
+This is where you point the bot at your App or Apps.
 
-1. Go to `https://chat.aomi.dev/settings` and open the **Bots** tab.
-2. Click to register a Telegram bot. Fill in:
+1. Go to `https://build.aomi.dev/integrations` and sign in with GitHub. This is the same account your Apps are deployed under.
+2. In the **Telegram** section, register a bot. Fill in:
    - **Label** (optional): a name for your own reference, like "Goal Digger".
-   - **Bot Token**: paste the token from BotFather.
-   - **Default App**: pick your App from the list, for example `goal-digger-live`. This is what binds the bot to your App. Every message to the bot goes to this App.
-   - **Thread Mode**: choose **Single thread** (one running conversation per user) or **Multiple threads** (users can keep separate conversations). Single thread is the simplest to start with.
-3. Create it.
+   - **Bot token**: paste the token from BotFather.
+   - **Attached apps**: tick every App this bot should serve. Pick just `goal-digger-live` for a single App bot, or check several to let one bot front many Apps.
+   - **Primary app**: choose which attached App the bot opens with. It has to be one of the Apps you ticked. For a single App bot, that is the same App.
+   - **Thread mode**: choose **single** (one running conversation per user) or **multi** (users can keep separate conversations). Single is the simplest to start with.
+3. Register the bot.
 
-Aomi verifies the token with Telegram, stores it encrypted, and turns on the webhook for you. When it says the bot is registered and the webhook is active, you are done. There is nothing to deploy and no server to keep running.
+Aomi verifies the token with Telegram, stores it encrypted, and turns on the webhook for you. When it says the bot is registered, you are done. There is nothing to deploy and no server to keep running.
 
 <Note>
-Your App must appear in the **Default App** list, which means it has to be active first. If you do not see it, deploy or redeploy it (see [Deploy and activate on aomi CLI](/build/deploy-cli)), then reload the Bots tab.
+Your App must appear in the **Attached apps** list, which means it has to be active first. If you do not see it, deploy or redeploy it (see [Deploy and activate on aomi CLI](/build/deploy-cli)), then reload the page. You can come back later and **edit the attached apps** for a bot without re-entering the token.
 </Note>
 
 ## Step 3: talk to your bot
@@ -73,12 +74,12 @@ You mostly just chat, but the bot also takes slash commands. Send them in a dire
 | `/settings` | Bot preferences, such as streaming replies. |
 | `/sessions` | Manage conversation threads. |
 | `/apikey` | Set an app key, only needed for a **private** App. See [Keys](#keys). |
-| `/app` | Switch between a small built in set of sample Apps. |
+| `/app` | Switch between the Apps attached to this bot. |
 | `/help` | List the available commands. |
 
-<Warning>
-`/app` switches among a fixed built in set of sample Apps, not your whole catalog. It is **not** how you reach your own App. Your App is reached by setting it as the bot's **Default App** in Step 2, which is why every registered bot points at one App.
-</Warning>
+<Note>
+If you attached more than one App in Step 2, `/app` lets a user switch between them mid conversation. The bot opens with the **primary** App and each App is listed by name. A bot with a single attached App simply stays on that App.
+</Note>
 
 ## Groups
 
