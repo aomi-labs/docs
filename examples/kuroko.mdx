@@ -1,0 +1,34 @@
+---
+title: Kuroko
+description: "See how Kuroko combines live prediction-market data, AI analysis, simulation, and non-custodial execution."
+---
+
+Kuroko is an AI hybrid trading platform for prediction markets, built by [@0xgordian](https://x.com/0xgordian). It brings market discovery, analysis, simulation, and execution into one interface.
+
+<CardGroup cols={2}>
+  <Card title="View source" icon="github" href="https://github.com/0xgordian/kuroko">
+    Read the implementation on GitHub.
+  </Card>
+
+  <Card title="Meet the builder" icon="user" href="https://x.com/0xgordian">
+    Follow @0xgordian on X.
+  </Card>
+</CardGroup>
+
+## What it does
+
+- Adds live Polymarket context to every AI message.
+- Scores active markets using volume, liquidity, uncertainty, and price movement.
+- Lets you compare paper, testnet, and live trading flows.
+- Tracks positions and can apply stop-loss or take-profit guards.
+- Routes a confirmed trade to the connected wallet without leaving the conversation.
+
+## How it uses Aomi
+
+Kuroko uses the widget as its conversational interface and `@aomi-labs/client` for programmatic trade intents. The App turns an AI recommendation into an interactive trade card. For an interactive trade, you review the action before the connected wallet signs it.
+
+The product supports Polymarket on Polygon and prediction-market contracts on Arc Testnet. It keeps unsupported or unverified markets in simulation mode instead of presenting them as executable.
+
+## Why it is a useful example
+
+Kuroko shows how to combine an opinionated product experience with Aomi's reusable agent and wallet layers. The surrounding application owns market discovery, scoring, portfolio views, and risk controls. Aomi handles the conversational loop and routes confirmed onchain actions to the wallet.

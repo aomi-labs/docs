@@ -1,0 +1,34 @@
+---
+title: World Markets
+description: "Follow the World Markets Telegram asset manager being built with an Aomi App on MegaETH."
+---
+
+The World Markets example is an in-development Telegram asset manager for World Markets on MegaETH. It pairs a focused Aomi App with a Telegram channel so a user can inspect markets, understand an account, and prepare a trade from a conversation.
+
+<CardGroup cols={2}>
+  <Card title="Read the App source" icon="github" href="https://github.com/CeciliaZ030/world-markets-agent/blob/publish/README.md">
+    Review the current World Markets App and its tool surface.
+  </Card>
+
+  <Card title="Telegram channel guide" icon="telegram" href="/build/telegram">
+    Learn how an Aomi App becomes a Telegram experience.
+  </Card>
+</CardGroup>
+
+## What it does today
+
+- Lists available World Markets assets.
+- Reads account and market state directly from the exchange contract.
+- Shows open orders and relevant account permissions.
+- Checks an investment mandate against the requested action.
+- Previews a World Markets trade without presenting it as executed.
+
+## What is being built
+
+The next product layer is a Telegram asset manager. A user can continue an investment conversation in Telegram, inspect live World Markets context, and review a proposed action from the same thread.
+
+The App remains non-executable while the team finishes the policy and transaction boundary. It fails closed when it cannot prove the resulting portfolio state. This keeps the example honest while the Telegram experience is under development.
+
+## Why it is a useful example
+
+World Markets shows how to separate a product-specific mandate from the general transaction pipeline. The App owns World Markets context and policy checks. Aomi supplies the hosted loop, channel, simulation, and wallet-signing flow.

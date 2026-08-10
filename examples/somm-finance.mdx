@@ -1,0 +1,34 @@
+---
+title: Somm Finance
+description: "See how Somm Finance uses an Aomi App to turn portfolio and risk data into agentic investment recommendations."
+---
+
+[Somm Finance](https://somm.finance) offers actively managed DeFi strategies. [Agentic Somm](https://agentic.somm.finance) adds an AI interface that can inspect portfolio context, assess risk, and present an investment recommendation for you to review.
+
+<CardGroup cols={2}>
+  <Card title="Open Agentic Somm" icon="arrow-up-right-from-square" href="https://agentic.somm.finance">
+    Explore the live agentic experience.
+  </Card>
+
+  <Card title="View Aomi Apps" icon="github" href="https://github.com/aomi-labs/somm-finance-apps">
+    See the Somm Finance Aomi Apps repository.
+  </Card>
+</CardGroup>
+
+## What it does
+
+- Reads idle portfolio assets.
+- Retrieves current venue and asset risk context.
+- Assesses a candidate position before recommending it.
+- Presents the recommendation as structured UI instead of raw model text.
+- Keeps approval with the user before a strategy change proceeds.
+
+## How it uses Aomi
+
+The Somm App wraps the product's existing APIs as typed tools. A system prompt gives the agent its investment mandate. The frontend renders the resulting recommendation as a product-native card.
+
+Aomi hosts the agentic loop and makes the App available through the deployed Somm experience. Somm keeps ownership of its strategy logic, data, risk model, and interface.
+
+## Why it is a useful example
+
+Somm shows how to add an agentic interface to established financial software without rebuilding the product inside the model. Existing APIs remain the source of truth. The App gives the model a small, explicit tool surface and turns its output into a reviewable action.

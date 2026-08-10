@@ -124,11 +124,11 @@
         "group": "Examples",
         "icon": "rectangle-code",
         "pages": [
-          "examples/example-integrations-overview",
-          "examples/polymarket",
-          "examples/defi-aggregators",
-          "examples/x-apis",
-          "examples/metamask-wallet-integration"
+          "examples/overview",
+          "examples/somm-finance",
+          "examples/world-markets",
+          "examples/kuroko",
+          "examples/aomi-trader"
         ]
       },
       {
@@ -228,15 +228,35 @@
     },
     {
       "source": "/examples",
-      "destination": "/examples/example-integrations-overview"
+      "destination": "/examples/overview"
     },
     {
       "source": "/examples/index",
-      "destination": "/examples/example-integrations-overview"
+      "destination": "/examples/overview"
+    },
+    {
+      "source": "/examples/example-integrations-overview",
+      "destination": "/examples/overview"
+    },
+    {
+      "source": "/examples/polymarket",
+      "destination": "/examples/kuroko"
+    },
+    {
+      "source": "/examples/defi-aggregators",
+      "destination": "/examples/overview"
+    },
+    {
+      "source": "/examples/x-apis",
+      "destination": "/examples/overview"
     },
     {
       "source": "/examples/metamask",
-      "destination": "/examples/metamask-wallet-integration"
+      "destination": "/guides/widget/quickstart"
+    },
+    {
+      "source": "/examples/metamask-wallet-integration",
+      "destination": "/guides/widget/quickstart"
     },
     {
       "source": "/reference",

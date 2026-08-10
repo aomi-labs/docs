@@ -7,8 +7,8 @@ description: "Create, deploy, activate, and operate Aomi Apps from build.aomi.de
 You sign in with GitHub. Every deploy operation in the
 [`aomi-build` CLI](/build/toolchain/aomi-build) also has a web interface. This
 includes connect, deploy, activate, and status. The dashboard also provides
-sense in a dashboard: deployment history, environment secrets, model provider
-keys, bot integrations, transactions, usage, logs, and metrics.
+deployment history, environment secrets, model provider keys, bot
+integrations, transactions, usage, logs, and metrics.
 
 <Info>
   The platform and the CLI drive the same backend lifecycle. Nothing you do in
@@ -28,8 +28,11 @@ keys, bot integrations, transactions, usage, logs, and metrics.
 
 ## Ship your first app from the browser
 
-The web path creates the repo for you. It forks Aomi's template into your own
-GitHub account, so you own the code from the first commit.
+Start from Aomi's template or import a GitHub repository you already own.
+
+<Frame caption="Start from the Aomi template or import an existing GitHub repository.">
+  <img src="/images/build/new-app.jpg" alt="The New app screen in Aomi Build with template and GitHub import options" />
+</Frame>
 
 <Steps>
   <Step title="Sign in with GitHub">
@@ -44,8 +47,10 @@ GitHub account, so you own the code from the first commit.
     [CLI](/build/toolchain/aomi-build).)
   </Step>
   <Step title="Create">
-    Build forks the template repository (`aomi-labs/playground-example`) into
-    your account and connects it as a Project.
+    Choose **Start from the template** to fork
+    `aomi-labs/playground-example` into your account. Choose **Import from
+    GitHub** to connect a repository you already have. Either path creates a
+    Project in Build.
   </Step>
   <Step title="Deploy and activate">
     The wizard deploys the commit, waits for the platform build, and activates
@@ -60,10 +65,9 @@ GitHub account, so you own the code from the first commit.
 </Steps>
 
 <Note>
-  The web wizard only creates template forks. To connect a repo you already
-  already own, use
-  [`aomi-build connect`](/build/toolchain/aomi-build). Once connected, the repo
-  appears as a Project here and gets the full web lifecycle below.
+  You can also connect a repository from your terminal with
+  [`aomi-build connect`](/build/toolchain/aomi-build). Once connected, the
+  repository appears as a Project and gets the same web lifecycle below.
 </Note>
 
 ## The project page
