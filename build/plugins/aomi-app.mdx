@@ -1,0 +1,227 @@
+---
+title: "Aomi App"
+description: "Organize the plugin, behavior, tools, and package that become a deployed Aomi App."
+---
+
+<Info>Verified against aomi-sdk@08b21f9 on 2026-06-29.</Info>
+
+An Aomi App combines a role, a focused set of tools, and the workflow that tells
+the model how to use them. You author those pieces as a Rust **plugin**. Once
+deployed, that plugin becomes the user-selectable **App** shown by the CLI and
+Developer Platform.
+
+This page covers the design and organization of that plugin. For exact Rust
+trait signatures and helper APIs, use the [Rust SDK reference](/build/plugins/rust-sdk).
+
+## What belongs in an App
+
+Every App has three layers:
+
+| Layer | Your decision | Where it lives |
+| --- | --- | --- |
+| Behavior | The App's role, boundaries, and workflow | The preamble in `src/lib.rs` |
+| Capabilities | The small set of actions the model may take | Typed tools in `src/tool.rs` |
+| Delivery | The package identity and publishing target | `Cargo.toml` and, for contributor Apps, `aomi.toml` |
+
+Keep these layers separate. The preamble should explain when to use a tool. The
+tool should perform one stable operation. Packaging files should describe how
+the plugin is built and shipped, not how the model should behave.
+
+## Recommended project layout
+
+```text
+my-app/
+├─ Cargo.toml
+├─ aomi.toml          contributor Apps only
+└─ src/
+   ├─ lib.rs          registration and preamble
+   ├─ client.rs       external API client, models, and typed arguments
+   └─ tool.rs         tool implementations
+```
+
+| File | What it owns |
+| --- | --- |
+| `src/lib.rs` | The preamble and one `dyn_aomi_app!` registration |
+| `src/client.rs` | Authentication, HTTP calls, response models, and typed tool arguments |
+| `src/tool.rs` | The tools exposed to the model and their stable JSON results |
+| `Cargo.toml` | The `cdylib` target and exact `aomi-sdk` dependency |
+| `aomi.toml` | The contributor App's publishing identity and platform destination |
+
+Start from `sdk/examples/app-template-http` in the
+[Aomi SDK repository](https://github.com/aomi-labs/aomi-sdk). The template
+already follows this split.
+
+## 1. Define the App's behavior
+
+The preamble is the App-specific system prompt. It should tell the model what
+the App does, where its authority ends, and which workflow to follow.
+
+A useful preamble covers four things:
+
+<Steps>
+  <Step title="State the role and boundary">
+    Say what the App is for and what it must not do. A data App can state that
+    it is read-only and never stages transactions.
+  </Step>
+  <Step title="Map capabilities to tools">
+    Name the exact tool for each job so the model can choose deliberately.
+  </Step>
+  <Step title="Define identifiers and conventions">
+    Document formats such as chain names, asset IDs, protocol slugs, and time
+    units that tool calls must use.
+  </Step>
+  <Step title="Describe common workflows">
+    Explain the order in which tools should run for multi-step requests.
+  </Step>
+</Steps>
+
+```rust
+const PREAMBLE: &str = r#"## Role
+You are a read-only market data App. Never stage or submit transactions.
+
+## Capabilities
+- Use `search_assets` to resolve a user phrase to an asset ID.
+- Use `get_asset_price` only after you have a resolved asset ID.
+
+## Workflow
+For an ambiguous asset, search first. Ask the user to choose when several
+results remain plausible.
+"#;
+```
+
+Write instructions about decisions and sequencing here. Keep API URLs, headers,
+and response decoding in `client.rs`.
+
+## 2. Design a focused tool surface
+
+Tools are the App's vocabulary. Prefer a few intent-shaped operations over one
+tool per upstream endpoint.
+
+- Use names such as `search_*`, `get_*`, `build_*`, and `submit_*`.
+- Give every tool one clear purpose.
+- Use typed arguments and concrete field descriptions.
+- Return stable JSON rather than raw upstream responses.
+- Normalize errors into short messages that tell the model what to change.
+- Separate reads from actions that stage or submit transactions.
+
+Three to eight tools is a useful target for most Apps. A smaller surface makes
+selection more reliable and gives your preamble fewer branches to explain.
+
+For the implementation contract, see
+[`DynAomiTool`](/build/plugins/rust-sdk#the-dynaomitool-trait). For patterns
+such as route hints and multi-step tools, see
+[Custom tools](/build/plugins/custom-tools).
+
+## 3. Register the plugin
+
+Keep `src/lib.rs` short. Declare the modules, define the preamble, and register
+the App once:
+
+```rust
+use aomi_sdk::*;
+
+mod client;
+mod tool;
+
+dyn_aomi_app!(
+    app = client::MarketDataApp,
+    name = "market-data",
+    version = "0.1.0",
+    preamble = PREAMBLE,
+    tools = [tool::SearchAssets, tool::GetAssetPrice],
+    namespaces = []
+);
+```
+
+The registration connects the App type, preamble, tool list, required secrets,
+and host namespaces. Treat it as the plugin's public inventory. Do not put
+business logic in the registration file.
+
+Use `namespaces = []` for an App that only calls an external HTTP API. Declare
+a host namespace only when the App needs the corresponding chain or wallet
+capabilities. The [Rust SDK reference](/build/plugins/rust-sdk#host-namespaces)
+documents the field values and defaults.
+
+## 4. Package the plugin
+
+The plugin must compile as a `cdylib`. Pin `aomi-sdk` to the exact version your
+publishing platform requires.
+
+```toml
+[package]
+name = "market-data"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+aomi-sdk = "=3.0.3"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+```
+
+<Warning>
+  Confirm the required version in the publishing platform's `platform.json`.
+  Pin that value exactly. A version mismatch prevents the plugin from loading.
+</Warning>
+
+### Contributor App manifest
+
+If the plugin lives in a community or partner source repository, add an
+`aomi.toml`. Official plugins in the Aomi SDK repository use its release
+process and do not need this file.
+
+```toml
+[app]
+name         = "market-data"
+display_name = "Market Data"
+platform     = "community"
+git          = "https://github.com/aomi-labs/community-apps"
+public       = true
+```
+
+| Field | Required | Meaning |
+| --- | --- | --- |
+| `name` | yes | Kebab-case App slug and release identity |
+| `display_name` | yes | Human-readable name shown to users |
+| `platform` | yes | Publishing platform, such as `community` |
+| `git` | yes | Repository into which this App publishes |
+| `public` | yes | Whether the App is visible to all users of that platform |
+| `server_tags` | no | Server targets allowed to load the release; defaults to staging |
+| `access_token` | no | Environment-variable reference for a private repository |
+
+<Warning>
+  Never put a literal access token in `aomi.toml`. Use an environment-variable
+  reference such as `access_token = "$MY_GH_TOKEN"`, or omit the field for a
+  public repository.
+</Warning>
+
+## Authoring checklist
+
+- The preamble states the role, boundaries, tool mapping, and workflow.
+- The tool set represents user intents rather than raw API endpoints.
+- Every argument has a concrete description and example format.
+- Tools return stable JSON and actionable errors.
+- `src/lib.rs` contains registration, not business logic.
+- `Cargo.toml` builds a `cdylib` and pins the required SDK version exactly.
+- Contributor Apps have an `aomi.toml` with no literal credentials.
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Rust SDK" icon="book" href="/build/plugins/rust-sdk">
+    Implement tools, secrets, async work, namespaces, and tests with the public
+    Rust APIs.
+  </Card>
+  <Card title="CLI toolchain" icon="hammer" href="/build/toolchain/aomi-build">
+    Compile, test, deploy, and activate the plugin.
+  </Card>
+  <Card title="Custom tools" icon="wrench" href="/build/plugins/custom-tools">
+    Design routed and multi-step tool behavior.
+  </Card>
+  <Card title="Transaction pipeline" icon="diagram-project" href="/concepts/transaction-pipeline">
+    Follow a transaction after the runtime loads your App.
+  </Card>
+</CardGroup>

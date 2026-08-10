@@ -1,38 +1,54 @@
 # Aomi
 
-> Aomi is a blockchain harness for agentic AI. You build an App as a Rust plugin, Aomi hosts it on a runtime, and it acts on-chain for the user with simulate-before-sign safety and non-custodial signing. There are three builder surfaces: a Rust agent runtime, drop-in agent skills for coding agents, and a React widget.
+> Aomi is the execution harness for onchain AI. Plain-language instructions become real transactions — EVM and Solana behind one interface — through one pipeline: build, simulate, sign, broadcast. Non-custodial: the agent proposes, the user's own key signs. Aomi is also a hosted platform ("Vercel for crypto agents"): you compose your APIs, skills, and prompt as a plugin, the runtime loads it dynamically, and your users reach the agent via widget, Telegram, or Discord.
 
-## Build on Aomi
-- [Overview](https://aomi.dev/docs/build/index): what an Aomi App is and the path to ship one.
-- [Quickstart](https://aomi.dev/docs/build/quickstart): zero to a deployed App.
-- [Building an App](https://aomi.dev/docs/reference/building-apps): the anatomy of an App and its host tools.
-- [The SDK](https://aomi.dev/docs/reference/sdk-api): the DynAomiTool trait and the dyn_aomi_app! macro.
-- [CLI toolchain](https://aomi.dev/docs/reference/cli-toolchain): aomi-build and aomi-run.
-- [Deploy and activate](https://aomi.dev/docs/build/deploy): ship an App to the community platform.
-- [Common errors](https://aomi.dev/docs/build/common-errors): the errors a builder hits and the fixes.
+## Use Aomi
+- [Introduction](https://aomi.dev/docs/index): what Aomi is, demo clips, and the architecture.
+- [Portal](https://aomi.dev/docs/trade/portal): the hosted chat at chat.aomi.dev — connect a wallet and trade by chat.
+- [Agents with MCP](https://aomi.dev/docs/guides/mcp): connect Claude Code, Cursor, or any MCP client to the Aomi server.
+- [Client CLI](https://aomi.dev/docs/reference/client-cli): install the aomi command, chat, simulate, and sign from the terminal — every command, flag, and environment variable.
 
 ## Trade on Aomi
 - [Overview](https://aomi.dev/docs/trade/index): how Aomi executes on-chain trades.
 - [How execution works](https://aomi.dev/docs/trade/execution): the simulate-before-sign trade flow.
 
+## Build on Aomi
+- [Overview](https://aomi.dev/docs/build/overview): why plugins exist, what an App is, and the path to ship one.
+- [Quickstart](https://aomi.dev/docs/build/quickstart): zero to a deployed App.
+- [Aomi App](https://aomi.dev/docs/build/plugins/aomi-app): the crate layout, aomi.toml, preamble, and tools.
+- [Rust SDK](https://aomi.dev/docs/build/plugins/rust-sdk): the DynAomiTool trait and the dyn_aomi_app! macro.
+- [Custom tools](https://aomi.dev/docs/build/plugins/custom-tools): add your own tools with DynAomiTool.
+- [Evals and testing](https://aomi.dev/docs/build/plugins/evals-and-testing): test a plugin before it ships.
+- [aomi-run](https://aomi.dev/docs/build/toolchain/aomi-run): the local dev runtime — chat with your plugin before shipping.
+- [aomi-build](https://aomi.dev/docs/build/toolchain/aomi-build): connect, deploy, and activate from the terminal.
+- [The Developer Platform](https://aomi.dev/docs/build/developer-platform): create, deploy, and operate Apps from the browser at build.aomi.dev.
+- [Put your App on Telegram](https://aomi.dev/docs/build/telegram): turn a deployed App into a hosted Telegram bot.
+- [Common errors](https://aomi.dev/docs/build/common-errors): the errors a builder hits and the fixes.
+
+## Widget library
+- [Widget or headless](https://aomi.dev/docs/guides/widget/widget-library): decide between the bundled widget and the headless React library.
+- [Widget installation](https://aomi.dev/docs/guides/widget/widget-installation): props, compound API, and theming.
+- [Headless library](https://aomi.dev/docs/guides/widget/customization#build-a-headless-ui): the @aomi-labs/react library and the AomiClient.
+- [Hooks](https://aomi.dev/docs/guides/widget/customization#hooks): the headless hooks.
+- [Build custom UI](https://aomi.dev/docs/guides/widget/customization#complete-custom-ui-example): composers, message lists, tool views.
+- [Ship on Vercel](https://aomi.dev/docs/guides/widget/deploy/ship-on-vercel): give your widget frontend a public URL.
+
 ## Aomi Skills
 - [Aomi Skills](https://aomi.dev/docs/skills/index): the aomi-build and aomi-transact agent skills.
 
-## Integrations
-- [Widget setup](https://aomi.dev/docs/guides/frontend-setup): install the React widget.
-- [Headless library](https://aomi.dev/docs/guides/headless-library): the @aomi-labs/react library and the AomiClient.
-- [Hooks](https://aomi.dev/docs/guides/headless/hooks): the headless hooks.
-- [Custom tools](https://aomi.dev/docs/guides/custom-tools): add your own tools with DynAomiTool.
-
 ## Concepts
-- [What is Aomi](https://aomi.dev/docs/concepts/what-is-aomi): the model in one read.
-- [How it works](https://aomi.dev/docs/concepts/how-it-works): the request flow.
+- [How it works](https://aomi.dev/docs/concepts/transaction-pipeline): the request flow.
 - [Architecture](https://aomi.dev/docs/concepts/architecture): the public App and runtime model.
-- [Security](https://aomi.dev/docs/concepts/security): the safety posture.
+- [Permission model](https://aomi.dev/docs/concepts/permission-model): signing modes, the permit ceremony, guards — fail-closed everywhere.
+- [Accounts and wallets](https://aomi.dev/docs/concepts/accounts-and-wallets): one user, many wallets; delegation as data.
+- [Multi-threading](https://aomi.dev/docs/concepts/multi-threading): durable parent and child threads with controlled authority.
+- [Asynchronous tasks](https://aomi.dev/docs/concepts/asynchronous-tasks): detached, scheduled, recurring, and condition-triggered runs.
+- [Payments](https://aomi.dev/docs/concepts/payments): price tools in credits, settle over x402.
+- [EVM](https://aomi.dev/docs/concepts/chains/evm) / [SVM](https://aomi.dev/docs/concepts/chains/svm): the multi-chain specification.
 - [Glossary](https://aomi.dev/docs/concepts/glossary): the terms.
 
 ## Reference
 - [HTTP API](https://aomi.dev/docs/reference/api-reference): the backend HTTP surface.
-- [Simulation](https://aomi.dev/docs/reference/simulation): simulate-before-sign.
+- [Simulation](https://aomi.dev/docs/reference/simulation-reference): simulate-before-sign.
 - [Sessions](https://aomi.dev/docs/reference/sessions): session and thread handling.
-- [Apps and authentication](https://aomi.dev/docs/reference/apps-auth): App keys and scoping.
+- [Apps and authentication](https://aomi.dev/docs/reference/apps-and-authentication): App keys and scoping.

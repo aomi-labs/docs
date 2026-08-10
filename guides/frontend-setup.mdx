@@ -1,10 +1,10 @@
 ---
 title: "Frontend Setup"
-description: "Set up the Aomi chat widget in a Next.js 15 app as a product surface: prerequisites, shadcn install, environment configuration, and widget mounting steps."
+description: "Add the Aomi widget to a Next.js 15 product. Install it with shadcn, configure the environment, and mount the App-bound interface."
 ---
 
 <Info>
-  Looking for install steps? See the [Quickstart](/getting-started/quickstart) for the one-command shadcn install.
+  Looking for install steps? See [Installation](/guides/widget/installation) for the one-command shadcn install.
 </Info>
 
 This page covers what the Aomi widget gives you, how it slots into a Next.js app, and how to decide between the widget and the headless library.
@@ -18,7 +18,7 @@ This page covers what the Aomi widget gives you, how it slots into a Next.js app
 | Standard layout (sidebar \+ thread \+ composer) works for you | You need a non-standard layout |
 | You want to edit source files when needed | You want to compose from primitives |
 
-→ [Headless Library](/guides/headless-library) covers the alternative path.
+→ [Headless Library](/guides/widget/customization#build-a-headless-ui) covers the alternative path.
 
 ## What the widget gives you
 
@@ -70,11 +70,11 @@ export default function ChatPage() {
 }
 ```
 
-For embedded layouts (sidebars, modals, panels), use the [compound API](/guides/widget-installation#compound-component-api).
+For embedded layouts (sidebars, modals, panels), use the [compound API](/guides/widget/installation#compound-component-api).
 
 ## Next steps
 
-- [Quickstart](/getting-started/quickstart): install with one command.
-- [Widget Installation](/guides/widget-installation): props, compound API, and customization.
-- [Headless Library](/guides/headless-library): build your own UI.
-- [Apps & Auth](/reference/apps-auth): how API keys and apps work.
+- [Installation](/guides/widget/installation): install with one command.
+- [Installation](/guides/widget/installation): props, compound API, and customization.
+- [Headless Library](/guides/widget/customization#build-a-headless-ui): build your own UI.
+- [Apps & Authentication](/reference/apps-and-authentication): how API keys and Apps work.

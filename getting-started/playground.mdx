@@ -1,21 +1,22 @@
 ---
 title: Playground
-description: "Interactive playground to configure the AomiFrame widget. Adjust layout, theme, sidebar, and control panel options, then copy the generated JSX directly into your app."
+description: "Configure AomiFrame in a live preview. Adjust layout, theme, sidebar, and controls, then copy the generated JSX into your App."
 mode: custom
 ---
 
-<div style={{
-  minHeight: "100vh",
+import { WidgetPlayground } from "../snippets/widget-playground.jsx";
+
+<div className="max-w-8xl mx-auto" style={{
+  minHeight: "calc(100vh - 64px)",
   background: "var(--background)",
   fontFamily: "inherit"
 }}>
 
   {/* Top nav bar */}
-  <div style={{
+  <div className="px-4 lg:px-8" style={{
     display: "flex",
     alignItems: "center",
     gap: "10px",
-    padding: "0 20px",
     height: "44px",
     borderBottom: "1px solid var(--border)",
     background: "var(--background)",
@@ -24,7 +25,7 @@ mode: custom
     zIndex: 10
   }}>
     <a
-      href="/getting-started/quickstart"
+      href="/build/common-errors"
       style={{
         display: "flex",
         alignItems: "center",
@@ -60,26 +61,6 @@ mode: custom
     </span>
   </div>
 
-  {/* Full-width iframe — no max-width so internal side-by-side layout doesn't collapse */}
-  <div style={{
-    padding: "16px",
-    boxSizing: "border-box"
-  }}>
-    <iframe
-      src="https://aomi.dev/embed-playground?embed=true"
-      title="Aomi Widget Playground"
-      allow="accelerometer; clipboard-write; encrypted-media; gyroscope"
-      style={{
-        display: "block",
-        width: "100%",
-        minWidth: "900px",
-        height: "calc(100vh - 76px)",
-        minHeight: "780px",
-        border: "1px solid var(--border)",
-        borderRadius: "12px",
-        background: "var(--background)"
-      }}
-    />
-  </div>
+  <WidgetPlayground />
 
 </div>

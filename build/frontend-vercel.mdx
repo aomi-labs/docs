@@ -1,9 +1,9 @@
 ---
-title: Deploy a frontend on Vercel
-description: Give your deployed Aomi App its own public URL. Add the AomiFrame widget to a Next.js app, then ship it to Vercel.
+title: Ship on Vercel
+description: "Publish your App's widget frontend on Vercel and give users a stable URL for the deployed experience."
 ---
 
-Your App already runs on Aomi. This page gives it a frontend of your own: a public URL, your branding, your domain.
+Your plugin is deployed and running as an App on Aomi. This page takes the widget frontend you built for it and ships it to Vercel: a public URL, your branding, your domain.
 
 <Info>
 **Verified 2026-07-14** against `@aomi-labs/react` 0.5.0 and a live App on `https://api.aomi.dev`. Package versions move: trust the registry and your install over any version written here.
@@ -17,7 +17,7 @@ You do not need a frontend to use or demo your App. Once it is active it already
 
 ## Before you start
 
-- **An App that is deployed and activated.** See [Deploy and activate on aomi CLI](/build/deploy-cli). Confirm it is live:
+- **An App that is deployed and activated.** See [Deploy and activate on aomi CLI](/build/toolchain/aomi-build). Confirm it is live:
 
   ```bash
   aomi-build deploy status
@@ -25,58 +25,19 @@ You do not need a frontend to use or demo your App. Once it is active it already
 
   You want `active=true`, `artifact_ready=true`, and `loaded` on your App. If `artifact_ready` is false, redeploy before you build a frontend against it.
 
+- **A Next.js app with the widget installed.** [Installation](/guides/widget/installation) covers the one-command shadcn install, environment variables, and mounting `AomiFrame`. [Quickstart](/guides/widget/quickstart) covers how the widget slots into your app. The install pulls a large dependency tree, including the wallet stack; on a slow connection it takes a few minutes.
+
 - **Node 20 or newer**, and a package manager (`pnpm` or `npm`).
 - **A Vercel account.**
 
-## Step 1: Create a Next.js app
-
-Skip this if you already have one.
-
-```bash
-npx create-next-app@latest my-app
-cd my-app
-```
-
-Take the defaults. The widget is a shadcn component, so App Router and TypeScript are the smoothest path.
-
-## Step 2: Add the AomiFrame widget
-
-```bash
-npx shadcn@latest add https://aomi.dev/r/aomi-frame.json
-```
-
-`AomiFrame` is the whole chat experience in one component: thread list, control bar, message composer, and the runtime wiring. It also handles sign in, so people who visit your page authenticate the same way they do on `chat.aomi.dev`.
-
-This pulls a large dependency tree, including the wallet stack. On a slow connection it takes a few minutes.
-
-## Step 3: Point it at the backend
-
-Create `.env.local`:
-
-```bash
-NEXT_PUBLIC_BACKEND_URL=https://api.aomi.dev
-```
+## Point the widget at production
 
 `AomiFrame` resolves the backend in this order: the `backendUrl` prop, then `NEXT_PUBLIC_BACKEND_URL`, then `http://localhost:8080`.
 
-Passing the prop explicitly is the most predictable choice, because it works even if an environment variable is missing on your host.
-
-## Step 4: Render the widget
-
-Replace the contents of `app/page.tsx`:
+Passing the prop explicitly is the most predictable choice, because it works even if an environment variable is missing on your host:
 
 ```tsx
-"use client";
-
-import { AomiFrame } from "@/components/aomi-frame";
-
-export default function Page() {
-  return (
-    <main style={{ height: "100dvh" }}>
-      <AomiFrame backendUrl="https://api.aomi.dev" height="100dvh" />
-    </main>
-  );
-}
+<AomiFrame backendUrl="https://api.aomi.dev" height="100dvh" />
 ```
 
 `AomiFrame` takes `width`, `height`, `className`, `style`, `walletPosition`, and `backendUrl`.
@@ -87,20 +48,17 @@ If your App only reads data and simulates, and never asks anyone to sign a trans
 <AomiFrame backendUrl="https://api.aomi.dev" walletPosition={null} />
 ```
 
-## Step 5: Run it locally
+## Check the build before you deploy
 
-```bash
-pnpm install
-pnpm dev
-```
-
-Open `http://localhost:3000`, pick your App in the picker, and send it a message. Confirm you get a real answer back before you deploy. Then check the production build:
+Run the app locally, pick your App in the picker, and send it a message. Confirm you get a real answer back before you deploy. Then check the production build:
 
 ```bash
 pnpm build
 ```
 
-## Step 6: Deploy to Vercel
+Vercel runs this same build. A failure you catch here is a failure you do not debug through deploy logs.
+
+## Deploy to Vercel
 
 ```bash
 npm i -g vercel
@@ -116,6 +74,8 @@ vercel --prod
 ```
 
 Vercel prints your live URL.
+
+## Environment variables on Vercel
 
 If you used `NEXT_PUBLIC_BACKEND_URL` instead of the `backendUrl` prop, add it in the Vercel dashboard under **Settings**, **Environment Variables**, then redeploy so the production build picks it up. If you passed the prop, there is nothing to configure.
 
@@ -170,16 +130,16 @@ An app key is a credential. Keep it on your server, in an environment variable, 
 ## Next
 
 <CardGroup cols={2}>
-<Card title="Deploy and activate on aomi CLI" href="/build/deploy-cli">
+<Card title="Deploy and activate on aomi CLI" href="/build/toolchain/aomi-build">
 Ship the App itself, then come back and give it a frontend.
 </Card>
-<Card title="The builder toolchain" href="/reference/cli-toolchain">
+<Card title="The builder toolchain" href="/build/toolchain/aomi-build">
 The full reference for `aomi-build` and `aomi-run`.
 </Card>
 <Card title="Common errors" href="/build/common-errors">
 The errors you are most likely to hit, each with its fix.
 </Card>
-<Card title="Add the chat widget" href="/guides/widget-installation">
-More ways to embed and customize the widget.
+<Card title="Installation" href="/guides/widget/installation">
+The full install, environment, and component API reference.
 </Card>
 </CardGroup>

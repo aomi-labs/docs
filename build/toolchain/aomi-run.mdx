@@ -1,0 +1,110 @@
+---
+title: "aomi-run"
+description: "Test a compiled plugin locally against a real LLM and inspect which tools it selects before you deploy."
+---
+
+<Info>Verified against aomi-sdk@08b21f9 on 2026-06-29.</Info>
+
+[`aomi-run`](https://github.com/aomi-labs/aomi-sdk/tree/main/sdk/bin/run) is the local dev runtime. It ships as a binary from the [`aomi-sdk` crate on crates.io](https://crates.io/crates/aomi-sdk). It loads a compiled plugin, reads its manifest, and opens an interactive REPL connected to Anthropic, OpenAI, or OpenRouter. It does not require a backend or deployment. Use it to inspect which tools the model selects before you ship.
+
+## Install
+
+`aomi-run` installs from the `aomi-sdk` source, alongside its sibling `aomi-build`:
+
+<CodeGroup>
+```bash macOS / Linux
+cargo install --git https://github.com/aomi-labs/aomi-sdk --features cli,dev-runtime aomi-sdk
+```
+
+```powershell Windows
+cargo install --git https://github.com/aomi-labs/aomi-sdk --features cli,dev-runtime aomi-sdk
+```
+</CodeGroup>
+
+The `dev-runtime` feature builds `aomi-run`; the `cli` feature builds [aomi-build](/build/toolchain/aomi-build). Install with `--features cli` alone and you get only `aomi-build`, not `aomi-run`. The binary has no `--version` flag; run `aomi-run --help` to confirm the install.
+
+<Note>
+These are not standalone crates or npm packages, so there is no `aomi-run` to find on crates.io or npm. They are binaries built from the `aomi-sdk` crate, which is why the install command points at that crate and uses feature flags to choose which binaries you get.
+</Note>
+
+<Note>
+You can also run it without installing: prefix with `cargo run -p aomi-sdk --features dev-runtime --bin aomi-run --`. The install is just a convenience.
+</Note>
+
+## Run your plugin
+
+There are no subcommands. You pass the plugin path as the one positional argument, then a handful of flags.
+
+```bash
+aomi-run apps/khalani/target/debug/libkhalani.dylib
+```
+
+On start, `aomi-run` prints a summary of what it loaded, stubs any host namespaces the plugin asked for, and opens the REPL. The block below is illustrative, not literal output, and the version reflects the current SDK line (`3.0.x`):
+
+```text
+# illustrative boot banner
+▶ monad-oneshot v0.1.0  (aomi-sdk 3.0.1)
+  tools      : 4 (get_balance, wrap_mon, unwrap_wmon, send_mon)
+  namespaces : evm-core (stubbed)
+  ⚙ stubbed 12 tools for namespace 'evm-core'
+─────────────────────────────────────────
+ aomi-run REPL · app=monad-oneshot · session=<uuid>
+ max_turns=20 · /help for commands
+─────────────────────────────────────────
+```
+
+The `tools` line lists your plugin's own tools. The `namespaces` line and the `⚙ stubbed` line show the host capabilities the dev runtime stands in for, since the real backend is not present. Inside the REPL, `/help` lists commands and `/quit` exits.
+
+<Note>
+`aomi-run` calls a real LLM, so it needs a provider key in your environment. With the default Anthropic provider, set `ANTHROPIC_API_KEY` before you run. `aomi-run` checks for the key before it even loads the plugin. Pass `--env-file` to load it from a dotenv file.
+</Note>
+
+## Flags
+
+| Flag | Default | Meaning |
+|---|---|---|
+| `<plugin>` (positional) | required | Path to the built plugin (`.dylib`, `.so`, or `.dll`). |
+| `--provider <P>` | `anthropic` | LLM provider: `anthropic`, `openai`, or `openrouter`. |
+| `--model <ID>` | per provider | Model id. Defaults to a sane choice for the chosen provider. |
+| `--max-turns <N>` | `20` | Tool call rounds allowed inside one user turn before the model must answer in text. `0` means no tool round trips. |
+| `--max-tokens <N>` | `4096` | Cap on output tokens per LLM response. |
+| `--env-file <FILE>` | none | dotenv file loaded before any env var is read (API key and plugin secrets). |
+| `--session-id <ID>` | fresh UUID | Override the session id baked into every tool call context. |
+| `--verbose`, `-v` | off | More log detail. Sets a debug `RUST_LOG` if one is not already set. |
+
+```bash
+# OpenAI provider, explicit model, secrets from a file
+aomi-run apps/x/target/debug/libx.dylib \
+  --provider openai --model gpt-5 \
+  --env-file .env.local --verbose
+```
+
+The default model per provider is `claude-sonnet-4-6` for Anthropic, `gpt-5` for OpenAI, and `anthropic/claude-sonnet-4` for OpenRouter. The provider's API key must be present in the environment (or in `--env-file`); `aomi-run` checks for it before it even loads the plugin.
+
+## What the dev runtime stubs
+
+<Warning>
+**aomi-run is a v1 dev runtime, not the real backend.** Some behavior is intentionally stubbed:
+
+- **Routed return envelopes** (`evm_commit_message`, `stage_tx`, `svm_sign_tx`, and the rest) do not fire. The model receives the envelope as opaque JSON; no wallet UX runs.
+- **Host namespace toolsets** (`evm-core`, `database`, `forge`, and others) are replaced with stub tools that return an "unavailable in dev runtime" value. The model still sees them by name, but a call resolves to a no op note.
+- **Skill activation** is not supported.
+- **`$SECRET:...` argument substitution** does not run, though the plugin's own env var secret fallback still works.
+- **State attributes** always return `None`.
+
+For any of those, deploy the plugin and exercise it against the real backend.
+</Warning>
+
+## Related
+
+<CardGroup cols={3}>
+  <Card title="aomi-build" icon="hammer" href="/build/toolchain/aomi-build">
+    Scaffold, compile, and deploy the plugin you just chatted with.
+  </Card>
+  <Card title="Aomi App" icon="book" href="/build/plugins/aomi-app">
+    What is inside a plugin: tools, system prompt, manifest, secrets.
+  </Card>
+  <Card title="Rust SDK" icon="cube" href="/build/plugins/rust-sdk">
+    The plugin SDK that your plugin compiles against.
+  </Card>
+</CardGroup>

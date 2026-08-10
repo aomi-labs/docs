@@ -1,0 +1,37 @@
+---
+title: "Ship on Vercel"
+description: "Deploy an App-bound Aomi widget to Vercel and verify that the public frontend reaches the configured App."
+---
+
+## Before you start
+
+You need an activated Aomi App, a working local widget, Node.js 20 or newer, and a Vercel account.
+
+## Build locally
+
+```bash
+npm run build
+```
+
+Confirm that the production build can sign in and send a message from your registered local origin.
+
+## Deploy
+
+```bash
+npm install --global vercel
+vercel
+vercel --prod
+```
+
+Add these public values in **Settings → Environment Variables**:
+
+```bash
+NEXT_PUBLIC_AOMI_API_URL=https://chat.aomi.dev
+NEXT_PUBLIC_AOMI_APPLICATION_ID=123
+```
+
+Register the production Vercel URL as an allowed origin before testing authentication.
+
+<Warning>
+  Never add App keys, provider secrets, paymaster credentials, or gas-policy credentials to frontend environment variables.
+</Warning>

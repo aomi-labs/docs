@@ -1,0 +1,38 @@
+---
+title: aomi-trader
+description: "See how aomi-trader watches live BTC-PERP markets and uses Aomi to drive an autonomous Hyperliquid trading loop."
+---
+
+aomi-trader is a Hyperliquid trader built by [Julian Martinez (@j_dev28)](https://x.com/j_dev28). It watches live BTC-PERP price action, evaluates market conditions, and executes trades when its configured signal threshold is met.
+
+<CardGroup cols={2}>
+  <Card title="View source" icon="github" href="https://github.com/Julian-dev28/aomi-trader">
+    Read the trader and dashboard implementation.
+  </Card>
+
+  <Card title="Meet the builder" icon="user" href="https://github.com/Julian-dev28">
+    Explore Julian's other projects.
+  </Card>
+</CardGroup>
+
+## What it does
+
+- Reads the live BTC-PERP mid price and order book from Hyperliquid.
+- Checks the account's current position and equity.
+- Adds current market sentiment to its analysis.
+- Produces a `LONG`, `SHORT`, `CLOSE`, or `PASS` decision.
+- Repeats the loop and manages the resulting position.
+
+## How it uses Aomi
+
+The trader creates one `Session` with `@aomi-labs/client`. Each cycle gives the App current market and account context, then streams the result back to the interface. The surrounding application handles Hyperliquid order signing and submission.
+
+This separation keeps the strategy easy to inspect: Aomi runs the agentic loop, while the product owns its risk threshold, position size, cooldown, and execution rules.
+
+## Why it is a useful example
+
+aomi-trader shows that an Aomi-powered product does not need to look like a general-purpose chat interface. A narrow loop can watch one market, make one class of decision, and expose a purpose-built dashboard around it.
+
+<Warning>
+  Autonomous trading can lose funds. Review the strategy, limits, signing setup, and execution mode before using real capital.
+</Warning>

@@ -1,0 +1,312 @@
+---
+title: "Rust SDK"
+description: "Reference the Rust traits and helpers used to implement typed Aomi plugin tools."
+---
+
+<Info>Verified against aomi-sdk@08b21f9 on 2026-06-29.</Info>
+
+The [`aomi-sdk` crate](https://crates.io/crates/aomi-sdk) is the public Rust API
+for implementing an Aomi plugin. It defines typed tools, call context, secrets,
+async results, registration, host namespaces, and test helpers.
+
+This is an API-focused reference. To choose a project layout, write a preamble,
+and package the plugin as an App, start with [Aomi App](/build/plugins/aomi-app).
+
+<Note>
+  Build only against the public `aomi-sdk` crate. Your plugin exchanges JSON
+  values with the host and does not link to private runtime crates.
+</Note>
+
+## SDK surface
+
+| API | Use it to |
+| --- | --- |
+| `DynAomiTool` | Define a typed synchronous or async tool |
+| `DynToolCallCtx` | Read session attributes and injected secrets |
+| `DynAsyncSink` | Emit progress and complete an async tool call |
+| `dyn_aomi_app!` | Register the App type, tools, preamble, secrets, and namespaces |
+| `Secret` | Declare a credential slot required by the plugin |
+| `TestCtxBuilder` | Test a tool with host-like attributes and secrets |
+
+The crate re-exports compatible `schemars` and `serde_json` modules. Using
+`aomi_sdk::schemars` and `aomi_sdk::serde_json` avoids dependency-version drift
+in schema and JSON types.
+
+## The `DynAomiTool` trait
+
+Implement one `DynAomiTool` per operation exposed to the model.
+
+```rust
+pub trait DynAomiTool: Send + Sync + 'static {
+    type App: DynAomiApp;
+    type Args: DeserializeOwned + JsonSchema + Send + 'static;
+
+    const NAME: &'static str;
+    const DESCRIPTION: &'static str;
+    const IS_ASYNC: bool = false;
+
+    fn run(
+        _app: &Self::App,
+        _args: Self::Args,
+        _ctx: DynToolCallCtx,
+    ) -> Result<Value, String>;
+
+    fn run_async(
+        _app: &Self::App,
+        _args: Self::Args,
+        _ctx: DynToolCallCtx,
+        _sink: DynAsyncSink,
+    ) -> Result<(), String>;
+}
+```
+
+| Member | Meaning |
+| --- | --- |
+| `type App` | The marker or state type shared by tools in one plugin |
+| `type Args` | The typed input decoded from the model's JSON arguments |
+| `NAME` | Unique tool name the model calls |
+| `DESCRIPTION` | Model-facing summary used during tool selection |
+| `IS_ASYNC` | Set to `true` when the tool uses `run_async` |
+| `run` | Synchronous implementation for normal tools |
+| `run_async` | Async or streaming implementation that writes to a sink |
+
+Argument types derive `Deserialize` and `JsonSchema`. Field doc comments become
+parameter descriptions in the generated schema.
+
+```rust
+use aomi_sdk::schemars::JsonSchema;
+use serde::Deserialize;
+
+#[derive(Debug, Deserialize, JsonSchema)]
+struct GreetArgs {
+    /// Person to greet, such as `Ada Lovelace`
+    name: String,
+}
+```
+
+```rust
+use aomi_sdk::{DynAomiTool, DynToolCallCtx};
+use serde_json::Value;
+
+struct Greet;
+
+impl DynAomiTool for Greet {
+    type App = MyApp;
+    type Args = GreetArgs;
+    const NAME: &'static str = "greet";
+    const DESCRIPTION: &'static str = "Greet one person by name.";
+
+    fn run(
+        _app: &MyApp,
+        args: GreetArgs,
+        _ctx: DynToolCallCtx,
+    ) -> Result<Value, String> {
+        Ok(serde_json::json!({ "message": format!("Hello, {}!", args.name) }))
+    }
+}
+```
+
+Return concise error strings that tell the model whether it should correct an
+argument, ask the user, or stop.
+
+## Tool-call context
+
+Every tool receives a `DynToolCallCtx` containing its call identity and the
+host data exposed to the plugin.
+
+```rust
+pub struct DynToolCallCtx {
+    pub session_id: String,
+    pub tool_name: String,
+    pub call_id: String,
+    pub state_attributes: Map<String, Value>,
+    pub secrets: HashMap<String, String>,
+}
+```
+
+Read nested attributes with typed helpers:
+
+```rust
+fn run(
+    _app: &MyApp,
+    _args: Args,
+    ctx: DynToolCallCtx,
+) -> Result<Value, String> {
+    let org_id = ctx
+        .attribute_u64(&["user", "org_id"])
+        .ok_or("This tool requires a user organization.")?;
+    let name = ctx
+        .attribute_string(&["user", "name"])
+        .unwrap_or_default();
+
+    Ok(serde_json::json!({ "org_id": org_id, "name": name }))
+}
+```
+
+Treat state attributes as input for the current call. Do not assume an
+attribute exists unless the host capability that supplies it is active.
+
+## Async tools
+
+Set `IS_ASYNC = true` and implement `run_async` for long-running work. Use the
+`DynAsyncSink` to send progress and one terminal result.
+
+```rust
+impl DynAomiTool for StreamingTool {
+    type App = MyApp;
+    type Args = StreamArgs;
+    const NAME: &'static str = "stream_report";
+    const DESCRIPTION: &'static str = "Build a report and stream its progress.";
+    const IS_ASYNC: bool = true;
+
+    fn run_async(
+        _app: &MyApp,
+        args: StreamArgs,
+        _ctx: DynToolCallCtx,
+        sink: DynAsyncSink,
+    ) -> Result<(), String> {
+        sink.emit(serde_json::json!({ "step": 1 }))
+            .map_err(|error| error.to_string())?;
+        sink.complete(serde_json::json!({ "report": args.topic }))
+            .map_err(|error| error.to_string())?;
+        Ok(())
+    }
+}
+```
+
+- `emit` sends a non-terminal update.
+- `complete` sends the terminal result.
+- `fail` reports a terminal error.
+- `is_canceled` lets expensive work stop after host cancellation.
+
+<Warning>
+  Pass bare JSON values to `emit`. Only the terminal `complete` result may use
+  a routed return envelope.
+</Warning>
+
+## The `dyn_aomi_app!` macro
+
+Call `dyn_aomi_app!` once in `src/lib.rs`. It registers the plugin manifest and
+dispatches tool calls to their typed implementations.
+
+```rust
+aomi_sdk::dyn_aomi_app!(
+    app = MyApp,
+    name = "greeter",
+    version = "0.1.0",
+    preamble = PREAMBLE,
+    tools = [Greet],
+    secrets = [API_KEY],
+    namespaces = ["evm-core"],
+);
+```
+
+| Field | Meaning |
+| --- | --- |
+| `app` | App type shared by the registered tools |
+| `name` | Stable App key |
+| `version` | Plugin version string |
+| `preamble` | App-specific system prompt |
+| `tools` | Tool types available to the model |
+| `secrets` | Optional credential slots declared by the plugin |
+| `namespaces` | Host capability sets requested by the plugin; defaults to `evm-core` |
+
+The macro is the only registration entry point you need. Do not implement the
+low-level plugin boundary by hand.
+
+## Secrets
+
+Declare each external credential as a `Secret` slot. The name is canonical,
+the description appears in configuration surfaces, and `required` determines
+whether the App can load without a value.
+
+```rust
+use aomi_sdk::Secret;
+
+const API_KEY: Secret = Secret::new(
+    "EXCHANGE_API_KEY",
+    "API key from the exchange dashboard.",
+    true,
+);
+```
+
+Register the slot with `secrets = [API_KEY]`. At call time, read it with
+`resolve_secret_value`:
+
+```rust
+let key = aomi_sdk::resolve_secret_value(
+    &ctx,
+    args.api_key.as_deref(),
+    "EXCHANGE_API_KEY",
+    "Add EXCHANGE_API_KEY in App settings before using this tool.",
+)?;
+```
+
+The helper resolves, in order:
+
+1. an explicit argument;
+2. the credential injected into `ctx.secrets`; and
+3. an environment variable used by local CLI and tests.
+
+Do not log, persist, or include the resolved value in tool output.
+
+## Host namespaces
+
+`namespaces` requests host capability sets that accompany your plugin tools.
+
+| App requirement | Registration value |
+| --- | --- |
+| Default EVM wallet and transaction flow | Omit the field or use `["evm-core"]` |
+| A non-EVM host capability only | Name that public namespace, such as `["database"]` |
+| External API calls with no host tools | Use `[]` |
+
+Declare only capabilities the App uses. If the App stages transactions,
+describe the expected stage, simulate, and commit sequence in its preamble so
+the model invokes the host tools in the correct order.
+
+## Testing tools
+
+Use `aomi_sdk::testing` to test typed tools without loading the compiled plugin.
+
+```rust
+use aomi_sdk::testing::{run_tool, TestCtxBuilder};
+use serde_json::json;
+
+#[test]
+fn greet_returns_message() {
+    let ctx = TestCtxBuilder::new("greet").build();
+    let result = run_tool::<Greet>(&MyApp, json!({ "name": "Ada" }), ctx)
+        .expect("greet should succeed");
+
+    assert_eq!(result["message"], "Hello, Ada!");
+}
+```
+
+Seed the same inputs a host call would provide:
+
+```rust
+let ctx = TestCtxBuilder::new("place_order")
+    .secret("EXCHANGE_API_KEY", "test-key")
+    .attribute("user", json!({ "org_id": 42 }))
+    .build();
+```
+
+For an async tool, `run_async_tool` returns `(updates, terminal)`: the emitted
+values in order and the terminal payload.
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Aomi App" icon="hammer" href="/build/plugins/aomi-app">
+    Structure the crate, write its preamble, and configure its package.
+  </Card>
+  <Card title="Custom tools" icon="wrench" href="/build/plugins/custom-tools">
+    Design route hints and multi-step tool behavior.
+  </Card>
+  <Card title="Testing" icon="flask" href="/build/plugins/evals-and-testing">
+    Add broader tool and model-behavior evaluations.
+  </Card>
+  <Card title="CLI toolchain" icon="terminal" href="/build/toolchain/aomi-build">
+    Compile, run, deploy, and activate the plugin.
+  </Card>
+</CardGroup>

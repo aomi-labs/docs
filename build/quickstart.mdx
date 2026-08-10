@@ -1,11 +1,35 @@
 ---
 title: "Quickstart"
-description: "Go from an empty folder to a deployed Aomi App on the community platform in about ten minutes."
+description: "Build and deploy your first Aomi App in about ten minutes, starting from an empty folder."
 ---
 
 By the end you will have written a small Aomi App, deployed it to the public community platform, and handed it to ops to load onto the live runtime.
 
 An App is a Rust crate the runtime loads as a plugin. You write the tools, the platform runs them. This is the happy path, start to finish.
+
+## From idea to live in four steps
+
+```mermaid
+graph LR
+    A[1. Write] --> B[2. Build] --> C[3. Deploy] --> D[4. Activate]
+```
+
+1. **Write** your tools in a Rust crate with `aomi.toml` and `src/lib.rs`.
+2. **Build** it with `cargo build --release`.
+3. **Deploy.** The backend builds your plugin and creates a release. Use
+   [`aomi-build`](/build/toolchain/aomi-build) from your terminal
+   or the [Developer Platform](/build/developer-platform) from your browser.
+4. **Activate.** The release loads onto the live runtime, and your App is
+   live.
+
+The steps below walk through all four stages end to end in about ten minutes.
+If you would rather not install anything yet, the platform's one-click wizard
+forks a working template into your GitHub account and takes it live from the
+browser.
+
+<Frame caption="Describe the App you want to build or start from a focused template.">
+  <img src="/images/build/create-app.jpg" alt="The Aomi Build creation screen with an App prompt and starter templates" />
+</Frame>
 
 ## Before you start
 
@@ -212,7 +236,7 @@ Your App is three small files. Make a folder and add them.
 
   <Step title="Watch CI">
     ```bash
-    aomi-build status
+    aomi-build deploy status
     ```
 
     When the release is built and ready to activate, you are set. A build takes a few minutes.
@@ -224,7 +248,7 @@ Your App is three small files. Make a folder and add them.
     ```bash
     AOMI_APP_ACTIVATION_TOKEN=<your-activation-token> \
     AOMI_BACKEND_URL=https://staging-api.aomi.dev \
-      aomi-build activate
+      aomi-build deploy activate
     ```
 
     The backend fetches your release, validates it, and loads it. Within a few minutes your `greet` tool appears in the agent for new chats.
@@ -240,10 +264,10 @@ You have a deployed Aomi App on the live runtime. You wrote three files, deploye
 To go further:
 
 <CardGroup cols={2}>
-  <Card title="Building an App" href="/reference/building-apps">
+  <Card title="Aomi App" href="/build/plugins/aomi-app">
     The anatomy: tools, arguments, the preamble, and host namespaces.
   </Card>
-  <Card title="Deploy and activate" href="/build/deploy-cli">
+  <Card title="Deploy and activate" href="/build/toolchain/aomi-build">
     The full shipping process, the validation pipeline, and troubleshooting.
   </Card>
   <Card title="Common errors" href="/build/common-errors">

@@ -1,0 +1,123 @@
+---
+title: Telegram
+description: "Connect a deployed Aomi App to Telegram without running your own server. Create the bot, register it with Aomi, and start chatting."
+---
+
+Your App already runs on Aomi. This page gives it a Telegram bot: a chat people open in Telegram and talk to, in a direct message or a group. The bot runs your deployed App, so it can answer questions, read live data, and walk a user through a transaction with simulate before sign.
+
+Aomi hosts the bot for you. You create a bot in Telegram, hand Aomi the token, and Aomi wires it up. You do not run a server. One bot can serve one App or several, so a single bot can front your whole catalog. Telegram is live today. [Discord](/getting-started/discord), [Slack](/getting-started/slack), and [iOS](/getting-started/ios) are coming soon.
+
+<Info>
+**Verified 2026-07-30** against the live Integrations page on `build.aomi.dev` and the shipped `aomi-telegram` bot. We use Goal Digger as the running example; swap in your own App name anywhere you see `goal-digger-live`.
+</Info>
+
+## Before you start
+
+- A deployed App that is **active and loaded**. If you have not deployed yet, do [Deploy and activate on aomi CLI](/build/toolchain/aomi-build) first. You can confirm it with `aomi-build deploy status`.
+- A Telegram account.
+
+That is all. No hosting, no bot code, no keys for a public App.
+
+## Step 1: create a bot in Telegram
+
+Telegram hands out bot tokens through its own bot, BotFather.
+
+1. Open [@BotFather](https://t.me/BotFather) in Telegram.
+2. Send `/newbot`.
+3. Give it a **name** (the display name people see, e.g. "Goal Digger").
+4. Give it a **username** (must end in `bot`, e.g. `goal_digger_live_bot`).
+5. BotFather replies with a **token**. It looks like `123456789:AAE...`. Copy it.
+
+Keep that token private. It is the full key to your bot. If it ever leaks, send `/revoke` to BotFather and get a new one.
+
+## Step 2: register the bot on Aomi
+
+This is where you point the bot at your App or Apps.
+
+1. Go to `https://build.aomi.dev/integrations` and sign in with GitHub. This is the same account your Apps are deployed under.
+2. In the **Telegram** section, register a bot. Fill in:
+   - **Label** (optional): a name for your own reference, like "Goal Digger".
+   - **Bot token**: paste the token from BotFather.
+   - **Attached apps**: tick every App this bot should serve. Pick just `goal-digger-live` for a single App bot, or check several to let one bot front many Apps.
+   - **Primary app**: choose which attached App the bot opens with. It has to be one of the Apps you ticked. For a single App bot, that is the same App.
+   - **Thread mode**: choose **single** (one running conversation per user) or **multi** (users can keep separate conversations). Single is the simplest to start with.
+3. Register the bot.
+
+Aomi verifies the token with Telegram, stores it encrypted, and turns on the webhook for you. When it says the bot is registered, you are done. There is nothing to deploy and no server to keep running.
+
+<Note>
+Your App must appear in the **Attached apps** list, which means it has to be active first. If you do not see it, deploy or redeploy it (see [Deploy and activate on aomi CLI](/build/toolchain/aomi-build)), then reload the page. You can come back later and **edit the attached apps** for a bot without re-entering the token.
+</Note>
+
+## Step 3: talk to your bot
+
+1. Open your bot in Telegram (the `t.me/<your_bot_username>` link, or search its username).
+2. Send `/start`. The bot greets you and shows a menu of buttons (Wallet, App, Model, Transactions, Threads, Network, Settings).
+3. Just type. The bot is your App. For Goal Digger, try:
+   - `where's the value today?`
+   - `simulate Spain vs Germany`
+   - `who wins the World Cup?`
+   - `best World Cup bet on Polymarket right now?`
+
+That is the whole loop. Your deployed App is now a Telegram bot anyone can message.
+
+## Commands
+
+You mostly just chat, but the bot also takes slash commands. Send them in a direct message, or in a group where the bot is a member.
+
+| Command | What it does |
+|---|---|
+| `/start` | Show the welcome menu and quick action buttons. |
+| `/wallet` | Connect or manage a wallet. |
+| `/model` | Choose the language model. |
+| `/network` | Switch the blockchain network. |
+| `/settings` | Bot preferences, such as streaming replies. |
+| `/sessions` | Manage conversation threads. |
+| `/apikey` | Set an app key, only needed for a **private** App. See [Keys](#keys). |
+| `/app` | Switch between the Apps attached to this bot. |
+| `/help` | List the available commands. |
+
+<Note>
+If you attached more than one App in Step 2, `/app` lets a user switch between them mid conversation. The bot opens with the **primary** App and each App is listed by name. A bot with a single attached App simply stays on that App.
+</Note>
+
+## Groups
+
+You can add your bot to a Telegram group so a whole channel can use it. Add the bot as a member, then people talk to it by mentioning it. Group behavior (respond to mentions only, or to every message) is a bot setting.
+
+## Keys
+
+A **public** App like Goal Digger needs no key. People can message the bot and use it right away.
+
+A **private** App needs an app key so the bot is allowed to open it. The user sets it in a direct message with `/apikey <key>`, and it is stored for their conversations. You create app keys at `https://chat.aomi.dev/settings` under the **App Keys** tab, scoped to the App they should unlock.
+
+Language model credentials stay on Aomi's side. A Telegram user never pastes an OpenAI or Anthropic key.
+
+## Wallets and transactions
+
+Each person who messages the bot uses their **own** Aomi identity, wallet, and threads. When your App proposes a transaction, the bot walks the user through connecting a wallet and approving it, and the transaction is simulated before it is signed, the same guardrail as everywhere else on Aomi.
+
+## Keeping it live
+
+Your bot is only as live as the App behind it. If the platform bumps the required SDK version, your App can stop loading and the bot will have nothing to answer with. If your bot goes quiet, check the App with `aomi-build deploy status` and redeploy if needed. See [When the platform bumps the SDK](/build/toolchain/aomi-build).
+
+## Advanced: run your own bot
+
+The steps above use Aomi's hosted bots, which is the right path for most Apps. If you are a partner who needs full control (your own infrastructure, custom access policies, group rules), you can run the Telegram bot binary yourself from a `bot.toml` config. That path, its configuration options, and the full command and panel reference live on the [Telegram Bot](/getting-started/telegram) page.
+
+## Next
+
+<CardGroup cols={2}>
+<Card title="Deploy and activate on aomi CLI" href="/build/toolchain/aomi-build">
+Get your App live on Aomi first, or bring it back after an SDK bump.
+</Card>
+<Card title="Deploy a frontend on Vercel" href="/guides/widget/deploy/ship-on-vercel">
+Give the same App a branded web page as well as a bot.
+</Card>
+<Card title="Telegram Bot reference" href="/getting-started/telegram">
+Every command, panel, and the self hosted `bot.toml` configuration.
+</Card>
+<Card title="Common errors" href="/build/common-errors">
+The errors you are most likely to hit, each with its fix.
+</Card>
+</CardGroup>

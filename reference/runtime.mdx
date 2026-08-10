@@ -1,6 +1,6 @@
 ---
 title: Runtime
-description: How the hosted Aomi runtime executes an App turn. Covers App loading, model and tool orchestration, user state, transaction staging, simulation, wallet callbacks, and streaming events.
+description: "Trace an App turn through loading, model and tool orchestration, user state, simulation, wallet callbacks, and streaming events."
 ---
 
 The Aomi runtime is the hosted execution environment for Apps.
@@ -79,7 +79,7 @@ Host capabilities provide runtime-owned actions such as:
 
 Your App declares which host namespaces it needs. A read-only App can use no host namespaces. A wallet-aware App can ask for the EVM host surface.
 
-See [Building an App](/reference/building-apps) and [SDK reference](/reference/sdk-api) for the authoring contract.
+See [Aomi App](/build/plugins/aomi-app) and [Rust SDK](/build/plugins/rust-sdk) for the authoring contract.
 
 ## User state
 
@@ -126,7 +126,7 @@ The important boundary is ownership:
 Staging is not signing. Simulation is not signing. Commit creates a wallet request, but the action is not complete until the wallet callback or chain evidence confirms it.
 </Warning>
 
-For transaction details, see [Simulation Reference](/reference/simulation) and [Non-custodial wallets](/concepts/non-custodial-wallets).
+For transaction details, see [Simulation Reference](/reference/simulation-reference) and [Accounts and wallets](/concepts/accounts-and-wallets).
 
 ## Simulation before signing
 
@@ -183,7 +183,7 @@ See [API Reference](/reference/api-reference#subscribe-to-updates) and [Sessions
 Use this page for the runtime execution model. Use the deeper references when you need a narrower contract:
 
 - [Sessions](/reference/sessions): session IDs, threads, state snapshots, and session APIs.
-- [Simulation Reference](/reference/simulation): transaction simulation and failure handling.
+- [Simulation Reference](/reference/simulation-reference): transaction simulation and failure handling.
 - [API Reference](/reference/api-reference): HTTP endpoints and payloads.
-- [SDK reference](/reference/sdk-api): App authoring, `DynAomiTool`, and `dyn_aomi_app!`.
-- [Builder toolchain](/reference/cli-toolchain): local App testing and toolchain commands.
+- [Rust SDK](/build/plugins/rust-sdk): App authoring, `DynAomiTool`, and `dyn_aomi_app!`.
+- [Builder toolchain](/build/toolchain/aomi-build): local App testing and toolchain commands.

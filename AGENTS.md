@@ -9,8 +9,8 @@
 
 ## Terminology
 
-- Use **Agentic Application** or **App** not "agent" or "bot" for the deployed unit
-- Use **App** (capitalized) not "app" when referring to Aomi Apps
+- Two-word system for the builder surface: a **plugin** is the thing a builder writes (the Rust cdylib the runtime loads dynamically — use for authoring, anatomy, SDK prose); an **App** is the thing they ship (the deployed, user-selectable unit — the word the CLI, `aomi.toml`, portal, and Developer Platform show). Define the bridge once per page at most; never rewrite commands, config keys, or UI labels to say "plugin"
+- Use **App** (capitalized) not "app" when referring to the deployed unit; not "agent" or "bot"
 - Use **non-custodial** not "trustless" or "decentralized"
 - Use **widget** not "chat widget" on first reference, then "widget"
 - Use **headless library** not "SDK" for `@aomi-labs/react`

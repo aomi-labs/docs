@@ -1,36 +1,71 @@
 ---
 title: "Portal"
-description: "The Aomi portal at chat.aomi.dev: a hosted chat where anyone can talk to an Aomi agent, read chain state, and run trades without installing anything."
+description: "Use chat.aomi.dev to inspect chain state and run trades. Aomi builds and simulates each transaction before your wallet signs it."
 ---
 
-The Aomi portal is the hosted chat at [chat.aomi.dev](https://chat.aomi.dev). It is the fastest way to use an Aomi agent. No install, no setup. You open the page, connect a wallet, and start asking.
+The Aomi portal is the hosted chat at [chat.aomi.dev](https://chat.aomi.dev). You can use it without an install or setup. Ask about prices, balances, positions, and routes before connecting a wallet. You only need a wallet when a transaction must be signed.
 
-{/* SCREENSHOT: portal home — drop image here, e.g. <Frame><img src="/images/portal-home.png" alt="Aomi portal home" /></Frame> */}
+<Frame caption="Choose the network, model, and App from the same surface where you describe what should happen onchain.">
+  <img src="/images/chat/portal-home.jpg" alt="The Aomi Chat home screen with network, model, App, and message controls" />
+</Frame>
 
 ## What you can do
 
-- Ask for prices, balances, and routes in plain English.
-- Run a trade end to end: the agent builds it, simulates it, and your wallet signs.
-- Switch the app and chain the agent uses.
+* Ask for prices, balances, positions, and routes in plain English.
+* Run a trade end to end: the agent builds the transaction, simulates it on a fork, and your own wallet signs it. Aomi never holds your keys.
+* Switch the chain, the model, and the app per thread.
+* Install App packages for protocols such as Uniswap, Jupiter, Aave, and Hyperliquid.
+* Keep thread history across visits once you have an account session, with or without a wallet connected.
 
 ## How to use it
 
 <Steps>
   <Step title="Open the portal">
-    Go to [chat.aomi.dev](https://chat.aomi.dev).
+    Go to [chat.aomi.dev](https://chat.aomi.dev). Chat works immediately; read-only questions need no wallet.
   </Step>
-  <Step title="Connect your wallet">
-    Connect the wallet you want to sign with. Aomi stays non-custodial, so your keys never leave your wallet.
+
+  <Step title="Connect a wallet or sign in">
+    Two paths, same account model:
+
+    * **Bring your own wallet.** Use MetaMask, Rabby, Coinbase Wallet, or WalletConnect on EVM chains. On Solana, use a standard wallet-adapter wallet. You prove ownership with a signed message through SIWE on EVM or SIWS on Solana. Keys stay in your wallet.
+    * **Sign in with email or Google.** The portal provisions an embedded wallet so you can trade without installing a wallet extension.
+
+    Either path creates an Aomi account. Your threads, installed packages, and settings attach to it.
   </Step>
+
   <Step title="Ask in plain English">
-    Type what you want, like "swap 1 ETH for USDC". The agent reads the chain, builds the transaction, and simulates it before you sign.
+    Type what you want, like "swap 1 ETH for USDC". The agent reads the chain, builds the transaction, and simulates it on a fork of the target chain before anything reaches your wallet.
   </Step>
+
   <Step title="Review and sign">
-    Read the simulated outcome, then approve the wallet request to send it.
+    The simulated outcome appears in the chat. When you proceed, the signing request goes to your wallet. The agent proposes the transaction, and only your key signs it. Aomi's fee is appended to the same simulated batch, so the signed batch matches the simulation. Reject the wallet prompt and nothing happens onchain.
   </Step>
 </Steps>
 
-{/* SCREENSHOT: a live trade in the portal — drop image here */}
+## The chat surface
+
+* **Network picker (header).** Set the chain for the thread. EVM options include Ethereum, Base, Arbitrum, Optimism, Polygon, Linea, Monad, MegaETH, Robinhood Chain, and their common testnets. Solana options include mainnet, devnet, and testnet. The portal changes the cluster before a Solana signing request when needed.
+* **Model selector (composer).** Choose the model or leave it on **Auto**.
+* **App selector (composer).** Scope the thread to one App or let the agent route across your installed packages.
+* **Packages catalog.** Browse and install Apps for DeFi execution, market data, chain explorers, and productivity tools. Core wallet and chain tools are always installed.
+* **Thread history.** Threads persist on your account and load with an account session, even when no wallet is connected. Without an account, threads remain only in the current tab.
+
+## Signing policy
+
+Settings → Account is the signing ACL for every wallet on your account. Each wallet carries one of four committed settings:
+
+* **Manual.** Every transaction opens your wallet for approval. The default for a newly linked wallet.
+* **Accept transactions.** Your connected wallet session signs each transaction without a separate popup. Aomi never receives the private key.
+* **Bypass permissions.** Unattended signing for scheduled or background work, through a Privy delegation or a provisioned Para agent wallet. Requires a separate provider authorization; revocable at any time.
+* **Locked.** The wallet stays linked but cannot sign through Aomi.
+
+Mode changes are never optimistic: each one asks a wallet to sign a short-lived authorization, and the committed setting is what you see reflected in the UI. See [Configure approvals](/security/configure-approvals) for the full setup and revocation guide, and [Signing](/security/signing) for what each setting feels like at transaction time. Settings → Usage shows your spend statement broken down by app.
+
+## Limits
+
+* Simulation covers EVM chains. Solana requests are signed and sent without a fork simulation. Review the transaction details in your wallet.
+* If simulation cannot complete (unsupported chain, zero balance), the portal tells you it is proceeding without a fee preview and still lets your wallet make the final call.
+* Unattended signing (**Bypass permissions**) requires a live provider authorization — a Privy delegation or a Para agent wallet. Without one, wallets prompt or auto-approve only within your own connected session.
 
 ## Next
 
@@ -38,6 +73,7 @@ The Aomi portal is the hosted chat at [chat.aomi.dev](https://chat.aomi.dev). It
   <Card title="How execution works" icon="gears" href="/trade/execution">
     What happens between your message and the confirmed transaction.
   </Card>
+
   <Card title="Overview" icon="arrow-right-arrow-left" href="/trade">
     What trading on Aomi is and which chains it covers.
   </Card>

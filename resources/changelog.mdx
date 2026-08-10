@@ -1,6 +1,6 @@
 ---
 title: "Changelog"
-description: "Aomi platform changelog: track major surface area changes, SDK and widget releases, runtime updates, new integrations, and current development priorities."
+description: "Follow Aomi SDK, widget, runtime, and integration updates, with a record of major product changes and current priorities."
 ---
 
 Track significant changes to the Aomi platform, SDK, widget, and runtime. For day-to-day fixes, see the [GitHub releases](https://github.com/aomi-labs).
@@ -28,7 +28,7 @@ The Build path now matches the live platform.
 
 **Added**
 
-- **Deploy from the portal.** A no-code walkthrough at [Deploy and activate](/build/deploy-cli): sign in at the settings page, then Dry run, Deploy, and Activate.
+- **Deploy from the portal.** A no-code walkthrough at [Deploy and activate](/build/toolchain/aomi-build): sign in at the settings page, then Dry run, Deploy, and Activate.
 - **Verified on stamps** on the Build reference pages, showing the exact `aomi-sdk` commit each page was checked against.
 
 **Fixed**
@@ -43,9 +43,9 @@ Smoother UX without compromising custody.
 
 **Added**
 
-- **Account abstraction support.** Session keys for repeated actions without re-signing, gas sponsorship via paymasters, and batched operations in a single user-op. See [Account Abstraction](/reference/account-abstraction).
+- **Account abstraction support.** EIP-4337 and EIP-7702 execution can batch calls into one operation and request network-gas sponsorship. See [Account abstraction](/concepts/account-abstraction).
 - **Telegram bot panel system.** Interactive panels for transaction review and tool output, including approve/reject flows for onchain actions.
-- **`@aomi-labs/client` CLI GA.** Full reference at [CLI Reference](/reference/cli); validate prompts, inspect sessions, and simulate execution locally.
+- **`@aomi-labs/client` CLI GA.** Full reference at [CLI Reference](/reference/client-cli); validate prompts, inspect sessions, and simulate execution locally.
 
 **Changed**
 
@@ -61,7 +61,7 @@ The frontend story lands.
 
 - **Widget GA via shadcn registry.** `npx shadcn add https://aomi.dev/r/aomi-frame.json` installs `AomiFrame` and all sub-components. Source is copied into your project; you own and edit it.
 - **`@aomi-labs/react` headless library.** `AomiRuntimeProvider`, `useAomiRuntime`, `useControl`, `useUser`, and the `AomiClient` client for building custom UIs.
-- **Simulation pipeline with Anvil fork management.** Every transaction simulated on a forked network before reaching the wallet. See [Simulation Reference](/reference/simulation).
+- **Simulation pipeline with Anvil fork management.** Every transaction simulated on a forked network before reaching the wallet. See [Simulation Reference](/reference/simulation-reference).
 - **Compound component API.** `AomiFrame.Root`, `AomiFrame.Header`, `AomiFrame.Composer` for custom layouts.
 
 **Changed**
@@ -82,7 +82,7 @@ The runtime gets real.
 
 **Changed**
 
-- Sessions are now keyed by `X-Session-Id` UUID with separate `AOMI-APP-KEY` for App scoping. See [Apps & Authentication](/reference/apps-auth).
+- Sessions are now keyed by `X-Session-Id` UUID with separate `AOMI-APP-KEY` for App scoping. See [Apps & Authentication](/reference/apps-and-authentication).
 
 ---
 
@@ -102,5 +102,5 @@ Aomi opens to early users.
 ## Next steps
 
 - [FAQ](/resources/faq): frequently asked questions
-- [What is Aomi?](/concepts/what-is-aomi): platform overview
-- [Quickstart](/getting-started/quickstart): install in minutes
+- [What is Aomi?](/build/overview): platform overview
+- [Client CLI](/reference/client-cli): install and use the aomi command

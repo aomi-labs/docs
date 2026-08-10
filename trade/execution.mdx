@@ -1,6 +1,6 @@
 ---
 title: "How execution works"
-description: "The Aomi transaction lifecycle: simulate on a forked chain, stage a wallet request, sign, broadcast, and confirm. Non-custodial throughout."
+description: "Follow an onchain action from build and simulation through wallet approval, broadcast, and confirmation. Signing remains non-custodial."
 ---
 
 Every transaction Aomi sends follows the same safe path. The agent never signs for you and never broadcasts a transaction you have not simulated. Here is the full lifecycle.
@@ -70,7 +70,7 @@ The CLI is one shot per command. Each `aomi` command starts, runs, and exits. It
   </Step>
 </Steps>
 
-For the complete command surface, flags, and environment variables, see the [aomi CLI reference](/reference/cli).
+For the complete command surface, flags, and environment variables, see [Commands and configuration](/reference/client-cli/commands).
 
 ## Safety rules the agent follows
 
@@ -98,7 +98,7 @@ aomi tx sign tx-1 --aa --aa-provider alchemy --aa-mode 7702
 aomi tx sign tx-1 --eoa
 ```
 
-`--aa` and `--eoa` are mutually exclusive. You cannot combine `--aa-provider` or `--aa-mode` with `--eoa`. See the [aomi CLI reference](/reference/cli#signing-modes) for the full signing surface.
+`--aa` and `--eoa` are mutually exclusive. You cannot combine `--aa-provider` or `--aa-mode` with `--eoa`. See [Transactions and signing](/reference/client-cli/transactions-and-signing#signing) for the full signing surface.
 
 ## Why simulation comes first
 
