@@ -34,7 +34,7 @@
         "icon": "hammer",
         "pages": [
           "build/overview",
-          "build/quickstart",
+          "build/first-app",
           {
             "group": "Plugins",
             "icon": "puzzle",
