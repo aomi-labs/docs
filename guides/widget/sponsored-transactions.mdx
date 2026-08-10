@@ -1,0 +1,37 @@
+---
+title: "Sponsored Transactions"
+description: "Understand backend-owned ERC-4337 execution, fees, approval, and confirmation."
+---
+
+For Apps configured for sponsored account abstraction, Aomi owns transaction preparation and broadcast.
+
+## Execution flow
+
+1. Aomi assembles the complete application batch.
+2. Aomi adds the required fee and simulates the final calls.
+3. The widget displays the calls, fee, owner, executor, and network.
+4. The wallet signs the ordered requests.
+5. Aomi sponsors and broadcasts the stored ERC-4337 operation.
+6. The widget reports confirmation or failure.
+
+```mermaid
+sequenceDiagram
+    participant Widget
+    participant Wallet
+    participant Aomi
+    participant Network
+
+    Aomi-->>Widget: "Final calls, fees, and signature requests"
+    Widget->>Wallet: "Display and request approval"
+    Wallet-->>Widget: "Owner signatures only"
+    Widget->>Aomi: "Submit signatures"
+    Aomi->>Network: "Sponsor and broadcast"
+    Network-->>Aomi: "Confirmed receipt"
+    Aomi-->>Widget: "Confirmed"
+```
+
+<Info>
+  The widget never constructs or broadcasts a sponsored operation. If Aomi does not broadcast it, the operation is not sponsored.
+</Info>
+
+There is no direct-wallet or unsponsored fallback for an App that requires Aomi-sponsored execution.

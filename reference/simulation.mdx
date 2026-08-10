@@ -57,7 +57,7 @@ An App never broadcasts a transaction directly. It stages each transaction, asks
 
 The order is always the same: **stage first, then `simulate_batch`, then commit**. Because each staged transaction sees the state changes from the ones before it, an approve-then-swap pair simulates correctly as a batch.
 
-For the full host capability contract, see [Building Apps](/reference/building-apps).
+For the full host capability contract, see [Building Apps](/build/plugins/anatomy).
 
 ## Transaction Simulation
 
@@ -184,5 +184,5 @@ flowchart LR
 ## Next Steps
 
 - [Non-Custodial Automation](/concepts/non-custodial-wallets): wallet security model
-- [Building Apps](/reference/building-apps): host tool contract for staging and committing
+- [Building Apps](/build/plugins/anatomy): host tool contract for staging and committing
 - [Execution](/trade/execution): transaction lifecycle from simulation to settlement

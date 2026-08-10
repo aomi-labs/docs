@@ -1,11 +1,11 @@
 ---
-title: SDK reference
-description: Rust reference for the Aomi plugin SDK. Build an App as a cdylib plugin with typed tools, the DynAomiTool trait, the dyn_aomi_app! macro, secrets, host namespaces, and the runtime hot load model.
+title: Rust SDK
+description: Rust reference for the Aomi plugin SDK. Build a plugin as a cdylib with typed tools, the DynAomiTool trait, the dyn_aomi_app! macro, secrets, host namespaces, and the runtime hot load model.
 ---
 
 <Info>Verified against aomi-sdk@08b21f9 on 2026-06-29.</Info>
 
-The Aomi SDK is a Rust crate for building **Apps**. An App is a dynamic plugin that the Aomi runtime hot loads at runtime as a shared library (`cdylib`) over a stable C ABI. You write typed tools in Rust, compile to a `.so` (Linux) or `.dylib` (macOS), and the runtime loads it without a restart.
+The Aomi SDK is a Rust crate for building **plugins**. A plugin is a shared library (`cdylib`) that the Aomi runtime hot loads over a stable C ABI. You write typed tools in Rust, compile the plugin to a `.so` (Linux) or `.dylib` (macOS), and the runtime loads it without a restart. Deployed on the runtime, a plugin is what Aomi calls an App.
 
 <Note>
 This is the public plugin surface. You build against the `aomi-sdk` crate, and your tools cross the FFI boundary as JSON. The runtime and loader are not part of this crate, so you never link against host internals. The compatibility gate is the SDK version: the host and your plugin must build against the same `aomi-sdk` version.
@@ -13,7 +13,7 @@ This is the public plugin surface. You build against the `aomi-sdk` crate, and y
 
 ## The four pieces
 
-A minimal App needs four things:
+A minimal plugin needs four things:
 
 <Steps>
 <Step title="An app struct">
@@ -94,7 +94,7 @@ serde_json = "1"
 ```
 
 <Note>
-Pin `aomi-sdk` exactly (`=3.0.3`), not with a caret range. The runtime gates plugin loading on an exact SDK version match, so the pin must equal the platform's `required_sdk_version` (see `platform.json` in the platform repo). A mismatch fails before your App ever loads.
+Pin `aomi-sdk` exactly (`=3.0.3`), not with a caret range. The runtime gates plugin loading on an exact SDK version match, so the pin must equal the platform's `required_sdk_version` (see `platform.json` in the platform repo). A mismatch fails before your plugin ever loads.
 </Note>
 
 <Warning>
@@ -128,7 +128,7 @@ pub trait DynAomiTool: Send + Sync + 'static {
 
 | Member | What it is |
 | --- | --- |
-| `type App` | The app struct this tool belongs to. Ties the tool to one App. |
+| `type App` | The app struct this tool belongs to. Ties the tool to one plugin. |
 | `type Args` | Your typed args struct. Must derive `Deserialize` and `JsonSchema`. |
 | `NAME` | The unique tool name the LLM calls, such as `get_token_price`. |
 | `DESCRIPTION` | One line shown to the LLM for tool selection. Write it for the model. |
@@ -139,7 +139,7 @@ pub trait DynAomiTool: Send + Sync + 'static {
 The runtime auto generates each tool's parameter schema from `Args` using `JsonSchema`. You do not write JSON Schema by hand.
 
 <Tip>
-Prefer intent shaped names like `search_*`, `get_*`, `build_*`, and `submit_*` over raw endpoint wraps. Keep the set small. Three to eight tools per App is typical for a clean workflow.
+Prefer intent shaped names like `search_*`, `get_*`, `build_*`, and `submit_*` over raw endpoint wraps. Keep the set small. Three to eight tools per plugin is typical for a clean workflow.
 </Tip>
 
 ### The tool context
@@ -197,7 +197,7 @@ Intermediate `emit` updates must be bare values. The terminal `complete` call is
 
 ## The `dyn_aomi_app!` macro
 
-`dyn_aomi_app!` is the one macro you call per App. It wires your tools into a dispatch router, builds the plugin manifest the host reads, and generates the FFI exports the runtime calls across the C ABI. You do not implement `DynAomiApp` or any C function by hand.
+`dyn_aomi_app!` is the one macro you call per plugin. It wires your tools into a dispatch router, builds the plugin manifest the host reads, and generates the FFI exports the runtime calls across the C ABI. You do not implement `DynAomiApp` or any C function by hand.
 
 ```rust
 aomi_sdk::dyn_aomi_app!(
@@ -215,15 +215,15 @@ aomi_sdk::dyn_aomi_app!(
 | --- | --- |
 | `app` | Your app struct. |
 | `name` | The App key the runtime uses, such as `"defi"`. |
-| `version` | Semver string for this App, such as `"0.1.0"`. |
+| `version` | Semver string for this plugin, such as `"0.1.0"`. |
 | `preamble` | The system prompt injected into the LLM context for this App. |
 | `tools` | The list of tool structs to register. |
-| `secrets` | Optional. The named credentials this App declares. See below. |
-| `namespaces` | Host namespaces this App needs. Defaults to `["evm-core"]`. |
+| `secrets` | Optional. The named credentials this plugin declares. See below. |
+| `namespaces` | Host namespaces this plugin needs. Defaults to `["evm-core"]`. |
 
 ## Secrets
 
-If your App needs external credentials, declare them as `Secret` slots. Each slot has a canonical name in `SCREAMING_SNAKE_CASE`, a one sentence description shown in the settings UI, and a `required` flag.
+If your plugin needs external credentials, declare them as `Secret` slots. Each slot has a canonical name in `SCREAMING_SNAKE_CASE`, a one sentence description shown in the settings UI, and a `required` flag.
 
 ```rust
 use aomi_sdk::Secret;
@@ -272,12 +272,12 @@ let key = aomi_sdk::resolve_secret_value(
 
 ## Host namespaces
 
-The `namespaces` field lists host side capability sets the runtime injects alongside your own tools. The default is `["evm-core"]`, which most Apps want for EVM wallet flows.
+The `namespaces` field lists host side capability sets the runtime injects alongside your own tools. The default is `["evm-core"]`, which most plugins want for EVM wallet flows.
 
 | You want to… | Set namespaces to |
 | --- | --- |
 | Use the default EVM wallet flow | omit the field, or `["evm-core"]` |
-| Ship a namespace only App (no wallet flow) | `["database"]` |
+| Ship a namespace only plugin (no wallet flow) | `["database"]` |
 | Opt out of host namespaces entirely | `[]` |
 
 ## How the runtime hot loads your plugin
@@ -331,7 +331,7 @@ let ctx = TestCtxBuilder::new("place_order")
 
 ## A full example, start to finish
 
-A minimal greeter App, straight from the crate docs:
+A minimal greeter plugin, straight from the crate docs:
 
 ```rust
 use aomi_sdk::{DynAomiTool, DynToolCallCtx};
@@ -371,15 +371,15 @@ aomi_sdk::dyn_aomi_app!(
 );
 ```
 
-The reference template at `sdk/examples/app-template-http` in the `aomi-labs/aomi-sdk` repo shows the recommended file split for a real App: `src/lib.rs` for the manifest and preamble, `src/client.rs` for the HTTP client and typed args, and `src/tool.rs` for the tool implementations.
+The reference template at `sdk/examples/app-template-http` in the `aomi-labs/aomi-sdk` repo shows the recommended file split for a real plugin: `src/lib.rs` for the manifest and preamble, `src/client.rs` for the HTTP client and typed args, and `src/tool.rs` for the tool implementations.
 
 ## Next steps
 
 <CardGroup cols={2}>
-<Card title="Building an App" icon="hammer" href="/reference/building-apps">
-The full workflow for authoring, structuring, and publishing an App.
+<Card title="Plugin anatomy" icon="hammer" href="/build/plugins/anatomy">
+The full workflow for authoring, structuring, and publishing a plugin.
 </Card>
-<Card title="CLI toolchain" icon="terminal" href="/reference/cli-toolchain">
+<Card title="CLI toolchain" icon="terminal" href="/build/toolchain/aomi-build">
 `aomi-build` to scaffold, compile, and deploy plugins, and `aomi-run` to exercise them locally.
 </Card>
 </CardGroup>

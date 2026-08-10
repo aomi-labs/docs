@@ -1,0 +1,226 @@
+---
+title: "Customization"
+description: "Customize AomiWidget with props, themes, source components, or the headless React library."
+---
+
+Start with `AomiWidget`, then take ownership of more of the interface only when your product needs it.
+
+## Choose your customization level
+
+| Level | You own | Aomi provides |
+| --- | --- | --- |
+| Widget props | Placement and visible controls | Complete UI, runtime, and wallets |
+| Themes | Brand colors and visual tokens | Component structure and behavior |
+| `AomiFrame` | Component composition | Chat, threads, and wallet components |
+| shadcn source | The copied component source | A production starting point |
+| Headless library | The complete interface | State, runtime, and React hooks |
+
+## Configure AomiWidget
+
+Use presentation props to fit the widget into a page, panel, or modal.
+
+```tsx
+<AomiWidget
+  applicationId="123"
+  apiUrl="https://chat.aomi.dev"
+  auth={{ kind: "browser_wallet" }}
+  width="100%"
+  height="min(780px, calc(100dvh - 160px))"
+  showSidebar
+  showHeader
+  walletPosition="footer"
+/>
+```
+
+| Prop | Purpose |
+| --- | --- |
+| `width`, `height` | Size the widget container |
+| `className`, `style` | Add application-specific layout styles |
+| `showSidebar` | Show or hide thread navigation |
+| `showHeader` | Show or hide the widget header |
+| `walletPosition` | Place the wallet control in the header, footer, or outside the frame |
+| `wallets` | Limit presented wallets, chains, and networks |
+| `persistThread` | Restore the active thread after a reload |
+
+These props change presentation. The Application ID continues to control App identity, execution, sponsorship, and fees on the server.
+
+## Apply themes and styles
+
+Import the default stylesheet once:
+
+```tsx
+import "@aomi-labs/widget-lib/styles.css";
+```
+
+Then override its CSS variables in your application stylesheet. Keep transaction warnings, fees, owner addresses, and confirmation states visually distinct when changing colors.
+
+## Compose with AomiFrame
+
+Use the compound API when the standard widget layout is close to what you need, but you want to rearrange its sections.
+
+```tsx
+import { AomiFrame } from "@aomi-labs/widget-lib";
+
+<AomiFrame.Root
+  backendUrl="https://chat.aomi.dev"
+  applicationId="123"
+  height="720px"
+  showSidebar={false}
+>
+  <AomiFrame.Header showSidebarTrigger={false} />
+  <AomiFrame.Composer
+    withControl
+    welcomeTitle="How can I help?"
+  />
+</AomiFrame.Root>;
+```
+
+`AomiFrame` provides the chat surface and runtime. If you use it outside `AomiWidget`, your application must supply the surrounding authentication and account integration.
+
+## Own the source with shadcn
+
+Copy the widget components into your repository when you need to change markup or component behavior:
+
+```bash
+npx shadcn add https://aomi.dev/r/aomi-widget.json
+```
+
+Copied components become application code. Review registry updates before overwriting local changes.
+
+## Build a headless UI
+
+Choose the headless library when props, themes, composition, and copied components are not enough. Aomi continues to provide thread, chat, user, event, notification, and wallet-request state. You provide every visible interaction.
+
+### Install the library
+
+```bash
+npm install @aomi-labs/react @assistant-ui/react
+```
+
+### Add the runtime provider
+
+```tsx
+import { AomiRuntimeProvider } from "@aomi-labs/react";
+
+export function Providers({ children }: { children: React.ReactNode }) {
+  return (
+    <AomiRuntimeProvider
+      backendUrl="https://chat.aomi.dev"
+      applicationId="123"
+    >
+      {children}
+    </AomiRuntimeProvider>
+  );
+}
+```
+
+### Your responsibilities
+
+A headless interface must provide:
+
+- Thread navigation and message rendering.
+- Composer, streaming, cancellation, and error states.
+- Wallet connection and network selection.
+- Transaction-call and fee disclosure.
+- Explicit approval and rejection controls.
+- Owner and network validation before signing.
+- Submitted, confirmed, expired, and failed operation states.
+
+<Warning>
+  For backend-owned sponsored execution, returning a generic transaction result is not enough. Your interface must follow the operation-specific signing contract and return only the requested owner signatures. Prefer `AomiWidget` unless you need to own this full approval experience.
+</Warning>
+
+## Hooks
+
+All hooks must run beneath `AomiRuntimeProvider`.
+
+### Chat and threads
+
+| Hook | Purpose |
+| --- | --- |
+| `useAomiRuntime` | Unified chat, thread, user, notification, event, and wallet API |
+| `useThreadContext` | Low-level thread state and operations |
+| `useCurrentThreadMessages` | Messages for the active thread |
+| `useCurrentThreadMetadata` | Metadata for the active thread |
+
+### User, wallets, and controls
+
+| Hook | Purpose |
+| --- | --- |
+| `useUser` | Canonical user and wallet state |
+| `useWalletHandler` | Transaction and signature request queue |
+| `useControl` | Combined App, model, API-key, and secret controls |
+| `useApiKey` | API-key state and actions |
+| `useAuthEndpoints` | Available Apps and models |
+| `usePerThreadControl` | Per-thread App and model selection |
+
+### Events and notifications
+
+| Hook | Purpose |
+| --- | --- |
+| `useEventContext` | SSE subscriptions and outbound events |
+| `useNotification` | Notice, success, wallet, and error messages |
+
+`pendingWalletRequests` is a discriminated union. Narrow on `request.kind` before reading its payload. Use the exported TypeScript types as the source of truth for complete signatures and payloads.
+
+## Complete custom UI example
+
+This starter owns message rendering, the composer, cancellation, and the visible wallet-request count:
+
+```tsx
+"use client";
+
+import { useState, type FormEvent } from "react";
+import { useAomiRuntime } from "@aomi-labs/react";
+
+export function CustomChat() {
+  const [input, setInput] = useState("");
+  const {
+    currentThreadId,
+    getMessages,
+    sendMessage,
+    isRunning,
+    cancelGeneration,
+    pendingWalletRequests,
+  } = useAomiRuntime();
+
+  const messages = getMessages(currentThreadId);
+
+  async function submit(event: FormEvent) {
+    event.preventDefault();
+    const text = input.trim();
+    if (!text || isRunning) return;
+    setInput("");
+    await sendMessage(text);
+  }
+
+  return (
+    <main>
+      <section aria-live="polite">
+        {messages.map((message, index) => (
+          <article key={index} data-role={message.role}>
+            <strong>{message.role}</strong>
+          </article>
+        ))}
+      </section>
+
+      <form onSubmit={submit}>
+        <input
+          value={input}
+          onChange={(event) => setInput(event.target.value)}
+          disabled={isRunning}
+        />
+        {isRunning ? (
+          <button type="button" onClick={cancelGeneration}>Stop</button>
+        ) : (
+          <button type="submit">Send</button>
+        )}
+      </form>
+
+      <p>{pendingWalletRequests.length} actions need review</p>
+    </main>
+  );
+}
+```
+
+Add an approval component for every wallet-request kind your App can produce. For sponsored execution, show the calls, mandatory fees, owner, executor, network, and terminal status.

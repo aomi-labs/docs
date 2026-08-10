@@ -1,11 +1,11 @@
 ---
 title: Evals and testing
-description: Learn how to test tool behavior, App conversations, wallet flows, and AomiBench-style outcomes.
+description: Test tool behavior in your plugin, full App conversations, wallet flows, and AomiBench-style outcomes.
 ---
 
 Good tests do more than check for a plausible answer. They prove the App did the right thing for the user.
 
-Start close to your code. Test each custom tool on its own, then test full App conversations with realistic prompts. For wallet and transaction-heavy integrations, Aomi can also run forked-chain validation and AomiBench internally.
+Start close to your code. Test each tool in your plugin on its own, then test full App conversations with realistic prompts. For wallet and transaction-heavy integrations, Aomi can also run forked-chain validation and AomiBench internally.
 
 <Note>
 You do not need AomiBench to build or launch an App. It is Aomi's internal evaluation system for model comparison, safety validation, and research.
@@ -29,7 +29,7 @@ Use the smallest layer that proves the behavior you care about.
 
 ## What to test before launch
 
-Before you ship an App, you should have:
+Before you ship a plugin, you should have:
 
 - Unit tests for important custom tools.
 - At least one realistic `test.json` journey.
@@ -58,7 +58,7 @@ For a deployed App, test through the backend. You may need an App API key for pr
 
 ## Tool unit tests
 
-Use Rust SDK testing helpers to test a custom tool without loading the full App plugin.
+Use Rust SDK testing helpers to test a custom tool without loading the full plugin.
 
 The `aomi_sdk::testing` module provides:
 
@@ -95,7 +95,7 @@ These tests cover tool descriptors, argument parsing, returned values, routed to
 
 Use App e2e tests when you need to check a realistic user journey, not only one tool call.
 
-Each App can carry a `test.json` file. It describes:
+Each plugin can carry a `test.json` file. It describes:
 
 - the user story
 - optional wallet seed state
@@ -142,7 +142,7 @@ For a read-only App, a realistic `test.json` can stay small:
 }
 ```
 
-See [Builder toolchain](/reference/cli-toolchain#the-end-to-end-test) for the `test.json` runner and full shape.
+See [Builder toolchain](/build/toolchain/aomi-build#the-end-to-end-test) for the `test.json` runner and full shape.
 
 ### Chain context
 
@@ -245,7 +245,7 @@ Avoid examples that only test Aomi's harness, such as generic balance checks or 
 
 ## Next steps
 
-- [Custom tools](/guides/custom-tools): define and test tool behavior
-- [Builder toolchain](/reference/cli-toolchain): run App e2e tests
+- [Custom tools](/build/plugins/custom-tools): define and test tool behavior
+- [Builder toolchain](/build/toolchain/aomi-build): run App e2e tests
 - [Simulation](/reference/simulation): understand how Aomi simulates transactions
-- [Building Apps](/reference/building-apps): build and package an App
+- [Plugin anatomy](/build/plugins/anatomy): build and package a plugin

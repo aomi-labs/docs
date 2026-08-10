@@ -25,7 +25,6 @@ Integration walkthroughs for builders:
 
 | Page | What it covers |
 |------|---------------|
-| `guides/integration.mdx` | Full-stack pipeline — APIs → tools → app → deploy |
 | `guides/frontend-setup.mdx` | Widget install walkthrough — shadcn, env vars, AomiFrame, layout |
 | `guides/widget-installation.mdx` | shadcn registry install, compound components, control bar |
 | `guides/widget/aomi-frame.mdx` | AomiFrame props, compound API, layout diagram |

@@ -15,9 +15,10 @@
         "group": "Try Aomi",
         "icon": "rocket",
         "pages": [
-          "getting-started/quickstart",
-          "reference/cli",
-          "getting-started/playground"
+          "trade/portal",
+          "guides/mcp",
+          "guides/skills",
+          "reference/cli"
         ]
       },
       {
@@ -26,13 +27,46 @@
         "pages": [
           "build/index",
           "build/quickstart",
-          "reference/building-apps",
-          "reference/sdk-api",
-          "reference/cli-toolchain",
-          "build/deploy-cli",
-          "build/frontend-vercel",
-          "build/telegram-bot",
-          "build/common-errors"
+          {
+            "group": "Plugins",
+            "icon": "puzzle",
+            "pages": [
+              "build/plugins/anatomy",
+              "build/plugins/sdk",
+              "build/plugins/custom-tools",
+              "build/plugins/evals"
+            ]
+          },
+          {
+            "group": "Builder Toolchain",
+            "icon": "wrench",
+            "pages": [
+              "build/platform",
+              "build/toolchain/aomi-build",
+              "build/toolchain/aomi-run"
+            ]
+          },
+          {
+            "group": "Widget Library",
+            "icon": "window",
+            "pages": [
+              "guides/widget/index",
+              "guides/widget/installation",
+              "guides/widget/sponsored-transactions",
+              "guides/widget/customization",
+              "guides/widget/deploy/vercel",
+              "guides/widget/troubleshooting"
+            ]
+          },
+          {
+            "group": "Channels",
+            "icon": "paper-plane",
+            "pages": [
+              "build/telegram-bot"
+            ]
+          },
+          "build/common-errors",
+          "getting-started/playground"
         ]
       },
       {
@@ -40,8 +74,7 @@
         "icon": "arrow-right-arrow-left",
         "pages": [
           "trade/index",
-          "trade/execution",
-          "trade/portal"
+          "trade/execution"
         ]
       },
       {
@@ -49,38 +82,6 @@
         "icon": "robot",
         "pages": [
           "skills/index"
-        ]
-      },
-      {
-        "group": "Integrations",
-        "icon": "puzzle",
-        "pages": [
-          "guides/integration",
-          {
-            "group": "Widget",
-            "icon": "window",
-            "pages": [
-              "guides/frontend-setup",
-              "guides/widget-installation"
-            ]
-          },
-          {
-            "group": "Headless",
-            "icon": "code",
-            "pages": [
-              "guides/headless-library",
-              "guides/headless/hooks",
-              "guides/headless/build-custom-ui"
-            ]
-          },
-          {
-            "group": "Backend",
-            "icon": "server",
-            "pages": [
-              "guides/custom-tools",
-              "guides/evals-testing"
-            ]
-          }
         ]
       },
       {
@@ -103,6 +104,9 @@
           "concepts/how-it-works",
           "concepts/architecture",
           "concepts/non-custodial-wallets",
+          "concepts/signing-policy",
+          "concepts/background-execution",
+          "concepts/payments",
           "concepts/security",
           "concepts/skills",
           "concepts/glossary"
@@ -143,8 +147,80 @@
   },
   "redirects": [
     {
+      "source": "/guides/widget/headless",
+      "destination": "/guides/widget/customization#build-a-headless-ui"
+    },
+    {
+      "source": "/guides/widget/headless/build-custom-ui",
+      "destination": "/guides/widget/customization#complete-custom-ui-example"
+    },
+    {
+      "source": "/guides/widget/headless/hooks",
+      "destination": "/guides/widget/customization#hooks"
+    },
+    {
+      "source": "/guides/widget/authentication",
+      "destination": "/guides/widget/installation#cross-origin-authentication"
+    },
+    {
+      "source": "/guides/frontend-setup",
+      "destination": "/guides/widget"
+    },
+    {
+      "source": "/guides/widget-installation",
+      "destination": "/guides/widget/installation"
+    },
+    {
+      "source": "/guides/headless-library",
+      "destination": "/guides/widget/customization#build-a-headless-ui"
+    },
+    {
+      "source": "/guides/headless/hooks",
+      "destination": "/guides/widget/customization#hooks"
+    },
+    {
+      "source": "/guides/headless/build-custom-ui",
+      "destination": "/guides/widget/customization#complete-custom-ui-example"
+    },
+    {
+      "source": "/build/frontend-vercel",
+      "destination": "/guides/widget/deploy/vercel"
+    },
+    {
+      "source": "/guides/integration",
+      "destination": "/concepts/how-it-works"
+    },
+    {
+      "source": "/getting-started/quickstart",
+      "destination": "/reference/cli"
+    },
+    {
       "source": "/build/deploy",
-      "destination": "/build/deploy-cli"
+      "destination": "/build/toolchain/aomi-build"
+    },
+    {
+      "source": "/build/deploy-cli",
+      "destination": "/build/toolchain/aomi-build"
+    },
+    {
+      "source": "/reference/cli-toolchain",
+      "destination": "/build/toolchain/aomi-build"
+    },
+    {
+      "source": "/reference/building-apps",
+      "destination": "/build/plugins/anatomy"
+    },
+    {
+      "source": "/reference/sdk-api",
+      "destination": "/build/plugins/sdk"
+    },
+    {
+      "source": "/guides/custom-tools",
+      "destination": "/build/plugins/custom-tools"
+    },
+    {
+      "source": "/guides/evals-testing",
+      "destination": "/build/plugins/evals"
     },
     {
       "source": "/guides/cli-usage",
@@ -193,7 +269,7 @@
     "primary": {
       "type": "button",
       "label": "Get Started",
-      "href": "/getting-started/quickstart"
+      "href": "/reference/cli"
     }
   },
   "contextual": {

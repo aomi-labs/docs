@@ -1,21 +1,23 @@
 ---
-title: "Building an App"
-description: "How an Aomi App is built. The standard crate file split, the aomi.toml manifest, the preamble, tools, and host namespaces. Authoring only; compiling and shipping link forward."
+title: "Plugin anatomy"
+description: "How an Aomi plugin is put together. The standard crate file split, the aomi.toml manifest, the preamble, tools, and host namespaces. Authoring only; compiling and shipping link forward."
 ---
 
 <Info>Verified against aomi-sdk@08b21f9 on 2026-06-29.</Info>
 
-This page is about **authoring** an Aomi App: how the crate is laid out, what goes in each file, and how you wire it together. An App is a Rust crate that compiles to a dynamic plugin the Aomi runtime hot loads. It wraps an external API as a small set of typed tools, ships a preamble that tells the model how to use them, and declares which host capabilities it needs.
+Plugins extend the harness beyond pure onchain execution: wrap an order book, a prediction-market API, a data feed, or a search service, and your APIs become tools the agent can call. This page is about **authoring** a plugin: how the crate is laid out, what goes in each file, and how you wire it together.
+
+A plugin is a Rust crate that compiles to a shared library the Aomi runtime hot loads. It wraps an external API as a small set of typed tools, ships a preamble that tells the model how to use them, and declares which host capabilities it needs. Once deployed and live on the runtime, the plugin becomes an **App** — the word the CLI, `aomi.toml`, and the Developer Platform use for the deployed, user-selectable unit.
 
 When you are ready to compile and ship, follow the forward links at the bottom of this page. This page does not cover the build or deploy steps.
 
 <Note>
-  Throughout this page, **App** (capitalized) means the deployed unit: a `cdylib` crate the runtime loads. The earlier docs talked about `aomi_chat::CoreAppBuilder`. That is an internal runtime crate and is not how you author a plugin. The real authoring model is the one below: the `dyn_aomi_app!` macro plus the `DynAomiTool` trait from the public `aomi-sdk` crate.
+  The earlier docs talked about `aomi_chat::CoreAppBuilder`. That is an internal runtime crate and is not how you author a plugin. The real authoring model is the one below: the `dyn_aomi_app!` macro plus the `DynAomiTool` trait from the public `aomi-sdk` crate.
 </Note>
 
 ## What you are building
 
-The Aomi SDK lets you wrap any crypto API as a dynamic plugin. The runtime loads your compiled plugin and routes chat to it. The apps in the SDK repo show the range you can cover:
+The Aomi SDK lets you wrap any external API as a plugin. The runtime loads your compiled plugin and routes chat to it. The plugins in the SDK repo show the range you can cover:
 
 <CardGroup cols={2}>
   <Card title="DeFi protocols" icon="coins">
@@ -37,7 +39,7 @@ The Aomi SDK lets you wrap any crypto API as a dynamic plugin. The runtime loads
 
 ## The standard file split
 
-Every App follows the same layout across three files. Keep this split even for small apps. It keeps the surface the model sees easy to scan and keeps API details out of your tool logic.
+Every plugin follows the same layout across three files. Keep this split even for small plugins. It keeps the surface the model sees easy to scan and keeps API details out of your tool logic.
 
 ```text
 my-app/
@@ -59,7 +61,7 @@ The fastest way to start is to copy `sdk/examples/app-template-http` from the SD
 
 ## src/lib.rs: registration and preamble
 
-`lib.rs` is short on purpose. It declares the other modules, holds the preamble, and calls `dyn_aomi_app!` to register the App. Here is the full `lib.rs` from the HTTP template:
+`lib.rs` is short on purpose. It declares the other modules, holds the preamble, and calls `dyn_aomi_app!` to register the plugin. Here is the full `lib.rs` from the HTTP template:
 
 ```rust
 use aomi_sdk::*;
@@ -99,7 +101,7 @@ The `dyn_aomi_app!` macro is the single registration point. It generates the plu
 | `version` | The app version string. |
 | `preamble` | The system prompt that shapes behavior (see below). |
 | `tools` | The list of tool types the model can call. Keep it small: 3 to 8 tools is typical. |
-| `namespaces` | The host capability sets your App depends on. `[]` for a read only HTTP wrapper (see "Declaring host namespaces"). |
+| `namespaces` | The host capability sets your plugin depends on. `[]` for a read only HTTP wrapper (see "Declaring host namespaces"). |
 
 ## Writing the preamble
 
@@ -146,27 +148,6 @@ opportunities — never to execute trades.
 ```
 
 ## Defining tools
-
-```text
-You are the MyCoinDex trading assistant.
-
-## Capabilities
-- Check real-time token prices
-- View user portfolio and P&L
-- Execute trades (with user confirmation)
-- List available trading pairs
-
-## Rules
-- Always confirm with the user before executing a trade
-- Show prices in USD unless the user requests otherwise
-- If you don't have data for a token, say so clearly
-- Never fabricate prices or portfolio data
-
-## Tone
-- Professional but approachable
-- Concise responses unless the user asks for detail
-- Use bullet points for lists of data
-```
 
 Tools live in `src/tool.rs`. Each tool is a type that implements `DynAomiTool`. The trait ties together your app type, the typed argument struct, the name and description the model reads, and a `run` function that does the work and returns JSON.
 
@@ -253,12 +234,12 @@ impl CoinGeckoClient {
 ```
 
 <Note>
-  For full trait signatures (`DynAomiTool`, `DynToolCallCtx`, the `dyn_aomi_app!` macro, and the `aomi_sdk::testing` helpers like `TestCtxBuilder` and `run_tool`), see the [SDK Reference](/reference/sdk-api).
+  For full trait signatures (`DynAomiTool`, `DynToolCallCtx`, the `dyn_aomi_app!` macro, and the `aomi_sdk::testing` helpers like `TestCtxBuilder` and `run_tool`), see the [Rust SDK](/build/plugins/sdk).
 </Note>
 
 ## Declaring host namespaces
 
-The `namespaces` field in `dyn_aomi_app!` declares which host capabilities your App needs. A read only HTTP wrapper needs none, so it uses `namespaces = []`, like the template above. An App that reads chain state or stages transactions declares a namespace, the way the `defillama` app does:
+The `namespaces` field in `dyn_aomi_app!` declares which host capabilities your plugin needs. A read only HTTP wrapper needs none, so it uses `namespaces = []`, like the template above. A plugin that reads chain state or stages transactions declares a namespace, the way the `defillama` plugin does:
 
 ```rust
 dyn_aomi_app!(
@@ -271,7 +252,7 @@ dyn_aomi_app!(
 );
 ```
 
-Host capabilities are a public contract, not private infrastructure. Apps that execute transactions may assume the host runtime exposes tools such as:
+Host capabilities are a public contract, not private infrastructure. Plugins that execute transactions may assume the host runtime exposes tools such as:
 
 | Host tool | What it does |
 | --- | --- |
@@ -285,12 +266,12 @@ Host capabilities are a public contract, not private infrastructure. Apps that e
 The transaction model is always **stage first, then simulate, then commit**. Describe the host capabilities you rely on in your tool descriptions and preamble. Do not refer to private namespaces, and do not assume a hidden fallback network. If a host does not implement a capability, it surfaces that absence rather than silently redirecting.
 
 <Note>
-  Apps that execute across several steps (like `polymarket` or `khalani`) return a `ToolReturn` with route hints instead of a bare JSON value, so the host can chain a wallet signature back into the next tool call. The full route hint contract lives in the SDK repo's `docs/host-interop.md` and the [SDK Reference](/reference/sdk-api).
+  Plugins that execute across several steps (like `polymarket` or `khalani`) return a `ToolReturn` with route hints instead of a bare JSON value, so the host can chain a wallet signature back into the next tool call. The full route hint contract lives in the SDK repo's `docs/host-interop.md` and the [Rust SDK](/build/plugins/sdk).
 </Note>
 
 ## The aomi.toml manifest
 
-If you are building a **community or partner App** in your own source repo, you also author an `aomi.toml`. This manifest tells the deploy tooling where your App ships and how the backend should load it. (Official Apps that live in the SDK repo do not use `aomi.toml`; they ship through the repo's release pipeline instead.)
+If you are building a plugin for a **community or partner platform** in your own source repo, you also author an `aomi.toml`. This manifest tells the deploy tooling where your App ships and how the backend should load it. (Official plugins that live in the SDK repo do not use `aomi.toml`; they ship through the repo's release pipeline instead.)
 
 ```toml
 [app]
@@ -351,27 +332,23 @@ serde_json = "1"
 
 ## Authoring guidelines
 
-- Prefer one App crate per external product or ecosystem.
-- Keep the toolset small. 3 to 8 tools per App is typical for a clean workflow.
+- Prefer one plugin crate per external product or ecosystem.
+- Keep the toolset small. 3 to 8 tools per plugin is typical for a clean workflow.
 - Keep tool arguments typed and documented with `JsonSchema`. The doc comments are read by the model.
 - Normalize upstream API errors into short actionable strings.
 - Keep assumptions about one host out of your prompts.
-- If your App needs signing or execution, depend only on the public host capabilities above.
+- If your plugin needs signing or execution, depend only on the public host capabilities above.
 
 ## Next steps
 
 You have authored the crate. Now compile it, test it, and ship it.
 
 <CardGroup cols={2}>
-  <Card title="Compile and run" icon="hammer" href="/reference/cli-toolchain">
-    Use the `aomi-build` CLI to compile your plugin and `aomi-run` to exercise it locally before you ship.
+  <Card title="Compile, deploy, and activate" icon="hammer" href="/build/toolchain/aomi-build">
+    Use the `aomi-build` CLI to compile your plugin and `aomi-run` to exercise it locally, then `aomi-build deploy` and `aomi-build deploy activate` to ship it.
   </Card>
 
-  <Card title="Deploy and activate" icon="rocket" href="/build/deploy-cli">
-    Use `aomi-build deploy` to send your source to the backend, then `aomi-build activate` so the backend loads it.
-  </Card>
-
-  <Card title="SDK Reference" icon="book" href="/reference/sdk-api">
+  <Card title="Rust SDK" icon="book" href="/build/plugins/sdk">
     Full trait definitions: `DynAomiTool`, the `dyn_aomi_app!` macro, the host-interop contract, and the testing helpers.
   </Card>
 

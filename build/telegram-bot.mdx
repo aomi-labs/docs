@@ -5,7 +5,7 @@ description: Turn your deployed Aomi App into a Telegram bot people can chat wit
 
 Your App already runs on Aomi. This page gives it a Telegram bot: a chat people open in Telegram and talk to, in a direct message or a group. The bot runs your deployed App, so it can answer questions, read live data, and walk a user through a transaction with simulate before sign.
 
-Aomi hosts the bot for you. You create a bot in Telegram, hand Aomi the token, and Aomi wires it up. You do not run a server. One bot can serve one App or several, so a single bot can front your whole catalog.
+Aomi hosts the bot for you. You create a bot in Telegram, hand Aomi the token, and Aomi wires it up. You do not run a server. One bot can serve one App or several, so a single bot can front your whole catalog. Telegram is the live channel today; Discord and Slack appear on the Integrations page but are not yet available.
 
 <Info>
 **Verified 2026-07-30** against the live Integrations page on `build.aomi.dev` and the shipped `aomi-telegram` bot. We use Goal Digger as the running example; swap in your own App name anywhere you see `goal-digger-live`.
@@ -13,7 +13,7 @@ Aomi hosts the bot for you. You create a bot in Telegram, hand Aomi the token, a
 
 ## Before you start
 
-- A deployed App that is **active and loaded**. If you have not deployed yet, do [Deploy and activate on aomi CLI](/build/deploy-cli) first. You can confirm it with `aomi-build deploy status`.
+- A deployed App that is **active and loaded**. If you have not deployed yet, do [Deploy and activate on aomi CLI](/build/toolchain/aomi-build) first. You can confirm it with `aomi-build deploy status`.
 - A Telegram account.
 
 That is all. No hosting, no bot code, no keys for a public App.
@@ -46,7 +46,7 @@ This is where you point the bot at your App or Apps.
 Aomi verifies the token with Telegram, stores it encrypted, and turns on the webhook for you. When it says the bot is registered, you are done. There is nothing to deploy and no server to keep running.
 
 <Note>
-Your App must appear in the **Attached apps** list, which means it has to be active first. If you do not see it, deploy or redeploy it (see [Deploy and activate on aomi CLI](/build/deploy-cli)), then reload the page. You can come back later and **edit the attached apps** for a bot without re-entering the token.
+Your App must appear in the **Attached apps** list, which means it has to be active first. If you do not see it, deploy or redeploy it (see [Deploy and activate on aomi CLI](/build/toolchain/aomi-build)), then reload the page. You can come back later and **edit the attached apps** for a bot without re-entering the token.
 </Note>
 
 ## Step 3: talk to your bot
@@ -99,7 +99,7 @@ Each person who messages the bot uses their **own** Aomi identity, wallet, and t
 
 ## Keeping it live
 
-Your bot is only as live as the App behind it. If the platform bumps the required SDK version, your App can stop loading and the bot will have nothing to answer with. If your bot goes quiet, check the App with `aomi-build deploy status` and redeploy if needed. See [When the platform bumps the SDK](/build/deploy-cli#when-the-platform-bumps-the-sdk).
+Your bot is only as live as the App behind it. If the platform bumps the required SDK version, your App can stop loading and the bot will have nothing to answer with. If your bot goes quiet, check the App with `aomi-build deploy status` and redeploy if needed. See [When the platform bumps the SDK](/build/toolchain/aomi-build).
 
 ## Advanced: run your own bot
 
@@ -108,7 +108,7 @@ The steps above use Aomi's hosted bots, which is the right path for most Apps. I
 ## Next
 
 <CardGroup cols={2}>
-<Card title="Deploy and activate on aomi CLI" href="/build/deploy-cli">
+<Card title="Deploy and activate on aomi CLI" href="/build/toolchain/aomi-build">
 Get your App live on Aomi first, or bring it back after an SDK bump.
 </Card>
 <Card title="Deploy a frontend on Vercel" href="/build/frontend-vercel">

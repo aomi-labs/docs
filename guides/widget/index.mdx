@@ -1,0 +1,66 @@
+---
+title: "Widget Library"
+sidebarTitle: "Usage"
+description: "Add an application-bound Aomi chat and wallet experience to your product."
+---
+
+## Overview
+
+`AomiWidget` is the fastest way to add Aomi to a React application. It includes chat, threads, wallet connection, transaction approval, and status updates.
+
+You provide an Aomi Application ID and choose browser-wallet, Para, or Privy authentication. Aomi controls the App's execution and sponsorship policy on the server.
+
+## Live demo
+
+<div style={{ overflow: "hidden", border: "1px solid var(--gray-a5)", borderRadius: "20px" }}>
+  <iframe
+    src="https://chat.aomi.dev"
+    title="Aomi widget live demo"
+    width="100%"
+    height="720"
+    loading="lazy"
+    allow="clipboard-write"
+    style={{ display: "block", border: 0 }}
+  />
+</div>
+
+<Note>
+  Wallet popups may open outside the embedded frame. [Open the demo in a new tab](https://chat.aomi.dev).
+</Note>
+
+## Choose an integration
+
+| Use | When |
+| --- | --- |
+| `AomiWidget` | You want the complete cross-origin product |
+| `AomiFrame` | You want Aomi's UI and will provide the surrounding account integration |
+| Headless library | You need a completely custom interface |
+| shadcn source | You want to own and maintain every component |
+
+## How it works
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant Widget
+    participant Wallet as "Browser, Para, or Privy wallet"
+    participant Aomi
+
+    User->>Widget: "Sign in"
+    Widget->>Wallet: "Authenticate wallet owner"
+    Widget->>Aomi: "Open application-bound session"
+    Aomi-->>Widget: "Chat and signing requests"
+    Widget->>Wallet: "Request approval"
+    Wallet-->>Widget: "Owner signatures"
+    Widget->>Aomi: "Return signatures"
+    Aomi-->>Widget: "Execution status"
+```
+
+<CardGroup cols={2}>
+  <Card title="Install the widget" href="/guides/widget/installation">
+    Mount `AomiWidget` with browser, Para, or Privy authentication.
+  </Card>
+  <Card title="Customize the widget" href="/guides/widget/customization">
+    Start with props and themes, or build a completely headless interface.
+  </Card>
+</CardGroup>
