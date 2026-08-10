@@ -1,6 +1,6 @@
 ---
 title: "Skills"
-description: "Install aomi-transact and aomi-build into Claude Code, Cursor, or Codex: what the skills teach your agent, the safety model they enforce, and when to use a skill instead of MCP."
+description: "Teach Claude Code, Cursor, or Codex to trade and build with Aomi. Compare the skills workflow, safety rules, and MCP alternative."
 ---
 
 An Aomi Skill is a markdown file that teaches an AI coding assistant how to use Aomi. There is nothing to compile and nothing to run: the agent reads the skill, learns the command surface and the operating procedure, and drives the `aomi` CLI on your machine. Skills follow the Agent Skills spec, so they work in Claude Code, Cursor, Codex CLI, Gemini CLI, and any runtime that supports it.
@@ -10,7 +10,7 @@ Two skills ship together, matching the two things you do on Aomi:
 | Skill | What it teaches | Companion page |
 | --- | --- | --- |
 | `aomi-transact` | Drive the CLI to read chain state and turn plain English into simulated, wallet-signed transactions. | [Trade on Aomi](/trade) |
-| `aomi-build` | Turn an OpenAPI spec, SDK, or REST endpoint into an Aomi App crate. | [Build on Aomi](/build) |
+| `aomi-build` | Turn an OpenAPI spec, SDK, or REST endpoint into an Aomi App crate. | [Build on Aomi](/build/overview) |
 
 ## Install
 
@@ -26,7 +26,7 @@ Both skills install at once. Your agent selects between them from what you ask: 
 npm install -g @aomi-labs/client@latest
 ```
 
-For signing you supply a key the usual way — `--private-key`, the `PRIVATE_KEY` environment variable, or a key persisted in CLI state. See the [Client CLI reference](/reference/cli) for the full flag and environment surface.
+For signing, supply a key with `--private-key`, the `PRIVATE_KEY` environment variable, or CLI state. See [Commands and configuration](/reference/client-cli/commands#flags-and-environment-variables) for all flags and environment variables.
 
 ## What the agent does with it
 
@@ -39,21 +39,21 @@ aomi tx simulate tx-1 tx-2
 aomi tx sign tx-1 tx-2
 ```
 
-The skill's value is not the commands — it is the procedure around them. It tells the agent to treat a chat reply that returns a quote as *not yet staged*, to simulate an approve-then-swap pair together because the second step depends on the first, to keep the signing RPC aligned with the pending transaction's chain, and to read `batch_status` before signing anything.
+The skill provides a procedure in addition to commands. It treats a chat reply with a quote as *not yet staged*. It simulates dependent transactions together, uses the signing RPC for the pending transaction's chain, and reads `batch_status` before signing.
 
 ## The safety model
 
-`aomi-transact` is classified `risk_tier: L2` — it can sign and broadcast real transactions — so it ships with a least-privilege manifest the runtime enforces:
+`aomi-transact` is classified `risk_tier: L2` because it can sign and broadcast real transactions. Its manifest applies these least-privilege rules:
 
 - **Shell allowlist.** Only `aomi` and `npx @aomi-labs/client@latest` may execute. No arbitrary subprocesses.
 - **Network allowlist.** Outbound traffic is restricted to Aomi's API. An `--rpc-url` you supply is resolved by the CLI itself, so review endpoints before allowing a signing run.
-- **File scope.** Read and write are limited to `~/.aomi/`. Writes to agent identity files (`SOUL.md`, `MEMORY.md`, `AGENTS.md`) are denied outright — the OWASP AST03 mitigation for over-privileged skills.
+- **File scope.** Read and write are limited to `~/.aomi/`. Writes to agent identity files (`SOUL.md`, `MEMORY.md`, `AGENTS.md`) are denied under the OWASP AST03 mitigation for over-privileged skills.
 - **No blind signing.** Multi-step flows go through `aomi tx simulate` on a forked chain before `aomi tx sign`, and the agent signs only a pending `tx-N` that `aomi tx list` has shown and you asked for.
 - **Opaque credentials.** The skill never invents, derives, or echoes a credential. A command that takes one runs only when you explicitly asked for that setup and supplied the value in the same turn, and the agent confirms what will be persisted and where before running it.
 
 ### Drain-vector guards
 
-The strongest rule the skill encodes is that it must not talk its way around a guard. Every protocol has a calldata field where a malicious prompt could redirect funds — `recipient` on Uniswap, `onBehalfOf` on Aave, `mintRecipient` on CCTP, `_to` on OP-stack bridges. Aomi blocks these at simulation time when they do not equal the signer:
+The skill must not bypass a guard. Protocols contain calldata fields that can redirect funds. Examples include `recipient` on Uniswap, `onBehalfOf` on Aave, `mintRecipient` on CCTP, and `_to` on OP Stack bridges. Aomi blocks these fields during simulation when they do not match the signer:
 
 | Protocol | Field the guard watches |
 | --- | --- |
@@ -64,7 +64,7 @@ The strongest rule the skill encodes is that it must not talk its way around a g
 | CCTP `depositForBurn` | `mintRecipient` |
 | Across `depositV3` | `recipient` |
 | Stargate `send` | `recipient` and `refundAddress` (both) |
-| OP-stack `bridgeETHTo` | `_to` (and `_to == address(0)` is a hard block — bridging to zero locks funds permanently) |
+| OP Stack `bridgeETHTo` | `_to`. A zero address is blocked because it would lock the funds permanently. |
 
 A failed batch carrying one of these annotations is not a construction bug. It is the guard doing its job, and the skill's instruction is to surface the block to you rather than reformulate the prompt to get past it.
 
@@ -76,7 +76,7 @@ Both give a coding agent access to Aomi. They differ in where execution happens 
 | --- | --- | --- |
 | Runs where | Your machine, driving the `aomi` CLI | Aomi's server, inside your account thread |
 | Install | `npx skills add aomi-labs/skills` plus the CLI | One config entry, then OAuth in the browser |
-| Signing | Local — your key, on your machine | Staged server-side; approval on a wallet surface |
+| Signing | Local with your key on your machine | Staged server-side; approval on a wallet surface |
 | State | Local CLI session under `~/.aomi/` | A thread on your Aomi account, shared by all your MCP clients |
 | Best for | Trading sessions, App scaffolding, working offline from a wallet surface | Giving any MCP client the tool catalog with zero local setup |
 
@@ -89,7 +89,7 @@ They compose. An agent with both installed uses skills for guided CLI workflows 
     Connect a client straight to the hosted Aomi MCP server.
   </Card>
 
-  <Card title="Client CLI" icon="terminal" href="/reference/cli">
+  <Card title="Client CLI" icon="terminal" href="/reference/client-cli">
     Every command, flag, and environment variable the skill drives.
   </Card>
 </CardGroup>

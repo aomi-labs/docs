@@ -1,7 +1,7 @@
 ---
-title: "Widget Installation"
+title: "Installation"
 sidebarTitle: "Installation"
-description: "Install AomiWidget, configure your App, and choose browser, Para, or Privy authentication."
+description: "Install AomiWidget, connect it to your App, and choose browser, Para, or Privy authentication."
 ---
 
 Install `AomiWidget` to add application-bound chat, wallet authentication, and transaction approval to your React app. Your frontend selects the App and sign-in method. Aomi controls execution, fees, sponsorship, and broadcast on the server.
@@ -212,36 +212,12 @@ Authentication establishes the user session. Wallet ownership establishes which 
 
 For Vite, use `import.meta.env.VITE_AOMI_APPLICATION_ID` and `import.meta.env.VITE_AOMI_API_URL` in the same component.
 
-## Cross-origin authentication
-
-The widget runs on the partner page while Aomi owns the authenticated backend session.
-
-```mermaid
-flowchart LR
-    Browser["Browser wallet and SIWE"] --> Session["Origin-bound widget session"]
-    Para["Para login"] --> Session
-    Privy["Privy login"] --> Session
-    Session --> Owner["Verified wallet owner"]
-    Owner --> App["Application-bound chat and signing"]
-```
-
-The widget uses a short-lived session bound to the registered partner origin. It sends explicit authorization and does not depend on ambient cross-site cookies.
-
-Para or Privy login proves the provider identity. Wallet binding separately proves control of the active wallet. This gives browser and embedded wallets the same transaction-approval contract.
-
-Switching wallets or networks clears signing readiness until Aomi resolves the new active owner. Existing account links remain available, but a pending request cannot be signed by a different owner or on a different network.
-
-## What happens after mounting
-
-1. The user authenticates with the selected method.
-2. Aomi creates an origin-bound widget session.
-3. The active wallet is verified as the transaction owner.
-4. If the App requires account abstraction, Aomi resolves or provisions its execution account.
-5. The user can chat and review transaction requests in the widget.
-6. The wallet signs approved requests; Aomi handles sponsored broadcast and confirmation.
-
 <Info>
-  Notice that `AomiWidget` receives no paymaster URL, gas policy, fee rate, treasury, or executor address. Aomi resolves those settings from the Application ID.
+  These examples intentionally include only public browser configuration.
+  [Quickstart](/guides/widget/quickstart) explains how the widget exchanges a
+  wallet or provider proof for an origin-bound access token. `AomiWidget`
+  receives no paymaster URL, gas policy, fee rate, treasury, or executor
+  address; Aomi resolves those settings from the Application ID.
 </Info>
 
 ## Verify the setup

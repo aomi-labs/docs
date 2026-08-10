@@ -1,13 +1,15 @@
 ---
-title: "Plugin anatomy"
-description: "How an Aomi plugin is put together. The standard crate file split, the aomi.toml manifest, the preamble, tools, and host namespaces. Authoring only; compiling and shipping link forward."
+title: "Aomi App"
+description: "Learn how an Aomi App is organized: the plugin crate, manifest, preamble, tools, and hosted agentic loop."
 ---
 
 <Info>Verified against aomi-sdk@08b21f9 on 2026-06-29.</Info>
 
-Plugins extend the harness beyond pure onchain execution: wrap an order book, a prediction-market API, a data feed, or a search service, and your APIs become tools the agent can call. This page is about **authoring** a plugin: how the crate is laid out, what goes in each file, and how you wire it together.
+Aomi uses a plugin model similar to ChatGPT plugins and Claude connectors. You author a small Rust plugin that wraps your APIs as typed tools and defines an agentic loop with a preamble.
 
-A plugin is a Rust crate that compiles to a shared library the Aomi runtime hot loads. It wraps an external API as a small set of typed tools, ships a preamble that tells the model how to use them, and declares which host capabilities it needs. Once deployed and live on the runtime, the plugin becomes an **App** — the word the CLI, `aomi.toml`, and the Developer Platform use for the deployed, user-selectable unit.
+We call the deployed result an **Aomi App** because the agentic loop belongs to your product. You embed its role, tools, and workflow in the software you ship. Aomi hosts and runs that loop, connects it to users, and gives it a controlled path to compose, simulate, sign, and broadcast blockchain actions.
+
+In these docs, a **plugin** is the Rust crate you write. An **App** is the deployed, user-selectable unit. The CLI, `aomi.toml`, and Developer Platform use **App**. This page explains how to author the plugin that powers an Aomi App: how the crate is laid out, what goes in each file, and how you wire it together.
 
 When you are ready to compile and ship, follow the forward links at the bottom of this page. This page does not cover the build or deploy steps.
 
@@ -17,7 +19,7 @@ When you are ready to compile and ship, follow the forward links at the bottom o
 
 ## What you are building
 
-The Aomi SDK lets you wrap any external API as a plugin. The runtime loads your compiled plugin and routes chat to it. The plugins in the SDK repo show the range you can cover:
+The Aomi SDK lets you wrap any external API as a plugin. Once deployed, that plugin powers an Aomi App. Aomi loads it and routes conversations to its agentic loop. The plugins in the SDK repo show the range you can cover:
 
 <CardGroup cols={2}>
   <Card title="DeFi protocols" icon="coins">
@@ -184,7 +186,7 @@ The pieces that matter:
 - **`DESCRIPTION`** is read by the model when it decides whether to call the tool. Write it for the model, not for a human reader.
 - **`run`** returns `Result<Value, String>`. On error, return a short actionable string. Normalize upstream API errors so the model gets a clean message, not a raw stack.
 
-### Typed, documented arguments
+### Typed arguments
 
 The argument struct lives in `src/client.rs`. Derive `Deserialize` and `JsonSchema`, and put a doc comment on every field. Those doc comments become the parameter descriptions the model sees, so they directly shape how it fills the call.
 
@@ -234,7 +236,7 @@ impl CoinGeckoClient {
 ```
 
 <Note>
-  For full trait signatures (`DynAomiTool`, `DynToolCallCtx`, the `dyn_aomi_app!` macro, and the `aomi_sdk::testing` helpers like `TestCtxBuilder` and `run_tool`), see the [Rust SDK](/build/plugins/sdk).
+  For full trait signatures (`DynAomiTool`, `DynToolCallCtx`, the `dyn_aomi_app!` macro, and the `aomi_sdk::testing` helpers like `TestCtxBuilder` and `run_tool`), see the [Rust SDK](/build/plugins/rust-sdk).
 </Note>
 
 ## Declaring host namespaces
@@ -266,7 +268,7 @@ Host capabilities are a public contract, not private infrastructure. Plugins tha
 The transaction model is always **stage first, then simulate, then commit**. Describe the host capabilities you rely on in your tool descriptions and preamble. Do not refer to private namespaces, and do not assume a hidden fallback network. If a host does not implement a capability, it surfaces that absence rather than silently redirecting.
 
 <Note>
-  Plugins that execute across several steps (like `polymarket` or `khalani`) return a `ToolReturn` with route hints instead of a bare JSON value, so the host can chain a wallet signature back into the next tool call. The full route hint contract lives in the SDK repo's `docs/host-interop.md` and the [Rust SDK](/build/plugins/sdk).
+  Plugins that execute across several steps (like `polymarket` or `khalani`) return a `ToolReturn` with route hints instead of a bare JSON value, so the host can chain a wallet signature back into the next tool call. The full route hint contract lives in the SDK repo's `docs/host-interop.md` and the [Rust SDK](/build/plugins/rust-sdk).
 </Note>
 
 ## The aomi.toml manifest
@@ -348,11 +350,11 @@ You have authored the crate. Now compile it, test it, and ship it.
     Use the `aomi-build` CLI to compile your plugin and `aomi-run` to exercise it locally, then `aomi-build deploy` and `aomi-build deploy activate` to ship it.
   </Card>
 
-  <Card title="Rust SDK" icon="book" href="/build/plugins/sdk">
+  <Card title="Rust SDK" icon="book" href="/build/plugins/rust-sdk">
     Full trait definitions: `DynAomiTool`, the `dyn_aomi_app!` macro, the host-interop contract, and the testing helpers.
   </Card>
 
-  <Card title="How it works" icon="diagram-project" href="/concepts/how-it-works">
+  <Card title="Transaction pipeline" icon="diagram-project" href="/concepts/transaction-pipeline">
     See the full request flow once your App is loaded on the runtime.
   </Card>
 </CardGroup>

@@ -1,9 +1,9 @@
 ---
 title: "aomi-build"
-description: "The single CLI for the whole life of a plugin: scaffold, compile, connect, deploy, and activate. A verified end-to-end walkthrough first, then the full command and flag reference."
+description: "Take a plugin from scaffold to activation with aomi-build. Follow the verified workflow, then use the complete command and flag reference."
 ---
 
-`aomi-build` is the single CLI for the whole life of a plugin: it scaffolds, compiles, deploys, and activates. A deployed plugin — its tools and system prompt, live on the runtime — is what Aomi calls an **App**, and that is the word you see in the CLI output, in `aomi.toml`, and on the Developer Platform.
+[`aomi-build`](https://github.com/aomi-labs/aomi-sdk/tree/main/sdk/bin/build) scaffolds, compiles, deploys, and activates a plugin. It ships as a binary from the [`aomi-sdk` crate on crates.io](https://crates.io/crates/aomi-sdk). A deployed plugin combines its tools and system prompt on the runtime. Aomi calls this deployed unit an **App**, which is the term used in CLI output, `aomi.toml`, and the Developer Platform.
 
 This page takes a plugin from your own GitHub repo to live on Aomi. You work in your own repo the whole time. You never open a PR against `aomi-labs/community-apps`, and you never need write access to it. The backend does that part for you through the Aomi GitHub App. The walkthrough comes first; the [complete command reference](#command-reference) follows it.
 
@@ -12,7 +12,7 @@ This page takes a plugin from your own GitHub repo to live on Aomi. You work in 
 </Info>
 
 <Note>
-Prefer a browser? Everything on this page — connect, deploy, activate, status — also runs from the [Developer Platform](/build/platform) at `build.aomi.dev`, which additionally holds your secrets, model provider keys, bots, and usage. The CLI and the platform drive the same backend, so you can start in one and finish in the other.
+Prefer a browser? The [Developer Platform](/build/developer-platform) at `build.aomi.dev` supports connect, deploy, activate, and status. It also manages secrets, model provider keys, bots, and usage. The CLI and platform use the same backend, so you can move between them.
 </Note>
 
 The whole flow is four commands:
@@ -407,7 +407,7 @@ When you ask for help, send three clean blocks, each a command plus its output: 
 
 ## Command reference
 
-<Info>Reference verified against aomi-sdk@08b21f9 on 2026-06-29, updated against current source: `deploy status` and `deploy activate` are the canonical forms. Bare `aomi-build status` and `aomi-build activate` still work as aliases for one release cycle, then go away — prefer the `deploy`-prefixed forms.</Info>
+<Info>Reference verified against aomi-sdk@08b21f9 on 2026-06-29 and updated against current source. `deploy status` and `deploy activate` are the canonical forms. Bare `aomi-build status` and `aomi-build activate` remain aliases for one release cycle. Prefer the `deploy`-prefixed forms.</Info>
 
 Beyond deploying, `aomi-build` scaffolds, compiles, and end to end tests a plugin. The full path from "external API docs" to "tested plugin" is a six stage pipeline. Every stage runs on its own, and `new-app` is the one shot orchestrator for the first stages plus the compile.
 
@@ -718,19 +718,19 @@ Add `.aomi/` to your `.gitignore`. It is a local artifact, and committing it ten
   <Card title="aomi-run" icon="terminal" href="/build/toolchain/aomi-run">
     Chat with your compiled plugin locally against a real LLM before you ship.
   </Card>
-  <Card title="Add the chat widget" icon="window" href="/guides/widget-installation">
+  <Card title="Add the chat widget" icon="window" href="/guides/widget/installation">
     Drop the React widget into a frontend so people can chat with your deployed App.
   </Card>
-  <Card title="Plugin anatomy" icon="book" href="/build/plugins/anatomy">
+  <Card title="Aomi App" icon="book" href="/build/plugins/aomi-app">
     The full authoring walkthrough, from spec to curated tools to test.
   </Card>
-  <Card title="Rust SDK" icon="cube" href="/build/plugins/sdk">
+  <Card title="Rust SDK" icon="cube" href="/build/plugins/rust-sdk">
     The plugin SDK that your plugin compiles against.
   </Card>
   <Card title="Common errors" icon="triangle-exclamation" href="/build/common-errors">
     The errors you are most likely to hit, each with its fix.
   </Card>
-  <Card title="Client CLI" icon="npm" href="/reference/cli">
+  <Card title="Client CLI" icon="npm" href="/reference/client-cli">
     The npm `aomi` command for chatting with and driving a deployed App from your terminal.
   </Card>
 </CardGroup>

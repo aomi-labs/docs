@@ -1,11 +1,11 @@
 ---
 title: "aomi-run"
-description: "The local dev runtime. Load your compiled plugin, chat with it against a real LLM, and watch which tools the model picks — no backend, no deploy."
+description: "Test a compiled plugin locally against a real LLM and inspect which tools it selects before you deploy."
 ---
 
 <Info>Verified against aomi-sdk@08b21f9 on 2026-06-29.</Info>
 
-`aomi-run` is the local dev runtime. It loads a compiled plugin (the Rust `cdylib` you build with [aomi-build](/build/toolchain/aomi-build)), reads its manifest, and opens an interactive REPL wired to Anthropic, OpenAI, or OpenRouter. No backend, no deploy. You watch which tools the model picks and how they respond — it is how you feel out whether the model reaches for the right tools before you ever ship.
+[`aomi-run`](https://github.com/aomi-labs/aomi-sdk/tree/main/sdk/bin/run) is the local dev runtime. It ships as a binary from the [`aomi-sdk` crate on crates.io](https://crates.io/crates/aomi-sdk). It loads a compiled plugin, reads its manifest, and opens an interactive REPL connected to Anthropic, OpenAI, or OpenRouter. It does not require a backend or deployment. Use it to inspect which tools the model selects before you ship.
 
 ## Install
 
@@ -101,10 +101,10 @@ For any of those, deploy the plugin and exercise it against the real backend.
   <Card title="aomi-build" icon="hammer" href="/build/toolchain/aomi-build">
     Scaffold, compile, and deploy the plugin you just chatted with.
   </Card>
-  <Card title="Plugin anatomy" icon="book" href="/build/plugins/anatomy">
+  <Card title="Aomi App" icon="book" href="/build/plugins/aomi-app">
     What is inside a plugin: tools, system prompt, manifest, secrets.
   </Card>
-  <Card title="Rust SDK" icon="cube" href="/build/plugins/sdk">
+  <Card title="Rust SDK" icon="cube" href="/build/plugins/rust-sdk">
     The plugin SDK that your plugin compiles against.
   </Card>
 </CardGroup>

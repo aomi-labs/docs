@@ -1,6 +1,6 @@
 ---
 title: Ship on Vercel
-description: Give your deployed plugin's widget frontend a public URL on Vercel.
+description: "Publish your App's widget frontend on Vercel and give users a stable URL for the deployed experience."
 ---
 
 Your plugin is deployed and running as an App on Aomi. This page takes the widget frontend you built for it and ships it to Vercel: a public URL, your branding, your domain.
@@ -25,7 +25,7 @@ You do not need a frontend to use or demo your App. Once it is active it already
 
   You want `active=true`, `artifact_ready=true`, and `loaded` on your App. If `artifact_ready` is false, redeploy before you build a frontend against it.
 
-- **A Next.js app with the widget installed.** [Widget Installation](/guides/widget-installation) covers the one-command shadcn install, environment variables, and mounting `AomiFrame`. [Frontend Setup](/guides/frontend-setup) covers how the widget slots into your app. The install pulls a large dependency tree, including the wallet stack; on a slow connection it takes a few minutes.
+- **A Next.js app with the widget installed.** [Installation](/guides/widget/installation) covers the one-command shadcn install, environment variables, and mounting `AomiFrame`. [Quickstart](/guides/widget/quickstart) covers how the widget slots into your app. The install pulls a large dependency tree, including the wallet stack; on a slow connection it takes a few minutes.
 
 - **Node 20 or newer**, and a package manager (`pnpm` or `npm`).
 - **A Vercel account.**
@@ -139,7 +139,7 @@ The full reference for `aomi-build` and `aomi-run`.
 <Card title="Common errors" href="/build/common-errors">
 The errors you are most likely to hit, each with its fix.
 </Card>
-<Card title="Widget Installation" href="/guides/widget-installation">
+<Card title="Installation" href="/guides/widget/installation">
 The full install, environment, and component API reference.
 </Card>
 </CardGroup>

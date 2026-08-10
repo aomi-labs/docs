@@ -1,12 +1,12 @@
 ---
-title: "The Developer Platform"
-description: "build.aomi.dev is the web control plane for Aomi Apps: create, deploy, activate, and operate from the browser. What each surface does and when to use it over the CLI."
+title: "Developer Platform"
+description: "Create, deploy, activate, and operate Aomi Apps from build.aomi.dev. Learn when the browser workflow is more useful than the CLI."
 ---
 
 [build.aomi.dev](https://build.aomi.dev) is the hosted control plane for Aomi Apps.
-You sign in with GitHub, and every deploy-lifecycle operation the
-[`aomi-build` CLI](/build/toolchain/aomi-build) performs — connect, deploy, activate,
-status — has a web counterpart here, plus the operating surfaces that only make
+You sign in with GitHub. Every deploy operation in the
+[`aomi-build` CLI](/build/toolchain/aomi-build) also has a web interface. This
+includes connect, deploy, activate, and status. The dashboard also provides
 sense in a dashboard: deployment history, environment secrets, model provider
 keys, bot integrations, transactions, usage, logs, and metrics.
 
@@ -38,7 +38,7 @@ GitHub account, so you own the code from the first commit.
   </Step>
   <Step title="Install the Aomi Build GitHub App">
     **New app** walks you through installing the GitHub App on your **personal
-    account**. One-click creation does not work on an organization install — if
+    account**. One-click creation does not work on an organization install. If
     you installed on an org, the wizard stops and asks you to install on your
     personal account instead. (Org-owned repos can still deploy through the
     [CLI](/build/toolchain/aomi-build).)
@@ -50,7 +50,7 @@ GitHub account, so you own the code from the first commit.
   <Step title="Deploy and activate">
     The wizard deploys the commit, waits for the platform build, and activates
     the release onto the live runtime. If the app declares required secrets in
-    its manifest, the wizard blocks activation until you set them — so an app
+    its manifest, the wizard blocks activation until you set them. An App
     never goes live with an empty key it needs.
   </Step>
   <Step title="Live">
@@ -61,7 +61,7 @@ GitHub account, so you own the code from the first commit.
 
 <Note>
   The web wizard only creates template forks. To connect a repo you already
-  have — your own code, your own history — use
+  already own, use
   [`aomi-build connect`](/build/toolchain/aomi-build). Once connected, the repo
   appears as a Project here and gets the full web lifecycle below.
 </Note>
@@ -70,20 +70,19 @@ GitHub account, so you own the code from the first commit.
 
 Every Project has one page with five tabs:
 
-* **Home** — live status, the environment at a glance, a usage meter, and (when
-  the app prices its tools) a monetization card. The page computes the one next
-  action that matters — *Redeploy from Linked Repository*, *Open Environment*,
-  *Upgrade SDK* — and puts it on a single button.
-* **Deployments** — the release history for this project. Each deployment can
+* **Home.** View live status, the environment, a usage meter, and a
+  monetization card when the App prices its tools. The page displays the next
+  available action on one button.
+* **Deployments.** View the release history for this Project. Each deployment can
   be **promoted** or **deactivated** from its row.
-* **Providers** — which of your model keys fund this project's apps.
+* **Providers.** See which model keys fund this Project's Apps.
   Key management itself lives on the global [Providers](#model-provider-keys) page.
-* **Environment** — one list merging the variables the app's manifest declares
+* **Environment.** View the variables declared by the App manifest alongside
   (with descriptions and required flags) and the keys already configured in the
   vault. Values are write-only: you can set, replace, or delete a secret, but
   the platform never echoes one back.
-* **Chat** — your live app, embedded from chat.aomi.dev with the app
-  preselected. If the app's SDK is outdated the tab blocks and points you to
+* **Chat.** Open your live App from chat.aomi.dev with the App
+  preselected. If the App's SDK is outdated, the tab points you to
   the upgrade instead.
 
 ### Redeploy
@@ -99,14 +98,14 @@ The backend pins a required `aomi-sdk` version, and it moves. When your project
 falls behind, Build shows the required version and offers a one-click upgrade:
 it opens a pull request on **your** repository (branch `aomi/sdk-<version>`)
 that rewrites the pin, waits for you to merge it, then redeploys. The endpoint
-is idempotent — clicking again while the PR is open reuses it. If your
+is idempotent. Clicking again while the PR is open reuses it. If your
 `Cargo.lock` has to be regenerated locally, the flow says so and hands you the
 exact command instead of guessing. The CLI equivalent is `aomi-build sdk fix`.
 
 ## Model provider keys
 
-**Account → Providers** holds your own LLM keys — OpenAI, Anthropic, and
-OpenRouter — so your apps' model spend routes through accounts you control.
+**Account → Providers** stores your OpenAI, Anthropic, and OpenRouter keys.
+Your Apps' model spend then routes through accounts you control.
 Key material is write-only: after you paste a key, only its stored prefix is
 ever displayed. Each key can be assigned to specific projects, and each key
 row shows the tokens and cost it has accrued.
@@ -114,9 +113,9 @@ row shows the tokens and cost it has accrued.
 ## Integrations
 
 **Account → Integrations** turns a deployed app into a bot. Telegram is live:
-paste a BotFather token, attach one or more apps, pick the primary one and a
-thread mode, and Aomi hosts the bot and wires the webhook — the full walkthrough
-is [Put your App on Telegram](/build/telegram-bot). You can re-edit a
+paste a BotFather token, attach one or more Apps, pick the primary one and a
+thread mode, and Aomi hosts the bot and wires the webhook. The full walkthrough
+is [Telegram](/build/telegram). You can re-edit a
 bot's attached apps at any time without re-entering the token. Discord and
 Slack appear on the page but are not available yet.
 
@@ -125,15 +124,15 @@ Slack appear on the page but are not available yet.
 The Operate section is read-your-own-apps observability, scoped to the
 projects you own:
 
-* **Deployments** — deployment history across all your projects, filterable by
+* **Deployments.** View deployment history across all your Projects, filtered by
   project and by current/previous status.
-* **Transactions** — the onchain transactions your apps' users execute, with
+* **Transactions.** View the onchain transactions your Apps' users execute, with
   hash, status, and fee detail per row (EVM and SVM).
-* **Usage** — credits and tokens per app per day. When your apps price their
+* **Usage.** View credits and tokens per App per day. When your Apps price their
   tools, this page also carries the **partner payments ledger**: what each
   priced tool charges, who the beneficiary is, and the accrue → settle trail.
-* **Logs** — runtime logs for your apps.
-* **Observability** — per-app runtime metrics, served from Aomi's monitoring,
+* **Logs.** View runtime logs for your Apps.
+* **Observability.** View per-App runtime metrics from Aomi's monitoring,
   with links into the relevant dashboards.
 
 <Note>
@@ -150,9 +149,9 @@ Both drive the same lifecycle. Pick by task:
 
 | Task                                            | Use                                                            |
 | ----------------------------------------------- | -------------------------------------------------------------- |
-| First app, no local toolchain                   | Platform — the New app wizard                                  |
-| Deploy an existing repo you already own         | [CLI](/build/toolchain/aomi-build) — `aomi-build connect`, then either surface |
-| Redeploy after a push                           | Either — one button here, `aomi-build deploy` there            |
+| First App, no local toolchain                   | Platform with the **New App** wizard                            |
+| Deploy an existing repo you already own         | Run `aomi-build connect`, then use either surface               |
+| Redeploy after a push                           | Use either the web button or `aomi-build deploy`                |
 | SDK bump on a connected project                 | Platform (PR flow) or `aomi-build sdk fix`                     |
 | Secrets, provider keys, bots, usage, logs, metrics | Platform                                                    |
 | Scripted or CI-driven deploys                   | CLI                                                            |
@@ -167,10 +166,10 @@ in your terminal.
   <Card title="Deploy and activate on aomi CLI" href="/build/toolchain/aomi-build">
     The same lifecycle from your terminal, step by step.
   </Card>
-  <Card title="Put your App on Telegram" href="/build/telegram-bot">
+  <Card title="Telegram" href="/build/telegram">
     Register a bot on the Integrations page.
   </Card>
-  <Card title="Building an App" href="/build/plugins/anatomy">
+  <Card title="Aomi App" href="/build/plugins/aomi-app">
     The macro, the tools, and `aomi.toml`.
   </Card>
   <Card title="Common errors" href="/build/common-errors">

@@ -1,7 +1,7 @@
 ---
 title: "Overview"
 sidebarTitle: "Overview"
-description: "Reference index for the Aomi SDK, CLI, HTTP API, runtime, and authentication model."
+description: "Find detailed references for the Aomi SDK, CLI, HTTP API, hosted runtime, and authentication model."
 ---
 
 Technical reference for everything you can call, configure, or extend.
@@ -9,15 +9,15 @@ Technical reference for everything you can call, configure, or extend.
 ## Build
 
 <CardGroup cols={2}>
-  <Card title="SDK" icon="cube" href="/build/plugins/sdk">
+  <Card title="Rust SDK" icon="cube" href="/build/plugins/rust-sdk">
     Rust SDK for building agentic applications. ChatApp, builder pattern, custom tools.
   </Card>
 
-  <Card title="Building Apps" icon="hammer" href="/build/plugins/anatomy">
+  <Card title="Aomi App" icon="hammer" href="/build/plugins/aomi-app">
     Construct and deploy Aomi Apps with the Rust SDK.
   </Card>
 
-  <Card title="CLI Reference" icon="terminal" href="/reference/cli">
+  <Card title="Client CLI" icon="terminal" href="/reference/client-cli">
     Full reference for `@aomi-labs/client`.
   </Card>
 </CardGroup>
@@ -29,7 +29,7 @@ Technical reference for everything you can call, configure, or extend.
     HTTP endpoints, SSE streams, and request/response payloads.
   </Card>
 
-  <Card title="Apps & Authentication" icon="key" href="/reference/apps-auth">
+  <Card title="Apps & Authentication" icon="key" href="/reference/apps-and-authentication">
     How API keys, Aomi Apps, and sessions work together.
   </Card>
 
@@ -45,11 +45,15 @@ Technical reference for everything you can call, configure, or extend.
     How the runtime executes an App turn. Model loop, transaction harness, streaming.
   </Card>
 
-  <Card title="Simulation" icon="flask" href="/reference/simulation">
+  <Card title="Simulation Reference" icon="flask" href="/reference/simulation-reference">
     Simulation first transaction pipeline.
   </Card>
 
-  <Card title="Account Abstraction" icon="user-shield" href="/reference/account-abstraction">
-    Session keys, gas sponsorship, and batched operations.
+  <Card title="Account abstraction" icon="user-shield" href="/concepts/account-abstraction">
+    EIP-4337 and EIP-7702 execution, gas sponsorship, and batched operations.
+  </Card>
+
+  <Card title="Solana bundle" icon="sun" href="/concepts/solana-bundle">
+    Atomic instruction bundles, simulation, signing, and submission routes.
   </Card>
 </CardGroup>

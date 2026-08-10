@@ -48,9 +48,9 @@ Architectural deep-dives:
 | Page | What it covers |
 |------|---------------|
 | `concepts/what-is-aomi.mdx` | Agentic Applications, auth, safety defaults |
-| `concepts/how-it-works.mdx` | Full platform pipeline — APIs → tools → deploy → request flow |
+| `concepts/transaction-pipeline.mdx` | Full platform pipeline — APIs → tools → deploy → request flow |
 | `concepts/architecture.mdx` | Platform overview, transaction pipeline, integration paths |
-| `concepts/non-custodial-wallets.mdx` | Simulation-first flow, Para/wagmi setup, wallet integration code |
+| `concepts/accounts-and-wallets.mdx` | Simulation-first flow, Para/wagmi setup, wallet integration code |
 | `concepts/key-concepts.mdx` | Core concepts explained concisely |
 
 ### 4. Examples
@@ -62,7 +62,7 @@ Real-world integrations:
 | `examples/polymarket.mdx` | Prediction market tools (Gamma, Data API, CLOB) |
 | `examples/defi-aggregators.mdx` | DeFi tools (DefiLlama, 0x, LI.FI, CoW) |
 | `examples/x-apis.mdx` | X API v2 tools (search, timeline, trends) |
-| `examples/metamask.mdx` | Embedding Aomi in wallet UIs (coming soon) |
+| `examples/metamask-wallet-integration.mdx` | Embedding Aomi in wallet UIs (coming soon) |
 
 ### 5. Reference
 
@@ -71,8 +71,8 @@ Full API, CLI, SDK, and protocol reference:
 | Page | What it covers |
 |------|---------------|
 | `reference/sdk-api.mdx` | ChatAppBuilder, streaming, ChatCommand variants, SystemEventQueue, custom tools, multi-step tools |
-| `reference/cli.mdx` | Full CLI reference — commands, secrets, signing modes, session state, all flags |
-| `reference/simulation.mdx` | Anvil forks, ForkProvider, batch simulation |
+| `reference/client-cli.mdx` | Full CLI reference — commands, secrets, signing modes, session state, all flags |
+| `reference/simulation-reference.mdx` | Anvil forks, ForkProvider, batch simulation |
 | `reference/account-abstraction.mdx` | Session keys, gas sponsorship, ERC-4337 |
 | `reference/runtime.mdx` | App turn lifecycle, model/tool loop, transaction harness, wallet callbacks, SSE streaming |
 

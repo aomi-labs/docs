@@ -1,32 +1,30 @@
 ---
 title: "Introduction"
-description: "Aomi is the execution harness for onchain AI: plain-language instructions become simulated, wallet-signed transactions across EVM and Solana — and a hosted platform for deploying your own onchain agents."
+description: "Use Aomi to turn plain-language intent into simulated, wallet-signed transactions across EVM and Solana, or deploy your own onchain Apps."
 ---
 
 Aomi is the execution harness for onchain AI. It turns plain-language
 instructions into real transactions against arbitrary protocols and smart
-contracts — EVM and Solana behind one interface. The Aomi runtime is built on
+contracts across EVM and Solana. The Aomi runtime is built on
 top of EVM and SVM light-clients, so it executes seamlessly, like "Claude Code
 on-chain". Every transaction follows one pipeline, **build → simulate → sign →
 broadcast**: composed against the protocol's own contract interfaces,
 rehearsed on a fork of live chain state in ~200ms, and only then handed to a
-wallet. Signing is non-custodial by construction — the agent proposes, the
-user's own key signs, with EIP-7702/4337 account abstraction and Solana
-broadcast built in. A transaction that fails simulation never reaches a
+wallet. Signing is non-custodial. The agent proposes the transaction, and the
+user's own key signs it. Aomi supports EIP-7702/4337 account abstraction and
+Solana broadcast. A transaction that fails simulation never reaches a
 signature.
 
-Aomi is also **Vercel for crypto agents**. You bring your APIs, skills, and
-system prompt; compose them as a plugin; and the Aomi runtime loads it
-dynamically alongside the default agent — no restart, no infrastructure. That
-plugin becomes your customized agent, and your users reach it wherever they
-already are: the widget embedded in your own UI, Telegram, or Discord. You
-own the agent; Aomi hosts and runs it.
+Aomi also hosts custom Apps. You provide the APIs, skills, and system prompt
+as a plugin. The runtime loads the plugin without a restart. Users can access
+your App through a widget in your UI, Telegram, or Discord. You own the App,
+and Aomi hosts it.
 
 {/* Each clip uses the same 16:10 box (one capture is 16:9) so the tiles match. */}
 <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: "1rem" }}>
   <div style={{ margin: 0, padding: 0, border: 0, background: "transparent" }}>
     <video controls muted playsInline preload="metadata" src="/videos/bridge-to-base.mp4" poster="/videos/bridge-to-base.jpg" style={{ display: "block", width: "100%", aspectRatio: "16 / 10", objectFit: "contain", background: "transparent", borderRadius: "0.75rem" }} />
-    <p style={{ margin: "0.5rem 0 0", padding: 0, fontSize: "0.75rem", lineHeight: 1.4, textAlign: "center" }}>“Move most of my ETH over to Base — leave me enough on mainnet for gas.” Bridged via Across; keeps a gas buffer the user never specified.</p>
+    <p style={{ margin: "0.5rem 0 0", padding: 0, fontSize: "0.75rem", lineHeight: 1.4, textAlign: "center" }}>“Move most of my ETH over to Base, but leave enough on mainnet for gas.” Across handles the bridge and preserves a gas buffer.</p>
   </div>
   <div style={{ margin: 0, padding: 0, border: 0, background: "transparent" }}>
     <video controls muted playsInline preload="metadata" src="/videos/swap-and-stake.mp4" poster="/videos/swap-and-stake.jpg" style={{ display: "block", width: "100%", aspectRatio: "16 / 10", objectFit: "contain", background: "transparent", borderRadius: "0.75rem" }} />
@@ -38,7 +36,7 @@ own the agent; Aomi hosts and runs it.
   </div>
   <div style={{ margin: 0, padding: 0, border: 0, background: "transparent" }}>
     <video controls muted playsInline preload="metadata" src="/videos/scheduled-sequence.mp4" poster="/videos/scheduled-sequence.jpg" style={{ display: "block", width: "100%", aspectRatio: "16 / 10", objectFit: "contain", background: "transparent", borderRadius: "0.75rem" }} />
-    <p style={{ margin: "0.5rem 0 0", padding: 0, fontSize: "0.75rem", lineHeight: 1.4, textAlign: "center" }}>“Yes — do the whole sequence.” Lido, Aave, an ERC-20 — persisted as a recurring intent.</p>
+    <p style={{ margin: "0.5rem 0 0", padding: 0, fontSize: "0.75rem", lineHeight: 1.4, textAlign: "center" }}>“Yes, do the whole sequence.” The Lido, Aave, and ERC-20 steps persist as a recurring intent.</p>
   </div>
 </div>
 
@@ -63,8 +61,8 @@ out.
 Tell an agent what you want and it turns plain English into wallet-signed
 transactions. As a human, use the product directly at
 [chat.aomi.dev](https://chat.aomi.dev): connect your wallet and start
-chatting to trade. Your coding agents — Claude, Codex, Hermes — can use Aomi
-too, through our MCP server. And for headless access, run the `aomi` CLI from
+chatting to trade. Coding agents such as Claude, Codex, and Hermes can use Aomi
+through the MCP server. For headless access, run the `aomi` CLI from
 your terminal.
 
 <CardGroup cols={3}>
@@ -75,29 +73,28 @@ your terminal.
     Point Claude Code, Cursor, or any MCP client at the Aomi server and trade
     from your editor.
   </Card>
-  <Card title="Access through the CLI" icon="terminal" href="/reference/cli">
+  <Card title="Access through the CLI" icon="terminal" href="/reference/client-cli">
     Install `aomi`, chat, simulate, and sign from the terminal.
   </Card>
 </CardGroup>
 
 ## How to build
 
-You can build **Aomi Apps** — plugins in the same spirit as [ChatGPT
+You can build **Aomi Apps** as plugins similar to [ChatGPT
 plugins](https://chatgpt.com/plugins) and [Claude
 connectors](https://support.claude.com/en/articles/11176164-use-connectors-to-extend-claude-s-capabilities),
 but for onchain execution. Wrap your API as a small set of tools, add a
-system prompt, and deploy: the runtime loads your plugin live, and your agent
-inherits the whole pipeline above — simulation, non-custodial signing, every
-channel.
+system prompt, and deploy it. The runtime loads your plugin, and your agent
+inherits simulation, non-custodial signing, and every supported channel.
 
 <CardGroup cols={3}>
-  <Card title="Overview" icon="hammer" href="/build">
+  <Card title="Overview" icon="hammer" href="/build/overview">
     What an Aomi App is and the four steps from idea to live.
   </Card>
   <Card title="Quickstart" icon="rocket" href="/build/quickstart">
     From an empty folder to a deployed App in about ten minutes.
   </Card>
-  <Card title="Developer Platform" icon="layer-group" href="/build/platform">
+  <Card title="Developer Platform" icon="layer-group" href="/build/developer-platform">
     Create, deploy, and operate Apps from the browser at build.aomi.dev.
   </Card>
 </CardGroup>

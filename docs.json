@@ -18,30 +18,38 @@
           "trade/portal",
           "guides/mcp",
           "guides/skills",
-          "reference/cli"
+          {
+            "group": "Client CLI",
+            "icon": "terminal",
+            "pages": [
+              "reference/client-cli",
+              "reference/client-cli/commands",
+              "reference/client-cli/transactions-and-signing"
+            ]
+          }
         ]
       },
       {
         "group": "Build on Aomi",
         "icon": "hammer",
         "pages": [
-          "build/index",
+          "build/overview",
           "build/quickstart",
           {
             "group": "Plugins",
             "icon": "puzzle",
             "pages": [
-              "build/plugins/anatomy",
-              "build/plugins/sdk",
+              "build/plugins/aomi-app",
+              "build/plugins/rust-sdk",
               "build/plugins/custom-tools",
-              "build/plugins/evals"
+              "build/plugins/evals-and-testing"
             ]
           },
           {
             "group": "Builder Toolchain",
             "icon": "wrench",
             "pages": [
-              "build/platform",
+              "build/developer-platform",
               "build/toolchain/aomi-build",
               "build/toolchain/aomi-run"
             ]
@@ -50,11 +58,10 @@
             "group": "Widget Library",
             "icon": "window",
             "pages": [
-              "guides/widget/index",
+              "guides/widget/quickstart",
               "guides/widget/installation",
-              "guides/widget/sponsored-transactions",
               "guides/widget/customization",
-              "guides/widget/deploy/vercel",
+              "guides/widget/deploy/ship-on-vercel",
               "guides/widget/troubleshooting"
             ]
           },
@@ -62,7 +69,10 @@
             "group": "Channels",
             "icon": "paper-plane",
             "pages": [
-              "build/telegram-bot"
+              "build/telegram",
+              "getting-started/discord",
+              "getting-started/slack",
+              "getting-started/ios"
             ]
           },
           "build/common-errors",
@@ -70,69 +80,55 @@
         ]
       },
       {
-        "group": "Trade on Aomi",
-        "icon": "arrow-right-arrow-left",
-        "pages": [
-          "trade/index",
-          "trade/execution"
-        ]
-      },
-      {
-        "group": "Aomi Skills",
-        "icon": "robot",
-        "pages": [
-          "skills/index"
-        ]
-      },
-      {
-        "group": "Platform",
-        "icon": "layer-group",
-        "pages": [
-          "getting-started/telegram",
-          "getting-started/web-app",
-          "getting-started/discord",
-          "getting-started/ios",
-          "guides/troubleshooting"
-        ]
-      },
-      {
         "group": "Concepts",
         "icon": "lightbulb",
         "pages": [
-          "concepts/index",
-          "concepts/what-is-aomi",
-          "concepts/how-it-works",
           "concepts/architecture",
-          "concepts/non-custodial-wallets",
-          "concepts/signing-policy",
-          "concepts/background-execution",
-          "concepts/payments",
-          "concepts/security",
-          "concepts/skills",
+          "concepts/transaction-pipeline",
+          "concepts/accounts-and-wallets",
+          "concepts/account-abstraction",
+          "concepts/solana-bundle",
+          "concepts/multi-threading",
+          "concepts/asynchronous-tasks",
           "concepts/glossary"
+        ]
+      },
+      {
+        "group": "Security",
+        "icon": "shield-halved",
+        "pages": [
+          "security/permission-model",
+          "security/signing",
+          "security/configure-approvals",
+          "security/transaction-safety"
+        ]
+      },
+      {
+        "group": "Payments",
+        "icon": "coins",
+        "pages": [
+          "concepts/payments",
+          "payments/x402",
+          "reference/app-pricing"
+        ]
+      },
+      {
+        "group": "Multi-chain Support",
+        "icon": "link",
+        "pages": [
+          "concepts/chains/evm",
+          "concepts/chains/svm"
         ]
       },
       {
         "group": "Examples",
         "icon": "rectangle-code",
         "pages": [
-          "examples/index",
+          "examples/example-integrations-overview",
           "examples/polymarket",
           "examples/defi-aggregators",
           "examples/x-apis",
-          "examples/metamask"
-        ]
-      },
-      {
-        "group": "Reference",
-        "icon": "book",
-        "pages": [
-          "reference/index",
-          "reference/simulation",
-          "reference/runtime",
-          "reference/api-reference",
-          "reference/sessions",
-          "reference/apps-auth"
+          "examples/metamask-wallet-integration"
         ]
       },
       {
@@ -146,6 +142,118 @@
     ]
   },
   "redirects": [
+    {
+      "source": "/payments",
+      "destination": "/concepts/payments"
+    },
+    {
+      "source": "/guides/payment",
+      "destination": "/concepts/payments"
+    },
+    {
+      "source": "/reference/cli",
+      "destination": "/reference/client-cli"
+    },
+    {
+      "source": "/build",
+      "destination": "/build/overview"
+    },
+    {
+      "source": "/build/index",
+      "destination": "/build/overview"
+    },
+    {
+      "source": "/build/plugins/anatomy",
+      "destination": "/build/plugins/aomi-app"
+    },
+    {
+      "source": "/build/plugins/plugin-anatomy",
+      "destination": "/build/plugins/aomi-app"
+    },
+    {
+      "source": "/build/plugins/sdk",
+      "destination": "/build/plugins/rust-sdk"
+    },
+    {
+      "source": "/build/plugins/evals",
+      "destination": "/build/plugins/evals-and-testing"
+    },
+    {
+      "source": "/build/platform",
+      "destination": "/build/developer-platform"
+    },
+    {
+      "source": "/guides/widget",
+      "destination": "/guides/widget/quickstart"
+    },
+    {
+      "source": "/guides/widget/index",
+      "destination": "/guides/widget/quickstart"
+    },
+    {
+      "source": "/guides/widget/widget-library",
+      "destination": "/guides/widget/quickstart"
+    },
+    {
+      "source": "/guides/widget/widget-installation",
+      "destination": "/guides/widget/installation"
+    },
+    {
+      "source": "/guides/widget/deploy/vercel",
+      "destination": "/guides/widget/deploy/ship-on-vercel"
+    },
+    {
+      "source": "/build/telegram-bot",
+      "destination": "/build/telegram"
+    },
+    {
+      "source": "/concepts/how-it-works",
+      "destination": "/concepts/transaction-pipeline"
+    },
+    {
+      "source": "/concepts/non-custodial-wallets",
+      "destination": "/concepts/accounts-and-wallets"
+    },
+    {
+      "source": "/guides/widget/sponsored-transactions",
+      "destination": "/concepts/account-abstraction"
+    },
+    {
+      "source": "/reference/account-abstraction",
+      "destination": "/concepts/account-abstraction"
+    },
+    {
+      "source": "/concepts/background-execution",
+      "destination": "/concepts/asynchronous-tasks"
+    },
+    {
+      "source": "/examples",
+      "destination": "/examples/example-integrations-overview"
+    },
+    {
+      "source": "/examples/index",
+      "destination": "/examples/example-integrations-overview"
+    },
+    {
+      "source": "/examples/metamask",
+      "destination": "/examples/metamask-wallet-integration"
+    },
+    {
+      "source": "/reference",
+      "destination": "/reference/overview"
+    },
+    {
+      "source": "/reference/index",
+      "destination": "/reference/overview"
+    },
+    {
+      "source": "/reference/simulation",
+      "destination": "/reference/simulation-reference"
+    },
+    {
+      "source": "/reference/apps-auth",
+      "destination": "/reference/apps-and-authentication"
+    },
     {
       "source": "/guides/widget/headless",
       "destination": "/guides/widget/customization#build-a-headless-ui"
@@ -164,7 +272,7 @@
     },
     {
       "source": "/guides/frontend-setup",
-      "destination": "/guides/widget"
+      "destination": "/guides/widget/quickstart"
     },
     {
       "source": "/guides/widget-installation",
@@ -184,15 +292,15 @@
     },
     {
       "source": "/build/frontend-vercel",
-      "destination": "/guides/widget/deploy/vercel"
+      "destination": "/guides/widget/deploy/ship-on-vercel"
     },
     {
       "source": "/guides/integration",
-      "destination": "/concepts/how-it-works"
+      "destination": "/concepts/transaction-pipeline"
     },
     {
       "source": "/getting-started/quickstart",
-      "destination": "/reference/cli"
+      "destination": "/reference/client-cli"
     },
     {
       "source": "/build/deploy",
@@ -208,11 +316,11 @@
     },
     {
       "source": "/reference/building-apps",
-      "destination": "/build/plugins/anatomy"
+      "destination": "/build/plugins/aomi-app"
     },
     {
       "source": "/reference/sdk-api",
-      "destination": "/build/plugins/sdk"
+      "destination": "/build/plugins/rust-sdk"
     },
     {
       "source": "/guides/custom-tools",
@@ -220,11 +328,11 @@
     },
     {
       "source": "/guides/evals-testing",
-      "destination": "/build/plugins/evals"
+      "destination": "/build/plugins/evals-and-testing"
     },
     {
       "source": "/guides/cli-usage",
-      "destination": "/reference/cli"
+      "destination": "/reference/client-cli"
     },
     {
       "source": "/guides/execution",
@@ -240,7 +348,35 @@
     },
     {
       "source": "/concepts/use-cases",
-      "destination": "/concepts/what-is-aomi"
+      "destination": "/build/overview"
+    },
+    {
+      "source": "/concepts",
+      "destination": "/concepts/architecture"
+    },
+    {
+      "source": "/concepts/index",
+      "destination": "/concepts/architecture"
+    },
+    {
+      "source": "/concepts/what-is-aomi",
+      "destination": "/build/overview"
+    },
+    {
+      "source": "/concepts/skills",
+      "destination": "/guides/skills"
+    },
+    {
+      "source": "/concepts/signing-policy",
+      "destination": "/security/permission-model"
+    },
+    {
+      "source": "/concepts/security",
+      "destination": "/security/permission-model"
+    },
+    {
+      "source": "/concepts/permission-model",
+      "destination": "/security/permission-model"
     }
   ],
   "logo": {
@@ -269,7 +405,7 @@
     "primary": {
       "type": "button",
       "label": "Get Started",
-      "href": "/reference/cli"
+      "href": "/reference/client-cli"
     }
   },
   "contextual": {

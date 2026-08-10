@@ -1,28 +1,28 @@
 ---
 title: "Overview"
-description: "Why plugins exist, what an Aomi App is, and the path from an empty folder to an agent your users can talk to."
+description: "Learn how plugins become Aomi Apps and how the runtime handles execution, signing, payments, and delivery across user surfaces."
 ---
 
-Out of the box, the harness does one thing — it turns language into verified
+Out of the box, the harness turns language into verified
 onchain execution. That is powerful, but most real workflows need more than
 chain state. A trading agent needs an order book. A prediction-market agent
 needs the market's own API. A research agent needs price feeds, stats, news,
 and search. Your product's agent needs your product's backend.
 
-**Plugins are how you extend the harness.** In the same spirit as Claude
-connectors — and the old ChatGPT plugin system — a plugin wraps your external
+**Plugins extend the harness.** Like Claude connectors and the earlier ChatGPT
+plugin system, a plugin wraps your external
 APIs as tools the agent can call, with a system prompt that shapes how it
 uses them. The runtime loads plugins dynamically, next to the default agent,
 with no restart. Your tools run inside the same pipeline as everything else:
 every transaction they stage is simulated before anyone signs, and signing
 stays non-custodial.
 
-A deployed plugin — your tools plus your prompt, live on the runtime — is
-what Aomi calls an **App**: the unit users select in the portal, the CLI, and
+A deployed plugin combines your tools and prompt on the runtime. Aomi calls
+the deployed unit an **App**. Users select an App in the portal, CLI, and
 the Developer Platform. In these docs, "plugin" is the thing you write;
 "App" is the thing you ship.
 
-## What a plugin is, concretely
+## What a plugin contains
 
 A plugin is a small Rust crate compiled to a shared library. You declare it
 with one macro, `dyn_aomi_app!`, and one config file, `aomi.toml`. That is
@@ -34,14 +34,16 @@ parts:
 * **Simulate first.** Every transaction is simulated before anyone signs, so
   the agent shows the real outcome before it commits.
 
-## The pattern, in production: Somm Finance
+## Example: Somm Finance
 
-Somm Finance runs an actively managed liquidity vault. Its models, data, and
-risk framework already existed as five HTTP endpoints. Turning that into an
-agent-operated product took no net-new engineering: the endpoints wrapped
-into tools, the investment mandate became the system prompt — enforced
-configuration, not guidance — and the composed plugin deployed to the hosted
-runtime as the **Somm Liquidity Manager** App.
+[Somm Finance](https://somm.finance) provides automated DeFi vaults that seek
+yield while managing risk. [Agentic Somm](https://agentic.somm.finance) helps
+you move idle USDC into Aave v3 on Base through a human-approved flow.
+
+Somm's models, data, and risk framework already existed as five HTTP endpoints.
+The team wrapped those endpoints as tools and used the investment mandate as
+enforced configuration in the system prompt. They deployed the plugin as the
+**Somm Liquidity Manager** App.
 
 {/* The five-panel Somm engagement figure, inlined as srcDoc for the same reasons as the
     architecture figure on the docs index: Mintlify serves no raw HTML from the repo, and
@@ -49,73 +51,82 @@ runtime as the **Somm Liquidity Manager** App.
     aomi-design/post/aomi-onchain-asset-management.html (section 02) — regenerate rather
     than hand-editing the blob at the bottom of this file. */}
 <iframe
-  title="Somm Finance on Aomi — from managed vault to agent-operated product"
+  title="Somm Finance on Aomi: from managed vault to agent-operated product"
   srcDoc={SOMM_ENGAGEMENT_HTML}
   loading="lazy"
   scrolling="no"
   style={{ width: "100%", aspectRatio: "1120 / 815", border: "0", display: "block", overflow: "hidden", colorScheme: "light" }}
 />
 
-The same App now executes the vault's operations and faces its depositors —
-the Somm frontend, Telegram, Discord — from one deployment. It prices its own
-app-level fee, settled on Aomi rails. And the runtime holds zero keys
-throughout: the agent builds and simulates every transaction, then proposes
-it to the mandate holder's wallet.
+The same App now serves the Somm frontend, Telegram, and Discord from one
+deployment. It executes vault operations and charges an App-level fee through
+Aomi. The runtime holds no keys. The agent builds and simulates each
+transaction, then sends the proposal to the mandate holder's wallet.
 
-## What the runtime handles for you
+## Runtime Features
 
-Your plugin is tools and a prompt. Everything below comes with the runtime —
-you configure it, you don't build it.
+Your plugin contains tools and a prompt. You configure the runtime features
+below instead of building them.
 
-**Wallets and signing.** Non-custodial by construction: your users' keys
-never touch Aomi. Every wallet carries a kernel-enforced signing mode —
-`denied`, `manual`, `client_auto`, or `auto` — changed only through a
+**Wallets and signing.** Your users' keys never touch Aomi. Every wallet has
+one kernel-enforced signing mode: `denied`, `manual`, `client_auto`, or `auto`.
+The mode changes only through a
 wallet-signed permit, and everything unknown fails closed. Delegated
 auto-signing exists only for embedded wallets (Privy, Para) under a
 revocable grant; self-custody wallets sign every request on the user's own
 device. The invariant your users can rely on: the agent can compose and
 simulate any transaction, but can only ever propose it.
 
-**Account abstraction.** Signing runs through an AA lane — EIP-7702 and
-EIP-4337 — with Solana broadcast built in, so batched approvals land as one
-signature and your plugin never touches bundler plumbing. See
-[how execution works](/trade/execution).
+**Account abstraction.** EIP-7702 and EIP-4337 package compatible EVM calls
+into one operation. Your plugin does not need to manage bundler plumbing. See
+[Account abstraction](/concepts/account-abstraction) for the EVM flow.
 
-**Background execution.** A user intent can outlive the conversation:
-one-shot schedules, recurring intents, and condition triggers persist as
-durable jobs, fire server-side with crash-safe retries, and resolve signing
-authority from the wallet's own policy at execution time — never
-pre-granted by the scheduler.
+**Solana bundles.** Solana uses an ordered instruction bundle inside one atomic
+transaction. Aomi can assemble the transaction or preserve venue-supplied
+bytes, then route signing and submission according to the wallet policy. See
+[Solana bundle](/concepts/solana-bundle) for the complete lifecycle.
 
-**Payments.** Price a tool in credits in a sidecar file and your users pay
-you directly — the runtime answers with an x402 challenge addressed to your
-wallet, USDC settles onchain, and the receipt lands in your ledger on the
-Developer Platform. No billing system to build.
+**Multi-threading.** A parent thread can delegate focused work to a durable
+child. The child keeps a separate transcript, returns its result to the parent,
+and cannot sign or submit staged transactions on its own.
 
-**Every surface.** One deployment serves the portal, the widget or headless
-library inside your own frontend, and a hosted Telegram bot — with Discord
-and Slack next.
+**Asynchronous tasks.** A user intent can outlive the conversation. One-time
+schedules, recurring intents, and condition triggers persist as durable tasks,
+run with bounded retries, and resolve signing
+authority from the wallet's own policy at execution time. The scheduler does
+not pre-grant signing authority.
 
-## Go deeper
+**Fees.** Set flat tool prices in `<app>.pricing.toml`. User payments settle
+in USDC through x402. Supported outcome fees settle with the signed
+transaction. Review revenue and service charges in **Operate > Usage**.
+
+**Surfaces.** One deployment serves the portal, the widget or headless
+library in your frontend, and a hosted Telegram bot. Discord and Slack are
+planned.
+
+## Related Concepts
 
 <CardGroup cols={3}>
-  <Card title="Wallets" icon="wallet" href="/concepts/non-custodial-wallets">
+  <Card title="Accounts and wallets" icon="wallet" href="/concepts/accounts-and-wallets">
     How wallets link to an account and why keys never move.
   </Card>
-  <Card title="Signing policy" icon="shield-check" href="/concepts/signing-policy">
+  <Card title="Permission model" icon="shield-check" href="/security/permission-model">
     Per-wallet modes, the permit ceremony, and the guard layer.
   </Card>
-  <Card title="Account abstraction" icon="layer-group" href="/trade/execution">
-    The build → simulate → sign → broadcast pipeline, 7702/4337 and Solana.
+  <Card title="Transaction pipeline" icon="layer-group" href="/concepts/transaction-pipeline">
+    Build → simulate → sign → broadcast, with account abstraction in the sign step.
   </Card>
-  <Card title="Background execution" icon="clock" href="/concepts/background-execution">
-    Scheduled, recurring, and condition-triggered runs.
+  <Card title="Multi-threading" icon="diagram-project" href="/concepts/multi-threading">
+    Parent and child threads with separate context and controlled authority.
   </Card>
-  <Card title="Payments" icon="coins" href="/concepts/payments">
-    Price your tools, get paid over x402, watch the ledger.
+  <Card title="Asynchronous tasks" icon="clock" href="/concepts/asynchronous-tasks">
+    Detached, scheduled, recurring, and condition-triggered runs.
   </Card>
-  <Card title="Integration" icon="window" href="/guides/integration">
-    Widget, headless library, and the Telegram channel.
+  <Card title="Fees" icon="coins" href="/concepts/payments">
+    Price App tools and review revenue, platform fees, and service charges.
+  </Card>
+  <Card title="Multi-chain specification" icon="link" href="/concepts/chains/evm">
+    What EVM and SVM support each mean, chain by chain.
   </Card>
 </CardGroup>
 

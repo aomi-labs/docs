@@ -1,11 +1,11 @@
 ---
 title: Rust SDK
-description: Rust reference for the Aomi plugin SDK. Build a plugin as a cdylib with typed tools, the DynAomiTool trait, the dyn_aomi_app! macro, secrets, host namespaces, and the runtime hot load model.
+description: "Use the Rust SDK to build loadable Aomi plugins with typed tools, secrets, host namespaces, and the dyn_aomi_app! registration macro."
 ---
 
 <Info>Verified against aomi-sdk@08b21f9 on 2026-06-29.</Info>
 
-The Aomi SDK is a Rust crate for building **plugins**. A plugin is a shared library (`cdylib`) that the Aomi runtime hot loads over a stable C ABI. You write typed tools in Rust, compile the plugin to a `.so` (Linux) or `.dylib` (macOS), and the runtime loads it without a restart. Deployed on the runtime, a plugin is what Aomi calls an App.
+The [Aomi SDK](https://github.com/aomi-labs/aomi-sdk/tree/main/sdk) is a Rust crate for building **plugins**, published as [`aomi-sdk` on crates.io](https://crates.io/crates/aomi-sdk). A plugin is a shared library (`cdylib`) that the Aomi runtime hot loads over a stable C ABI. You write typed tools in Rust, compile the plugin to a `.so` (Linux) or `.dylib` (macOS), and the runtime loads it without a restart. Deployed on the runtime, a plugin is what Aomi calls an App.
 
 <Note>
 This is the public plugin surface. You build against the `aomi-sdk` crate, and your tools cross the FFI boundary as JSON. The runtime and loader are not part of this crate, so you never link against host internals. The compatibility gate is the SDK version: the host and your plugin must build against the same `aomi-sdk` version.
@@ -329,7 +329,7 @@ let ctx = TestCtxBuilder::new("place_order")
 
 `run_async_tool` returns `(updates, terminal)`: every non terminal `emit` value in order, plus the terminal `complete` payload.
 
-## A full example, start to finish
+## Complete example
 
 A minimal greeter plugin, straight from the crate docs:
 
@@ -376,7 +376,7 @@ The reference template at `sdk/examples/app-template-http` in the `aomi-labs/aom
 ## Next steps
 
 <CardGroup cols={2}>
-<Card title="Plugin anatomy" icon="hammer" href="/build/plugins/anatomy">
+<Card title="Aomi App" icon="hammer" href="/build/plugins/aomi-app">
 The full workflow for authoring, structuring, and publishing a plugin.
 </Card>
 <Card title="CLI toolchain" icon="terminal" href="/build/toolchain/aomi-build">

@@ -1,11 +1,11 @@
 ---
 title: Custom tools
-description: Extend Aomi with custom tools using the Rust SDK. Implement the DynAomiTool trait, register tools with the dyn_aomi_app! macro, and ship them as a plugin.
+description: "Connect external APIs to Aomi with typed Rust tools. Implement DynAomiTool, register it, and ship the plugin as an App."
 ---
 
 Custom tools are how you extend Aomi with your own APIs, data sources, and onchain actions. You define each tool in the Rust SDK by implementing the `DynAomiTool` trait, then register your tools with the `dyn_aomi_app!` macro. The macro compiles your tool list into a manifest, a dispatch router, and the C ABI entry points the host loads at runtime.
 
-For the full plugin lifecycle (crate setup, building, and shipping), see [Plugin anatomy](/build/plugins/anatomy). This page focuses on the tool surface.
+For the full plugin lifecycle (crate setup, building, and shipping), see [Aomi App](/build/plugins/aomi-app). This page focuses on the tool surface.
 
 ## Defining a tool
 
@@ -94,7 +94,7 @@ ToolReturn::with_route(
 )
 ```
 
-The host treats each route as advisory: `on_return` steps render into the next prompt the LLM sees, and out-of-band events (wallet callbacks, staged transaction completions) splice their results into the hinted args before the continuation prompt is injected. See [Plugin anatomy](/build/plugins/anatomy) for the host tool contract (`view_state`, `run_tx`, `stage_tx`, `simulate_batch`, `commit_tx`).
+The host treats each route as advisory: `on_return` steps render into the next prompt the LLM sees, and out-of-band events (wallet callbacks, staged transaction completions) splice their results into the hinted args before the continuation prompt is injected. See [Aomi App](/build/plugins/aomi-app) for the host tool contract (`view_state`, `run_tx`, `stage_tx`, `simulate_batch`, `commit_tx`).
 
 ## Registering tools
 
@@ -128,6 +128,6 @@ assert!(result.is_ok());
 
 ## Next steps
 
-- [Plugin anatomy](/build/plugins/anatomy): full plugin lifecycle and host tool contract
-- [Evals and testing](/build/plugins/evals): test tool and App behavior
-- [Rust SDK](/build/plugins/sdk): full Rust SDK documentation
+- [Aomi App](/build/plugins/aomi-app): full plugin lifecycle and host tool contract
+- [Evals and testing](/build/plugins/evals-and-testing): test tool and App behavior
+- [Rust SDK](/build/plugins/rust-sdk): full Rust SDK documentation

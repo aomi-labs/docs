@@ -1,6 +1,6 @@
 ---
 title: "Aomi Skills"
-description: "Drop in Agent Skills that teach Claude Code, Cursor, Codex, and Gemini how to use Aomi: aomi-transact to trade and aomi-build to scaffold Apps."
+description: "Install Agent Skills that teach coding assistants to use Aomi. Use aomi-transact for trading and aomi-build for App development."
 ---
 
 Aomi Skills are drop in Agent Skills: small markdown files that teach an AI coding assistant how to use Aomi. Install once and your agent learns the full command surface. No code to compile, nothing to configure. They work with Claude Code, Cursor, Gemini CLI, VS Code Copilot, and any tool that supports the Agent Skills spec.
@@ -26,7 +26,7 @@ Scaffold a new App. `aomi-build` teaches your agent to turn an API into Aomi too
 - It generates a working Aomi SDK crate: `lib.rs`, `client.rs`, and `tool.rs`, with tool schemas, a preamble, and validation.
 - Output supports sync HTTP tools, async tools, proxy unwrap (EIP-1967), and multistep quote to approval to swap flows.
 
-This is the skill behind [Build on Aomi](/build).
+This is the skill behind [Build on Aomi](/build/overview).
 
 ## Install
 
@@ -60,11 +60,11 @@ You need `@aomi-labs/client` v0.4.2 or newer. For transaction signing, also inst
 npm install -g viem
 ```
 
-`aomi-build` targets the Rust `aomi-sdk` (v0.1.15 or newer) when you compile the App you scaffold. See [Build on Aomi](/build) for that toolchain.
+`aomi-build` targets the Rust `aomi-sdk` (v0.1.15 or newer) when you compile the App you scaffold. See [Build on Aomi](/build/overview) for that toolchain.
 
 ## Where they live
 
-Both skills are open source in the [`aomi-labs/skills`](https://github.com/aomi-labs/skills) repo, under the MIT license. Every change runs four security scanners in CI. For the full list of protocols `aomi-transact` can reach, see the [protocol catalog](/concepts/skills).
+Both skills are open source in the [`aomi-labs/skills`](https://github.com/aomi-labs/skills) repo, under the MIT license. Every change runs four security scanners in CI. For the full list of protocols `aomi-transact` can reach, see the [protocol catalog](/guides/skills).
 
 ## Next
 
@@ -72,7 +72,7 @@ Both skills are open source in the [`aomi-labs/skills`](https://github.com/aomi-
   <Card title="Trade on Aomi" icon="arrow-right-arrow-left" href="/trade">
     Use aomi-transact to trade by chat.
   </Card>
-  <Card title="Build on Aomi" icon="hammer" href="/build">
+  <Card title="Build on Aomi" icon="hammer" href="/build/overview">
     Use aomi-build to scaffold and ship an App.
   </Card>
 </CardGroup>

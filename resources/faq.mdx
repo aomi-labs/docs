@@ -1,13 +1,13 @@
 ---
 title: "FAQ"
-description: "Frequently asked questions about Aomi: what tool calls are, wallet safety and custody, simulation, supported models, channels, and how to start integrating."
+description: "Get concise answers about Aomi tools, wallet custody, simulation, supported models, channels, and integration choices."
 ---
 
 ## Getting started
 
 ### What is Aomi?
 
-Aomi is a hosted runtime that turns your APIs into AI-callable tools and ships them as an embeddable chat experience, with simulation-first onchain transactions and non-custodial wallets built in. See [What is Aomi?](/concepts/what-is-aomi) for more.
+Aomi is a hosted runtime that turns your APIs into AI-callable tools and ships them as an embeddable chat experience, with simulation-first onchain transactions and non-custodial wallets built in. See [What is Aomi?](/build/overview) for more.
 
 ### Who is Aomi for?
 
@@ -15,7 +15,7 @@ Teams building agentic AI on top of blockchain APIs like DeFi protocols, exchang
 
 ### How do I get started?
 
-Run the [Widget Installation](/guides/widget-installation) guide to install the widget into a Next.js app in one command, or read [How It Works](/concepts/how-it-works) for the full pipeline.
+Run the [Installation](/guides/widget/installation) guide to install the widget into a Next.js app in one command, or read [Transaction pipeline](/concepts/transaction-pipeline) for the full pipeline.
 
 ### Do I need a backend?
 
@@ -29,7 +29,7 @@ Yes. Use the [Web App](https://chat.aomi.dev) or the [Telegram bot](https://t.me
 
 ### What is an Aomi App?
 
-An App is an isolated agent environment: its tools, system prompt (preamble), model, and API key. Switching Apps changes the agent's full capability surface. See [Apps & Authentication](/reference/apps-auth).
+An App is an isolated agent environment: its tools, system prompt (preamble), model, and API key. Switching Apps changes the agent's full capability surface. See [Apps & Authentication](/reference/apps-and-authentication).
 
 ### What is a tool call?
 
@@ -77,15 +77,15 @@ Para handles connect and account management; signing flows through wagmi-compati
 
 ### What is simulation-first execution?
 
-Before any transaction reaches your wallet, Aomi forks the current network state with Anvil and simulates the transaction. You see the exact outcome before approving. See [Simulation Reference](/reference/simulation).
+Before any transaction reaches your wallet, Aomi forks the current network state with Anvil and simulates the transaction. You see the exact outcome before approving. See [Simulation Reference](/reference/simulation-reference).
 
 ### What chains are supported?
 
 Ethereum, Base, Arbitrum, and any EVM chain you configure. See the [Architecture page](/concepts/architecture) for setup.
 
-### What about gas sponsorship and session keys?
+### What about gas sponsorship and batched operations?
 
-Supported via [Account Abstraction](/reference/account-abstraction) for smoother UX without custody changes.
+Supported through [account abstraction](/concepts/account-abstraction) on compatible EVM wallets and networks. Aomi can prepare a batched EIP-4337 or EIP-7702 operation and request network-gas sponsorship while the wallet owner retains signing authority.
 
 ## Sessions & threads
 
@@ -105,11 +105,11 @@ Session and thread history is persisted per the runtime's configuration. See [Se
 
 ### Should I use the widget or the headless library?
 
-Widget: fastest path, full chat UI, edit copied source files. Headless: full control over UI, build with `@aomi-labs/react` hooks. See [Frontend Setup](/guides/frontend-setup) for the comparison.
+Widget: fastest path, full chat UI, edit copied source files. Headless: full control over UI, build with `@aomi-labs/react` hooks. See [Quickstart](/guides/widget/quickstart) for the comparison.
 
 ### Can I embed Aomi inside another app (MetaMask, mobile, etc.)?
 
-Yes. See the [MetaMask example](/examples/metamask) for one pattern.
+Yes. See the [MetaMask example](/examples/metamask-wallet-integration) for one pattern.
 
 ### Does Aomi work in non-React frontends?
 
@@ -141,6 +141,6 @@ Common causes: the tool isn't registered in the active App, the description is u
 
 ## Next steps
 
-- [Client CLI](/reference/cli): install and use the aomi command
+- [Client CLI](/reference/client-cli): install and use the aomi command
 - [Troubleshooting](/guides/troubleshooting): common issues
 - [Changelog](/resources/changelog): platform updates

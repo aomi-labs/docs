@@ -1,11 +1,11 @@
 ---
-title: Put your App on Telegram
-description: Turn your deployed Aomi App into a Telegram bot people can chat with. Create a bot in BotFather, register it on Aomi, and it goes live. No server to run.
+title: Telegram
+description: "Connect a deployed Aomi App to Telegram without running your own server. Create the bot, register it with Aomi, and start chatting."
 ---
 
 Your App already runs on Aomi. This page gives it a Telegram bot: a chat people open in Telegram and talk to, in a direct message or a group. The bot runs your deployed App, so it can answer questions, read live data, and walk a user through a transaction with simulate before sign.
 
-Aomi hosts the bot for you. You create a bot in Telegram, hand Aomi the token, and Aomi wires it up. You do not run a server. One bot can serve one App or several, so a single bot can front your whole catalog. Telegram is the live channel today; Discord and Slack appear on the Integrations page but are not yet available.
+Aomi hosts the bot for you. You create a bot in Telegram, hand Aomi the token, and Aomi wires it up. You do not run a server. One bot can serve one App or several, so a single bot can front your whole catalog. Telegram is live today. [Discord](/getting-started/discord), [Slack](/getting-started/slack), and [iOS](/getting-started/ios) are coming soon.
 
 <Info>
 **Verified 2026-07-30** against the live Integrations page on `build.aomi.dev` and the shipped `aomi-telegram` bot. We use Goal Digger as the running example; swap in your own App name anywhere you see `goal-digger-live`.
@@ -111,7 +111,7 @@ The steps above use Aomi's hosted bots, which is the right path for most Apps. I
 <Card title="Deploy and activate on aomi CLI" href="/build/toolchain/aomi-build">
 Get your App live on Aomi first, or bring it back after an SDK bump.
 </Card>
-<Card title="Deploy a frontend on Vercel" href="/build/frontend-vercel">
+<Card title="Deploy a frontend on Vercel" href="/guides/widget/deploy/ship-on-vercel">
 Give the same App a branded web page as well as a bot.
 </Card>
 <Card title="Telegram Bot reference" href="/getting-started/telegram">

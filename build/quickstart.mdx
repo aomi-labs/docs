@@ -1,6 +1,6 @@
 ---
 title: "Quickstart"
-description: "Go from an empty folder to a deployed Aomi App on the community platform in about ten minutes."
+description: "Build and deploy your first Aomi App in about ten minutes, starting from an empty folder."
 ---
 
 By the end you will have written a small Aomi App, deployed it to the public community platform, and handed it to ops to load onto the live runtime.
@@ -16,10 +16,10 @@ graph LR
 
 1. **Write** your tools in a Rust crate with `aomi.toml` and `src/lib.rs`.
 2. **Build** it with `cargo build --release`.
-3. **Deploy** — the backend builds your plugin and cuts a release. Two ways
-   in: [`aomi-build`](/build/toolchain/aomi-build) from your terminal,
-   or the [Developer Platform](/build/platform) from your browser.
-4. **Activate** — the release loads onto the live runtime, and your App is
+3. **Deploy.** The backend builds your plugin and creates a release. Use
+   [`aomi-build`](/build/toolchain/aomi-build) from your terminal
+   or the [Developer Platform](/build/developer-platform) from your browser.
+4. **Activate.** The release loads onto the live runtime, and your App is
    live.
 
 The steps below walk through all four stages end to end in about ten minutes.
@@ -260,7 +260,7 @@ You have a deployed Aomi App on the live runtime. You wrote three files, deploye
 To go further:
 
 <CardGroup cols={2}>
-  <Card title="Building an App" href="/build/plugins/anatomy">
+  <Card title="Aomi App" href="/build/plugins/aomi-app">
     The anatomy: tools, arguments, the preamble, and host namespaces.
   </Card>
   <Card title="Deploy and activate" href="/build/toolchain/aomi-build">

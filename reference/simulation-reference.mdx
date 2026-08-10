@@ -1,6 +1,6 @@
 ---
 title: "Simulation Reference"
-description: "Technical deep dive into Aomi's simulation first transaction pipeline. Anvil fork lifecycle, state diffing, token change previews, and safety guarantees."
+description: "Inspect Aomi's simulation-first pipeline, including Anvil fork lifecycle, state diffs, token changes, and safety guarantees."
 ---
 
 The simulation pipeline is the core safety mechanism of the Aomi platform. Every transaction is simulated on a forked network before it reaches the user's wallet.
@@ -57,7 +57,7 @@ An App never broadcasts a transaction directly. It stages each transaction, asks
 
 The order is always the same: **stage first, then `simulate_batch`, then commit**. Because each staged transaction sees the state changes from the ones before it, an approve-then-swap pair simulates correctly as a batch.
 
-For the full host capability contract, see [Building Apps](/build/plugins/anatomy).
+For the full host capability contract, see [Aomi App](/build/plugins/aomi-app).
 
 ## Transaction Simulation
 
@@ -183,6 +183,6 @@ flowchart LR
 
 ## Next Steps
 
-- [Non-Custodial Automation](/concepts/non-custodial-wallets): wallet security model
-- [Building Apps](/build/plugins/anatomy): host tool contract for staging and committing
+- [Accounts and wallets](/concepts/accounts-and-wallets): wallet security model
+- [Aomi App](/build/plugins/aomi-app): host tool contract for staging and committing
 - [Execution](/trade/execution): transaction lifecycle from simulation to settlement

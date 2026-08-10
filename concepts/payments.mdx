@@ -1,101 +1,145 @@
 ---
-title: "Payments"
-description: "Price your App's tools in credits, get paid directly by your users over x402 — USDC settled onchain, no billing infrastructure to build. What is live today and what is still rolling out."
+title: "Fees"
+description: "Understand what your App can charge, what Aomi charges you, and how each amount appears in Usage."
 ---
 
-Aomi ships payment rails so an App can be a revenue line, not just a
-feature: you declare a price on a tool, users pay over HTTP, and settlement
-lands onchain — directly in your wallet, without the money ever pooling at
-Aomi.
+Aomi separates revenue from service charges. Your App can earn revenue from
+priced tools and supported transaction outcomes. Aomi charges for managed
+model usage and App hosting.
 
-The unit of account is the **credit**: 1 credit = $0.01.
+## How the fee model works
 
-## Pricing a tool
+| Flow | What it covers | Who pays | How it settles |
+| --- | --- | --- | --- |
+| Tool fee | A successful call to a priced App tool | User | USDC through x402 |
+| Outcome fee | A percentage of value moved by a supported transaction | User | In the signed transaction |
+| Managed model usage | Model inference funded by Aomi | App builder | Added to your Usage statement |
+| App hosting | Monthly hosting for an active App | App builder | Added to your Usage statement |
 
-An App declares prices in a sidecar file, `<app>.pricing.toml`, next to its
-manifest:
+Tool fees and outcome fees produce revenue for your App. Managed model usage
+and hosting are service charges.
 
-```toml
-version = 1
+## Credits
 
-[[beneficiaries]]
-name  = "treasury"
-type  = "evm_address"
-chain = "eip155:8453"
-value = "0xYourAddress"
+Aomi uses credits to price App tools and measure model usage.
 
-[resources.get_idle_assets]
-pricing     = { flat = 100 }   # 100 credits = $1.00 per successful call
-beneficiary = "treasury"
-```
+**1 Aomi credit = $0.01 USD.**
 
-Rules the runtime enforces: charging is **success-only** (a blocked or
-failed call is never charged), unknown pricing keys fail the App load
-rather than running it underpriced, and the beneficiary address is
-snapshotted at load so accrued fees keep the address they accrued under.
+A tool priced at `100` credits costs the user `$1.00` after a successful call.
+Failed and blocked calls do not create a tool fee.
 
-## How a user pays: x402
+## Tool fees
 
-Payment rides the HTTP layer via [x402](https://www.x402.org/). When a
-turn needs payment, the backend answers `402 Payment Required` with a
-signed challenge for the exact amount owed. The client — the portal, or
-the CLI with `--payment-method coinbase` — signs a USDC
-`transferWithAuthorization` (one wallet signature; the facilitator pays
-the gas) and retries. The facilitator verifies and settles the transfer
-onchain mid-request, and the transaction hash comes back as the receipt.
+You set a flat price for each billable tool in `<app>.pricing.toml`. You also
+name the wallet that should receive the revenue.
 
-Two floors keep this from prompting on every message:
+When a priced tool succeeds, Aomi records the fee for that user and
+beneficiary. Aomi can combine small balances before requesting payment. The
+user then pays the beneficiary directly in USDC through x402.
 
-- **Platform usage** accrues against a running balance and is only
-  challenged once you are ~$5 underwater.
-- **Partner fees** — your priced tools — accrue per user in a bucket keyed
-  to your beneficiary address. Once a user owes ~$1, their next message is
-  answered with a 402 whose pay-to **is your address**. The user pays you
-  directly, onchain; Aomi never holds the funds. The settlement is recorded
-  with its transaction hash and shows up in your ledger with an explorer
-  link.
+Aomi applies a **10% platform fee** to gross tool revenue. Your net revenue is
+the remaining 90%.
 
-## Watching the money: the ledger
+<Card title="Configure tool prices" icon="code" href="/reference/app-pricing">
+  See the complete pricing file schema and examples.
+</Card>
 
-The [Developer Platform](/build/platform) Usage page renders your
-partner-payments ledger live from the statement API: per-tool prices,
-observed calls, accrued vs settled vs outstanding, and an event trail of
-`fee_accrued` → `settlement_confirmed` with explorer links. One receipt may
-clear fees accrued across several of your Apps — settlement is per
-beneficiary, not per tool.
+## Outcome fees
 
-Platform take rates are published in the builder statement: 10% on tool
-fees, 30% on outcome fees, 10% on managed-model spend, $10/App/month
-hosting.
+An outcome fee charges a percentage of value moved by a supported onchain
+action. You define the percentage in basis points. A rule with `bps = 30`
+charges 0.30%.
 
-## Status: live and rolling out
+Aomi adds the fee to the same smart-account transaction as the requested
+action. The user reviews and signs both together. The fee uses the asset being
+moved, so it does not require an x402 payment.
 
-Honest limits, per house rule:
+Aomi applies a **30% platform fee** to gross outcome-fee revenue. Your net
+revenue is the remaining 70%.
 
-- **Live** — per-call x402 pricing and USDC settlement via facilitator;
-  partner fee accrual and direct user→builder settlement with onchain
-  receipts; the statement API and the Usage ledger; CLI payment
-  (`--payment-method coinbase`). The full loop — priced tool, 402,
-  signed retry, onchain receipt in the ledger — is proven end to end with
-  Somm Finance's app on Base Sepolia.
-- **Rolling out** — **MPP** (Machine Payments Protocol, Tempo's session-
-  channel rail): deposit once into an escrow channel, sign cumulative
-  off-chain vouchers, settle post-turn. The rail is implemented behind the
-  same payment gate as x402 but is not yet active on the production path.
-- **Rolling out** — **outcome fees**: `[[outcome]]` rules that add a
-  bps-of-flow fee leg to the transaction batch itself, paid in the flowed
-  token. Assembly and validation ship today; live broadcast is gated on
-  the wallet-delegation setup described in
-  [Signing policy](/concepts/signing-policy).
+<Note>
+  Outcome fees apply only when Aomi can identify a supported transaction flow.
+  Opaque contract calls do not produce an outcome fee.
+</Note>
+
+## Funding model usage
+
+Aomi checks who provides the model key for each App request.
+
+| Funding source | Who pays the model provider | Charge from Aomi |
+| --- | --- | --- |
+| App-provided key | App builder | None |
+| User-provided key | User | None |
+| Aomi-managed key | Aomi, then the App builder | Provider cost plus 10% |
+
+The selected model does not change when the funding source changes. If you use
+your own provider key, the provider bills that account directly and Aomi does
+not add a model charge.
+
+## App hosting
+
+Aomi charges **$10 per active App each calendar month**. Hosting appears as a
+service charge in Usage.
+
+## Read your Usage statement
+
+Open **Operate > Usage** in the Developer Platform to review your statement.
+
+| Summary | Meaning |
+| --- | --- |
+| Gross revenue | Amount collected from users for your Apps |
+| Platform fees | Aomi's share of App revenue |
+| Service charges | Managed model usage and App hosting |
+| Net | Gross revenue minus platform fees and service charges |
+
+Use the App filter to review one App. The entries table shows when each charge
+or earning occurred.
+
+## Worked examples
+
+### User Usage view
+
+Assume a user has a monthly allowance of `5,000` credits. During the statement
+period, they use `3,814.827` credits across `245` model turns. The Usage page
+reports `$38.15` of model usage after rounding to cents.
+
+| Item | Usage | Amount due now |
+| --- | --- | --- |
+| Model usage | `$38.15` | `$0.00` |
+| Priced tool calls | No charges | `$0.00` |
+| Outcome fees | No charges | `$0.00` |
+
+The monthly allowance covers the complete `$38.15` model charge. The user has
+about `1,185.173` credits left. No wallet payment is required for compute in
+this period. Any future outcome fee would settle separately in the asset used
+by the transaction.
+
+### Builder Usage view
+
+Assume a builder operates eight active Apps and uses `$0.65` of
+Aomi-managed model access during the statement period. The Apps generate no
+user revenue during that period.
+
+| Statement item | Calculation | Amount |
+| --- | --- | --- |
+| Gross revenue | No user payments collected | `$0.00` |
+| Platform fees | No revenue share without revenue | `$0.00` |
+| App hosting | `8 Apps x $10.00` | `-$80.00` |
+| Managed model usage | Provider cost plus markup | `-$0.65` |
+| Net | `$0.00 - $0.00 - $80.65` | `-$80.65` |
+
+The negative net means the builder owes `$80.65` for service charges. If an
+App uses its own model key, its provider usage does not add an Aomi model
+charge.
 
 ## Next
 
 <CardGroup cols={2}>
-  <Card title="The Developer Platform" icon="layer-group" href="/build/platform">
-    Where the ledger, statement, and monetization card live.
+  <Card title="x402 payments" icon="money-check-dollar" href="/payments/x402">
+    Learn how Aomi requests, verifies, and settles USDC payments.
   </Card>
-  <Card title="Build overview" icon="hammer" href="/build">
-    The plugin model your priced tools ship in.
+  <Card title="App pricing reference" icon="brackets-curly" href="/reference/app-pricing">
+    Configure tool prices, beneficiaries, and outcome fees.
   </Card>
 </CardGroup>
 
