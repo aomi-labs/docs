@@ -236,9 +236,9 @@ function copyToClipboard(text) {
           {showSidebar && (
             <aside style={{ width: 210, flexShrink: 0, padding: "14px 12px 12px", background: theme.sidebar, borderRight: `1px solid ${border}`, display: "flex", flexDirection: "column" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "0 4px" }}>
-                {aomiMark(24)}
-                <span style={{ fontFamily: '"Source Serif 4", ui-serif, Georgia, Cambria, serif', fontSize: 24, fontWeight: 600, lineHeight: 1, letterSpacing: "-.025em" }}>aomi</span>
-                <span style={{ padding: "2px 6px", borderRadius: 6, background: theme.panel, fontSize: 9, fontWeight: 600 }}>CHAT</span>
+                {aomiMark(17)}
+                <span style={{ fontFamily: '"Source Serif 4", ui-serif, Georgia, Cambria, serif', fontSize: 17, fontWeight: 600, lineHeight: 1, letterSpacing: "-.025em" }}>aomi</span>
+                <span style={{ display: "flex", height: 17, alignItems: "center", padding: "0 6px", borderRadius: 6, background: theme.panel, fontSize: 9, fontWeight: 600, lineHeight: 1 }}>CHAT</span>
                 <span style={{ color: theme.muted, fontSize: 11 }}>⌄</span>
               </div>
               {walletPosition === "header" && (
