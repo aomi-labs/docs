@@ -161,7 +161,7 @@ function copyToClipboard(text) {
 
   const visibleControls = CONTROL_OPTIONS.filter((name) => controls[name]);
   const rootProps = [
-    'height="520px"',
+    'height="640px"',
     `showSidebar={${showSidebar}}`,
     walletPosition === "hidden" ? "walletPosition={null}" : `walletPosition="${walletPosition}"`,
   ].join(" ");
@@ -206,8 +206,8 @@ function copyToClipboard(text) {
           --pg-accent-strong: #5288c2; --pg-accent-subtle: #28354a; --pg-on-accent: #09090b;
         }
         .aomi-playground-grid { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 12px; }
-        .aomi-playground-preview { min-width: 0; height: 430px; }
-        .aomi-playground-settings { height: 430px; overflow: auto; }
+        .aomi-playground-preview { min-width: 0; height: 640px; }
+        .aomi-playground-settings { height: 640px; overflow: auto; }
         .aomi-playground-code { margin-top: 12px; }
         @media (max-width: 900px) {
           .aomi-widget-playground { padding: 16px; }
@@ -235,9 +235,9 @@ function copyToClipboard(text) {
         >
           {showSidebar && (
             <aside style={{ width: 210, flexShrink: 0, padding: "14px 12px 12px", background: theme.sidebar, borderRight: `1px solid ${border}`, display: "flex", flexDirection: "column" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "0 4px", fontWeight: 650, fontSize: 14 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "0 4px" }}>
                 {aomiMark(24)}
-                <span>Aomi</span>
+                <span style={{ fontFamily: '"Source Serif 4", ui-serif, Georgia, Cambria, serif', fontSize: 24, fontWeight: 600, lineHeight: 1, letterSpacing: "-.025em" }}>aomi</span>
                 <span style={{ padding: "2px 6px", borderRadius: 6, background: theme.panel, fontSize: 9, fontWeight: 600 }}>CHAT</span>
                 <span style={{ color: theme.muted, fontSize: 11 }}>⌄</span>
               </div>
