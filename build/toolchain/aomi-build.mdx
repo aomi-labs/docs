@@ -179,7 +179,6 @@ From the root of your repo:
 
 ```bash
 aomi-build deploy \
-  --platform community \
   --repo you/my-app \
   --backend https://api.aomi.dev \
   --activation-token <your-token> \
@@ -191,7 +190,7 @@ Prefer env vars for repeat runs? Export once, then the short command works every
 ```bash
 export AOMI_BACKEND_URL=https://api.aomi.dev
 export AOMI_APP_ACTIVATION_TOKEN=<your-token>
-aomi-build deploy --platform community --repo you/my-app --target-tag prod
+aomi-build deploy --repo you/my-app --target-tag prod
 ```
 
 One command runs the whole lifecycle:
@@ -252,7 +251,7 @@ Updates are the same loop, shorter:
 ```bash
 cargo test
 git add -A && git commit -m "Update my app" && git push
-aomi-build deploy --platform community --repo you/my-app --target-tag prod
+aomi-build deploy --repo you/my-app --target-tag prod
 ```
 
 The CLI remembers your backend, token, and source from the first run.
@@ -284,8 +283,7 @@ The fix is a normal redeploy against the new version:
 aomi-build sdk fix --backend https://api.aomi.dev
 cargo build --release
 git add Cargo.toml Cargo.lock && git commit -m "Bump aomi-sdk" && git push
-aomi-build source sync --platform community --repo you/my-app
-aomi-build deploy --platform community --repo you/my-app --target-tag prod
+aomi-build deploy --repo you/my-app --target-tag prod
 ```
 
 Your App is back once you see `active=true artifact_ready=true loaded=true`.
@@ -392,10 +390,10 @@ That is the whole loop: you wrote a plugin, deployed it, activated it, and now a
 | `no Cargo.toml found at <repo>/Cargo.toml` | Your plugin is in a subdirectory. | Move `Cargo.toml`, `aomi.toml`, and `src/` to the repo root and push again. See [Step 2](#step-2-lay-out-your-repo). |
 | SDK mismatch | Your pin differs from the platform. | Run `aomi-build sdk fix --backend https://api.aomi.dev`, commit, deploy again. Or pass `--fix-sdk` on deploy. |
 | Deploy hangs at "waiting" after CI is green | Old CLI without the CI fallback. | Reinstall the CLI (Step 1). As a one off, kill the process and run `aomi-build deploy activate` by hand. |
-| `deploy needs an app source id` | The backend cannot find your connected repo. | Pass `--repo you/my-app`, or run `aomi-build source sync --platform community --repo you/my-app`. |
+| `deploy needs an app source id` | The backend cannot find your connected repo. | Pass `--repo you/my-app`, or run `aomi-build connect` to reconnect. |
 | Status shows `activate: false` | Activate never ran or failed. | Run [Activate by hand](#activate-by-hand). |
 | App vanished from the picker; status shows `artifact_ready=false not loaded` while `active=true` | The platform bumped the required SDK, so your release no longer loads. | Redeploy against the new version. See [When the platform bumps the SDK](#when-the-platform-bumps-the-sdk). |
-| Deploy endpoint returns `502 Bad Gateway` | The deploy call failed while resolving your source inline. | Run `aomi-build source sync --platform community --repo you/my-app` first, then deploy again. |
+| Deploy endpoint returns `502 Bad Gateway` | The deploy call failed while resolving your source inline. | Pass `--repo you/my-app` on deploy, or run `aomi-build connect` to reconnect. |
 | Deploy uses old code | You did not push your latest commit. | `git push`, deploy again. |
 | Everything true except `loaded` | The runtime did not load the plugin. | Run `aomi-build deploy status --json` and share the deployment id and release tag with the team. |
 
@@ -444,7 +442,6 @@ Running `aomi-build` with no subcommand launches an interactive wizard that walk
 | `status` | Read `.aomi/deployment.json` and the backend, and report whether the release is built and loaded. |
 | `activate` | Tell a backend to fetch a published release by tag, validate it, and load it. Run with your activation token. |
 | `token` | Mint, list, or revoke platform or app activation tokens. |
-| `source` | Resolve a connected source repo to its `app_source_id`. |
 | `apps` | List a platform's apps. |
 | `request` | Legacy. Ask platform ops for onboarding details. Superseded by `connect`. |
 
@@ -606,10 +603,11 @@ AOMI_BACKEND_URL=https://api.aomi.dev aomi-build deploy
 
 | Flag | Meaning |
 |---|---|
-| `--app-source-id <ID>` | Connected GitHub App install id for this repo. Defaults to `AOMI_APP_SOURCE_ID`, else resolved from the connected repo. |
+| `--repo <OWNER/REPO>` | Source repository used to resolve its existing Project. |
 | `--backend <URL>` | Backend base URL. Defaults to `AOMI_BACKEND_URL`. |
 | `--dry-run` (alias of `--preflight`) | Preview the deployment manifest and run the preflight checks. No deploy. |
 | `--json` | Print the plan or outcome as JSON. |
+| `--fix-sdk` | Rewrite Cargo.toml/Cargo.lock to the backend-required aomi-sdk version before deploying when a mismatch is detected. |
 
 <Note>
 `--dry-run` is an alias of `--preflight`. Both preview the plan and run the checks without deploying.
