@@ -94,6 +94,13 @@
         ]
       },
       {
+        "group": "Skills",
+        "icon": "sparkles",
+        "pages": [
+          "skills/index"
+        ]
+      },
+      {
         "group": "Security",
         "icon": "shield-halved",
         "pages": [
@@ -384,7 +391,7 @@
     },
     {
       "source": "/concepts/skills",
-      "destination": "/guides/skills"
+      "destination": "/skills"
     },
     {
       "source": "/concepts/signing-policy",
