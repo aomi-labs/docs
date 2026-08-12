@@ -1,79 +1,261 @@
 ---
-title: "Aomi Skills"
-description: "Install Agent Skills that teach coding assistants to use Aomi. Use aomi-transact for trading and aomi-build for App development."
+title: "Skills"
+sidebarTitle: "Overview"
+description: "How Aomi discovers and activates protocol-specific instructions, tools, and safety constraints for each request."
 ---
 
-Aomi Skills are drop in Agent Skills: small markdown files that teach an AI coding assistant how to use Aomi. Install once and your agent learns the full command surface. No code to compile, nothing to configure. They work with Claude Code, Cursor, Gemini CLI, VS Code Copilot, and any tool that supports the Agent Skills spec.
+Aomi can read and call public smart contracts on supported chains when their ABI or IDL is available. Given a contract address and interface, a capable frontier model can often infer how to read state, construct calldata, and compose a transaction without protocol-specific guidance.
 
-There are two skills, and they pair with the two things you do on Aomi: trade, and build.
+That general approach is flexible, but it is not always efficient. Large interfaces consume context, repeated contract discovery adds latency, and subtle protocol conventions can make an otherwise valid call unsafe or incomplete.
 
-## aomi-transact
+Skills make protocol execution faster, more token-efficient, and more reliable. A skill packages the context Aomi needs for a particular protocol or workflow:
 
-Trade by chat. `aomi-transact` teaches your agent to drive the `aomi` CLI, so you ask in plain English and it builds, simulates, and signs the transaction.
+- official contracts and programs;
+- the relevant subset of functions or instructions;
+- a concise execution procedure;
+- supported chains;
+- specialized tools;
+- protocol-specific hooks and guards.
 
-- Turns prompts like "swap 1 ETH for USDC" or "open a 3x GMX long" into wallet signed transactions.
-- Reads prices, balances, and routes across more than 40 protocols (Uniswap, Aave, Lido, GMX, Hyperliquid, Polymarket, and more).
-- Simulates multistep flows as a batch on a forked chain before signing. Non-custodial throughout.
-- Works on Ethereum, Base, Arbitrum, Optimism, Polygon, and Linea. Account abstraction first, with an EIP-7702 or EIP-4337 fallback.
+Aomi initially sees only a compact index of compatible skills. It activates the relevant one or two skills for the request, then loads their detailed instructions and skill-owned tools. This keeps unrelated protocol context out of the model while preserving Aomi's ability to work with public contracts when no specialized skill is required.
 
-This is the skill behind [Trade on Aomi](/trade).
+## How skills work
 
-## aomi-build
+```mermaid
+sequenceDiagram
+    autonumber
 
-Scaffold a new App. `aomi-build` teaches your agent to turn an API into Aomi tools.
+    actor User
+    participant Agent as Aomi agent
+    participant Engine as Skill engine
+    participant Catalog as Skill catalog
+    participant Tools as App tools
+    participant Guards as Hooks and guards
+    participant Chain as Supported chain
 
-- Point it at an OpenAPI or Swagger spec, a REST endpoint, or SDK docs.
-- It generates a working Aomi SDK crate: `lib.rs`, `client.rs`, and `tool.rs`, with tool schemas, a preamble, and validation.
-- Output supports sync HTTP tools, async tools, proxy unwrap (EIP-1967), and multistep quote to approval to swap flows.
+    User->>Agent: Swap 1 ETH for USDC on Uniswap
 
-This is the skill behind [Build on Aomi](/build/overview).
+    Agent->>Engine: Discover compatible skills
+    Engine->>Catalog: Filter by App tools and wallet chain
+    Catalog-->>Engine: Compact matching skill index
+    Engine-->>Agent: uniswap: swap, AMM, Ethereum, Monad
 
-## Install
+    Agent->>Engine: activate_skills(["uniswap"])
+    Engine->>Catalog: Validate skill and dependencies
+    Catalog-->>Engine: Instructions, tools, hooks, and chain scope
+    Engine-->>Agent: Activate Uniswap context
+    Note over Agent,Engine: Only the selected skill enters the request context
 
-Install both skills with one command:
+    Agent->>Tools: Read balance and allowance
+    Tools->>Chain: Query public contract state
+    Chain-->>Tools: Balance and allowance
+    Tools-->>Agent: Current state
 
-```bash
-npx skills add aomi-labs/skills
+    Agent->>Tools: Construct and stage approval and swap
+    Tools->>Guards: Run protocol-specific checks
+    Guards-->>Tools: Pass, modify, or block
+
+    alt Guard blocks the transaction
+        Tools-->>Agent: Block reason
+        Agent-->>User: Explain the safety constraint
+    else Guard passes
+        Tools->>Chain: Simulate the staged batch
+        Chain-->>Tools: Simulation result
+        Tools-->>Agent: Outcome, fees, and warnings
+        Agent-->>User: Present the transaction for approval
+
+        User->>Agent: Approve
+        Agent->>Tools: Commit the simulated batch
+        Tools->>Chain: Submit through the wallet signing policy
+        Chain-->>Tools: Transaction hash and status
+        Tools-->>Agent: Confirmed result
+        Agent-->>User: Report completion
+    end
 ```
 
-This works with Claude Code, Cursor, Gemini CLI, and VS Code Copilot. Your agent picks the right skill based on what you ask: `aomi-transact` on transaction prompts, `aomi-build` on app-building prompts.
+Skill selection changes which context and tools are available to the model. It does not bypass the normal transaction pipeline. Every skill-guided transaction still passes through construction, protocol guards, simulation, signing policy, and broadcast.
 
-### OpenAI Codex
+## Skill bundle anatomy
 
-Add the repo as a Codex plugin marketplace, then the `aomi` bundle is available:
+Every skill is compiled into a common runtime format. The following excerpt is based on the generated Uniswap skill and is shortened for readability:
 
-```bash
-codex plugin marketplace add aomi-labs/skills
+```json
+{
+  "id": "uniswap",
+  "name": "uniswap",
+  "description": "Use when users want to swap tokens on Uniswap V3 or V2.",
+  "tags": ["swap", "uniswap", "v3", "v2", "amm", "dex"],
+  "tool_names": [
+    "get_time_and_onchain_context",
+    "encode_and_call",
+    "simulate_batch",
+    "evm_stage_tx",
+    "evm_commit_txs"
+  ],
+  "injected_tools": [
+    "encode_and_simulate_multicall"
+  ],
+  "source": "aomi_builtin",
+  "activation_tokens": 1976,
+  "instruction_md": "## Uniswap: Procedure\n1. Confirm the wallet and chain.\n2. Check the token balance and allowance.\n3. Build and simulate the swap.\n4. Inspect the guard result.\n5. Commit only after confirmation.",
+  "tool_hooks": [
+    {
+      "tool": "simulate_batch",
+      "pre_call": [],
+      "post_call": ["uniswap-known-addrs"]
+    },
+    {
+      "tool": "evm_stage_tx",
+      "pre_call": [],
+      "post_call": ["uniswap-known-addrs"]
+    }
+  ],
+  "tools_namespace": "evm-core",
+  "chain_ids": [1, 143]
+}
 ```
 
-### Prerequisites
+| Field | Meaning |
+| --- | --- |
+| `id` | Stable identifier used during activation. |
+| `description` | Helps the model decide when the skill is relevant. |
+| `tags` | Discovery terms describing supported intents and protocols. |
+| `tool_names` | Base tools the current App must provide. |
+| `injected_tools` | Skill-owned tools exposed only after activation. |
+| `instruction_md` | Protocol procedure and critical execution rules. |
+| `tool_hooks` | Checks applied before or after particular tool calls. |
+| `tools_namespace` | Shorthand for a complete tool family such as `evm-core`. |
+| `chain_ids` | Chains on which the skill can activate. |
+| `activation_tokens` | Estimated context consumed when the skill is activated. |
 
-`aomi-transact` drives the Aomi CLI, so install the client:
+## Discovery and activation
 
-```bash
-npm install -g @aomi-labs/client
+Discovery is scoped to the current thread. Aomi lists only skills whose required tools are available in the selected App. The compact index includes each skill's intent, tags, and chain scope without loading its complete instructions.
+
+The model normally activates one or two relevant skills in the first pass of a request:
+
+```json
+{
+  "skill_ids": ["uniswap"]
+}
 ```
 
-You need `@aomi-labs/client` v0.4.2 or newer. For transaction signing, also install `viem`:
+Activation validates the skill ID, required tools, connected chain, and context budget. A successful result identifies what entered the request context:
 
-```bash
-npm install -g viem
+```json
+{
+  "activated": ["uniswap"],
+  "rejected": []
+}
 ```
 
-`aomi-build` targets the Rust `aomi-sdk` (v0.1.15 or newer) when you compile the App you scaffold. See [Build on Aomi](/build/overview) for that toolchain.
+Only active skills contribute detailed instructions, injected tools, hooks, and guard tables. Broad requests such as a portfolio overview can begin with general account tools and activate protocol skills only when a follow-up action requires them.
 
-## Where they live
+## Base tools and skill-owned tools
 
-Both skills are open source in the [`aomi-labs/skills`](https://github.com/aomi-labs/skills) repo, under the MIT license. Every change runs four security scanners in CI. For the full list of protocols `aomi-transact` can reach, see the [protocol catalog](/guides/skills).
+An App provides the base tools that determine which skills it can support. A skill can also contribute specialized tools that remain inaccessible until activation.
 
-## Next
+```text
+App tools
+├── encode_and_call
+├── simulate_batch
+├── evm_stage_tx
+└── evm_commit_txs
+
+Activated Uniswap skill
+└── encode_and_simulate_multicall
+```
+
+This separation keeps the default tool surface small. The model receives a specialized tool definition only when the owning skill is relevant to the current request.
+
+## Instructions and execution procedures
+
+The `instruction_md` field gives the model the protocol-specific procedure it should follow. For example:
+
+```md
+## Uniswap: Procedure
+
+1. Confirm the wallet, chain, and block context.
+2. Check token balance and allowance.
+3. Build and simulate an approval when required.
+4. Construct the swap using the official router.
+5. Inspect the guard result.
+6. Commit only after user confirmation.
+```
+
+Instructions improve planning and calldata construction, but they do not enforce policy. Enforcement happens in hooks, guards, signing policy, and the transaction pipeline.
+
+## Hooks and guards
+
+Skills attach named checks to relevant tools. A binding can run before a call, after a call, or at both points:
+
+```json
+{
+  "tool": "evm_stage_tx",
+  "pre_call": [],
+  "post_call": ["uniswap-known-addrs"]
+}
+```
+
+Depending on the protocol, these checks can enforce:
+
+- known contract and program addresses;
+- allowed function selectors or instruction discriminators;
+- recipient and approval-spender constraints;
+- slippage ceilings;
+- supported chains;
+- required routing and multicall patterns.
+
+Hooks can pass, narrow or modify a call, or block it. A failed guard is not necessarily a construction error. It means the proposed action falls outside the skill's permitted execution envelope. An invalid guard fails closed rather than allowing the skill to run without protection.
+
+## App and chain compatibility
+
+A skill must pass several gates before it can activate:
+
+| Result | Meaning |
+| --- | --- |
+| `invalid` | The requested skill ID is not in the catalog. |
+| `missing_tools:<tools>` | The selected App does not provide every required base tool. |
+| `wrong_chain:<details>` | The connected wallet is on an unsupported chain. |
+| `token_budget_trim` | Activating the complete selection would add too much context. |
+| `invalid_guard` | The skill's guard data could not be resolved, so activation failed closed. |
+
+When the wallet chain is known, a chain-scoped skill activates only on one of its declared `chain_ids`. Chain-agnostic skills omit that restriction.
+
+## Protocol catalog
+
+The built-in catalog currently contains protocol skills for:
+
+- **Swaps and DEXs:** Uniswap, 1inch, Curve, SushiSwap, Aerodrome, Jupiter, Raydium, and LiFi.
+- **Lending:** Aave, Compound, Morpho, and Kamino.
+- **Staking, restaking, and yield:** Lido, Rocket Pool, Ether.fi, EigenLayer, Renzo, Kelp, Pendle, Yearn, Convex, and Marinade.
+- **Bridges:** Across, CCTP, Stargate, Arbitrum, Optimism, Base, zkSync Era, and deBridge.
+- **Markets:** Avantis, Drift, OpenBook, and tokenized Robinhood assets.
+- **Solana protocols:** Jupiter, Raydium, Kamino, Marinade, Meteora, Sanctum, Squads, and OpenBook.
+- **Wallet and asset utilities:** native balances, ERC-20 holdings, allowances, and account inspection.
+
+The catalog can expand without making every request carry every protocol's interfaces and instructions.
+
+## Skills and Apps
+
+An App supplies the thread's permanent tool surface and policy. Runtime skills add task-specific protocol guidance and temporary tool access. Activating a skill cannot replace or weaken the App's policy.
+
+The App's own manifest policy remains in scope for every turn that runs the App. It is separate from catalog skills, which have discovery and activation semantics. When both apply, their constraints compose and can only narrow what the transaction may do.
+
+## Related documentation
 
 <CardGroup cols={2}>
-  <Card title="Trade on Aomi" icon="arrow-right-arrow-left" href="/trade">
-    Use aomi-transact to trade by chat.
+  <Card title="Transaction pipeline" icon="arrow-right-arrow-left" href="/concepts/transaction-pipeline">
+    Follow an action from construction through simulation, signing, and broadcast.
   </Card>
-  <Card title="Build on Aomi" icon="hammer" href="/build/overview">
-    Use aomi-build to scaffold and ship an App.
+  <Card title="Architecture" icon="diagram-project" href="/concepts/architecture">
+    See how Apps, tools, models, and execution fit together.
+  </Card>
+  <Card title="Transaction safety" icon="shield-halved" href="/security/transaction-safety">
+    Understand the checks that prevent unsafe execution.
+  </Card>
+  <Card title="Multi-chain support" icon="link" href="/concepts/chains/evm">
+    Review the EVM and SVM execution surfaces.
   </Card>
 </CardGroup>
 
