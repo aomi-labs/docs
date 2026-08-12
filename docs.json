@@ -85,19 +85,13 @@
         "pages": [
           "concepts/architecture",
           "concepts/transaction-pipeline",
+          "concepts/skills-and-guards",
           "concepts/accounts-and-wallets",
           "concepts/account-abstraction",
           "concepts/solana-bundle",
           "concepts/multi-threading",
           "concepts/asynchronous-tasks",
           "concepts/glossary"
-        ]
-      },
-      {
-        "group": "Skills",
-        "icon": "sparkles",
-        "pages": [
-          "skills/index"
         ]
       },
       {
@@ -391,7 +385,15 @@
     },
     {
       "source": "/concepts/skills",
-      "destination": "/skills"
+      "destination": "/concepts/skills-and-guards"
+    },
+    {
+      "source": "/skills",
+      "destination": "/concepts/skills-and-guards"
+    },
+    {
+      "source": "/skills/index",
+      "destination": "/concepts/skills-and-guards"
     },
     {
       "source": "/concepts/signing-policy",
