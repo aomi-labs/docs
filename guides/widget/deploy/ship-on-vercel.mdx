@@ -23,14 +23,13 @@ vercel
 vercel --prod
 ```
 
-Add these public values in **Settings → Environment Variables**:
+Point the widget at the backend in **Settings → Environment Variables**:
 
 ```bash
-NEXT_PUBLIC_AOMI_API_URL=https://chat.aomi.dev
-NEXT_PUBLIC_AOMI_APPLICATION_ID=123
+NEXT_PUBLIC_BACKEND_URL=https://api.aomi.dev
 ```
 
-Register the production Vercel URL as an allowed origin before testing authentication.
+`AomiFrame` resolves the backend from the `backendUrl` prop first, then `NEXT_PUBLIC_BACKEND_URL`, then `http://localhost:8080`. To pin the page to one App, pass `applicationId` to `AomiRuntimeProvider` (a prop, not an environment variable). Register the production Vercel URL as an allowed origin before testing authentication.
 
 <Warning>
   Never add App keys, provider secrets, paymaster credentials, or gas-policy credentials to frontend environment variables.

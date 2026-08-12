@@ -104,7 +104,7 @@ Your App is three small files. Make a folder and add them.
   </Step>
 
   <Step title="Cargo.toml">
-    Your App compiles to a `cdylib`. Pin `aomi-sdk` to the exact version the platform requires, today `=3.0.3`.
+    Your App compiles to a `cdylib`. Pin `aomi-sdk` to the exact version the platform requires. Run `aomi-build sdk check` to get the current number, and pin it exactly with a leading `=`. The example below uses `=3.1.0`, the required version at the time of writing.
 
     ```toml Cargo.toml
     [package]
@@ -116,18 +116,18 @@ Your App is three small files. Make a folder and add them.
     crate-type = ["cdylib"]
 
     [dependencies]
-    aomi-sdk   = "=3.0.3"
+    aomi-sdk   = "=3.1.0"
     schemars   = "1"
     serde      = { version = "1", features = ["derive"] }
     serde_json = "1"
     ```
 
     <Note>
-    The exact version lives in `platform.json` in the community-apps repo, under `required_sdk_version`. The runtime loads a plugin only if it was built against that version.
+    The required version moves often. Do not copy the number above and assume it is current. Run `aomi-build sdk check` for the live requirement, or `aomi-build sdk fix` to set the pin automatically. The runtime loads a plugin only if it was built against the required version.
     </Note>
 
     <Warning>
-    Pin the platform requirement `=3.0.3`, not the crate's own version. The `aomi-sdk` crate ships at `3.1.0`, but the community platform requires `=3.0.3`. Match the platform's `required_sdk_version` in `platform.json`, not whatever the crate prints. A build pinned to anything else is rejected at activation.
+    Pin it exactly (`=x.y.z`), not `^` or a range. A build pinned to anything other than the platform's required version is rejected at activation.
     </Warning>
   </Step>
 
@@ -191,7 +191,7 @@ Your App is three small files. Make a folder and add them.
     Expected output:
 
     ```text
-    Compiling aomi-sdk v3.0.3
+    Compiling aomi-sdk v3.1.0
     Compiling hello-aomi v0.1.0
     Finished `release` profile [optimized] target(s) in 12.6s
     ```
@@ -212,7 +212,7 @@ Your App is three small files. Make a folder and add them.
     The first time you ship, connect your source repo. This installs the Aomi GitHub App and saves your activation token. Run it once, not per deploy.
 
     ```bash
-    AOMI_BACKEND_URL=https://staging-api.aomi.dev aomi-build connect
+    AOMI_BACKEND_URL=https://api.aomi.dev aomi-build connect
     ```
 
     It prints a browser URL to install the Aomi GitHub App on your repo. Install it, then paste back the `installation_id` GitHub shows you. The backend reads your source through this install on every deploy.
@@ -222,7 +222,7 @@ Your App is three small files. Make a folder and add them.
     A dry run shows the plan and runs the checks. It deploys nothing.
 
     ```bash
-    AOMI_BACKEND_URL=https://staging-api.aomi.dev aomi-build deploy --dry-run
+    AOMI_BACKEND_URL=https://api.aomi.dev aomi-build deploy --dry-run
     ```
 
     The dry run previews the deployment manifest and runs the preflight checks. Fix anything it flags in your `aomi.toml`, then run it again.
@@ -230,7 +230,7 @@ Your App is three small files. Make a folder and add them.
 
   <Step title="Deploy">
     ```bash
-    AOMI_BACKEND_URL=https://staging-api.aomi.dev aomi-build deploy
+    AOMI_BACKEND_URL=https://api.aomi.dev aomi-build deploy
     ```
 
     This sends a deploy request to the backend. The backend reads your source through the connected GitHub App, opens a pull request, and CI builds your plugin and cuts a release tagged `apps-<installation-id>-<repo-key>-hello-aomi-<short-commit>`.
@@ -249,7 +249,7 @@ Your App is three small files. Make a folder and add them.
 
     ```bash
     AOMI_APP_ACTIVATION_TOKEN=<your-activation-token> \
-    AOMI_BACKEND_URL=https://staging-api.aomi.dev \
+    AOMI_BACKEND_URL=https://api.aomi.dev \
       aomi-build deploy activate
     ```
 

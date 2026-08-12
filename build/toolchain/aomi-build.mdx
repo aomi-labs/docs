@@ -579,7 +579,7 @@ The backend identifies your source through the GitHub App install, recorded as `
 The first step for a new contributor. `connect` installs the Aomi GitHub App on your source repo and saves the activation token you use to activate releases. Run it once, before your first deploy.
 
 ```bash
-AOMI_BACKEND_URL=https://staging-api.aomi.dev aomi-build connect
+AOMI_BACKEND_URL=https://api.aomi.dev aomi-build connect
 ```
 
 It prints a browser URL to install the Aomi GitHub App. Install it on the repo that holds your plugin, then paste back the `installation_id` GitHub shows you. After that, every deploy reads your source through this install.
@@ -596,10 +596,10 @@ It prints a browser URL to install the Aomi GitHub App. Install it on the repo t
 
 ```bash
 # Preview the plan and run the preflight checks. Changes nothing.
-AOMI_BACKEND_URL=https://staging-api.aomi.dev aomi-build deploy --dry-run
+AOMI_BACKEND_URL=https://api.aomi.dev aomi-build deploy --dry-run
 
 # Real deploy.
-AOMI_BACKEND_URL=https://staging-api.aomi.dev aomi-build deploy
+AOMI_BACKEND_URL=https://api.aomi.dev aomi-build deploy
 ```
 
 `deploy` sends `POST /api/platforms/:platform/deploy` carrying your `app_source_id`. The backend reads your source through the GitHub App, opens a pull request, and CI builds and publishes the release. A successful deploy writes `.aomi/deployment.json` with the backend's deployment record, including the release tags `activate` reads later.
@@ -637,7 +637,7 @@ Run by the app author with the activation token saved during `connect`. It tells
 ```bash
 # Activate every app from deployment.json.
 AOMI_APP_ACTIVATION_TOKEN=<your-activation-token> \
-AOMI_BACKEND_URL=https://staging-api.aomi.dev \
+AOMI_BACKEND_URL=https://api.aomi.dev \
   aomi-build deploy activate
 
 # Activate a named subset.
