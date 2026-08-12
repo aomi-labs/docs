@@ -1,27 +1,99 @@
 ---
-title: "x402 payments"
-description: "Learn how Aomi collects App tool fees through wallet-authorized USDC payments."
+title: "x402 and MPP"
+description: "Learn how Aomi batches App tool fees and settles them through x402 or MPP."
 ---
 
-x402 lets your App collect a fee without building a checkout or holding user
-funds. Aomi requests payment only when a balance is ready to settle. The user
-authorizes an exact USDC amount, and the payment goes directly to your
-beneficiary wallet.
+Aomi turns successful priced tool calls into a running balance. It can settle
+that balance through x402 or MPP. The accounting is the same in both flows;
+the difference is when the payment gate runs relative to the API call.
 
-## Before Aomi requests payment
+Your App declares a tool price and beneficiary in `<app>.pricing.toml`. The
+price determines how many credits a successful call adds to the balance. The
+beneficiary identifies the wallet that receives the payment. Blocked and
+failed calls remain free.
 
-Your App must declare a tool price and beneficiary in
-`<app>.pricing.toml`. The price determines how many credits the user owes. The
-beneficiary identifies the wallet that will receive the USDC. Aomi creates the
-fee only after the priced tool succeeds, so blocked and failed calls remain
-free.
+## x402 and MPP use the same balance
 
-Aomi can accumulate small fees before requesting payment. The balance remains
-associated with the user and beneficiary until it is ready to settle. This
-reduces wallet prompts and avoids asking the user to sign after every tool
-call.
+x402 is a pre-check gate. At a settlement checkpoint, Aomi verifies the
+balance before serving the request. If payment is required, the request stops
+with `402 Payment Required` until the user authorizes payment and retries it.
 
-## Payment flow
+MPP is a post-check settlement flow. The API call runs first, then Aomi
+reconciles the resulting balance on the trailing edge. Both variants preserve
+the same App, tool, user, and beneficiary attribution.
+
+<img
+  src="/images/payments/x402/x402-mpp-gate-position.png"
+  alt="x402 checks before an API call while MPP settles after the call"
+  style={{ width: "100%", border: 0, background: "transparent", boxShadow: "none", borderRadius: 0 }}
+/>
+
+## Why Aomi uses settlement checkpoints
+
+A strict x402 integration checks and settles every request. That gives zero
+credit exposure, but it also adds a payment round trip to every turn. Aomi can
+defer the gate to a settlement checkpoint and serve the turns between
+checkpoints immediately.
+
+The diagrams call the maximum number of turns between checkpoints `TURN_CAP`.
+With a cap of three, one turn performs the gate check and the next two use the
+fast path. Over six turns, this reduces six checks and settlements to two.
+
+<img
+  src="/images/payments/x402/turn-cap-amortization.png"
+  alt="Comparison of per-request x402 checks with deferred checks every three turns"
+  style={{ width: "100%", border: 0, background: "transparent", boxShadow: "none", borderRadius: 0 }}
+/>
+
+The tradeoff is bounded credit exposure. A balance may become negative after
+an admitted turn and remain negative until the next checkpoint. A smaller cap
+reduces that exposure. A cap of one recovers strict per-request x402 behavior.
+
+## The gate logic, per turn
+
+For x402, Aomi uses this order:
+
+1. A turn arrives and Aomi determines its cost.
+2. If the turn is not a checkpoint, Aomi serves it and records the cost.
+3. At a checkpoint, Aomi checks the balance entering the turn.
+4. If that balance is zero or positive, Aomi serves the turn, records its cost,
+   and resets the checkpoint counter.
+5. If that balance is negative, Aomi returns `402 Payment Required` without
+   serving the turn. The user can top up and retry the same request.
+
+<img
+  src="/images/payments/x402/deferred-gate-logic.png"
+  alt="Per-turn flow showing the fast path and settlement checkpoint branches"
+  style={{ width: "100%", border: 0, background: "transparent", boxShadow: "none", borderRadius: 0 }}
+/>
+
+In the diagram, the initial deduction represents the turn's provisional usage
+entry. The x402 admission decision uses the balance at the gate, before that
+new usage becomes settled debt. This is why a user entering a checkpoint at
+zero can complete the admitted turn and settle the resulting balance later.
+
+## Running balance across turns
+
+Suppose a user begins with one credit and each turn costs five credits. At the
+first checkpoint, the gate sees `+1`, so the turn is admitted and the balance
+becomes `-4`. The next two turns use the fast path, moving the balance to `-9`
+and then `-14`.
+
+At turn four, the next checkpoint sees `-14`. x402 blocks the turn with a
+`402` response. The balance does not fall again because the blocked turn did
+not run. After the user tops up, the retried request can pass the gate.
+
+<img
+  src="/images/payments/x402/running-balance.png"
+  alt="Running balance across four turns with a deferred x402 checkpoint"
+  style={{ width: "100%", border: 0, background: "transparent", boxShadow: "none", borderRadius: 0 }}
+/>
+
+## The x402 payment flow
+
+When an x402 checkpoint blocks a request, Aomi returns payment requirements to
+the client. The user authorizes an exact USDC amount, and the client retries
+the original request with the signed authorization.
 
 ```mermaid
 sequenceDiagram
@@ -35,7 +107,7 @@ sequenceDiagram
     participant Beneficiary as App beneficiary
 
     User->>Client: Send request
-    Client->>Aomi: Submit request
+    Client->>Aomi: Submit request at checkpoint
     Aomi-->>Client: 402 with Payment-Required
     Client->>Wallet: Show amount and recipient
     User->>Wallet: Authorize USDC payment
@@ -49,36 +121,34 @@ sequenceDiagram
     Aomi-->>Client: Continue request with Payment-Response
 ```
 
-The wallet authorization binds the payment to an exact amount and recipient.
-It also identifies the network and USDC contract used for settlement. A change
-to any signed payment term makes the authorization invalid and prevents the
-transfer.
+The wallet authorization binds the payment to an exact amount, recipient,
+network, and USDC contract. A change to any signed term invalidates the
+authorization and prevents the transfer.
 
-## HTTP exchange
+## x402 HTTP exchange
 
 | Step | HTTP field | Purpose |
 | --- | --- | --- |
-| Challenge | `402 Payment Required` | Stops the request until payment is authorized |
+| Challenge | `402 Payment Required` | Stops the checkpoint request until payment is authorized |
 | Requirements | `Payment-Required` | Describes the accepted network, asset, amount, and recipient |
 | Signed retry | `Payment-Signature` | Carries the user's wallet authorization |
 | Receipt | `Payment-Response` | Confirms settlement and identifies the onchain transaction |
 
 The facilitator verifies that the signed terms match the original challenge.
-It then submits the authorized USDC transfer and pays the network gas. The
-user signs the authorization in their wallet but does not need to submit a
-separate transaction.
+It then submits the authorized USDC transfer and pays the network gas. The user
+signs the authorization in their wallet but does not need to submit a separate
+transaction.
 
 ## Who receives the payment
 
-The beneficiary in `<app>.pricing.toml` receives the USDC directly from the
+The beneficiary in `<app>.pricing.toml` receives the payment directly from the
 user's wallet. Aomi verifies the payment and records the receipt, but it does
 not route the funds through an Aomi-owned wallet. The beneficiary controls the
 revenue as soon as the transfer settles.
 
 The wallet displays the network, asset, recipient, and exact amount before the
-user signs. These details let the user confirm where the payment will go. After
-settlement, Aomi keeps the App and tool attribution so the builder can match
-the receipt to its source in Usage.
+user signs. After settlement, Aomi keeps the App and tool attribution so the
+builder can match the receipt to its source in Usage.
 
 ## Payments across Apps
 
@@ -87,25 +157,24 @@ attribution remains attached to the Usage record even when payment occurs
 later. For settlement, Aomi groups outstanding fees by user and beneficiary
 wallet.
 
-If several Apps use the same beneficiary, one x402 payment can settle fees from
-more than one App. Each fee still appears under its original App in Usage, so
-the combined payment does not merge the underlying records. Apps with different
-beneficiaries remain in separate balances and settle through separate payment
-requests.
+If several Apps use the same beneficiary, one settlement can cover fees from
+more than one App. Each fee still appears under its original App in Usage.
+Apps with different beneficiaries remain in separate balances and settle
+through separate payment requests.
 
 ## Tool fees and outcome fees
 
-x402 collects flat tool fees declared under `[resources.<tool>]`. A successful
-tool call adds the configured credit amount to the user's balance for that
-beneficiary. Aomi converts the balance into the exact USDC amount when it
-creates the payment challenge.
+x402 and MPP settle flat tool fees declared under `[resources.<tool>]`. A
+successful tool call adds the configured credit amount to the user's balance
+for that beneficiary. Aomi converts the balance into the payment amount when
+it creates a settlement request.
 
 Outcome fees follow a different path. Aomi adds an outcome fee to the user's
 signed smart-account transaction. The fee settles in the asset being moved at
-the same time as the onchain action, so it does not create an x402 balance or
-require a separate USDC authorization.
+the same time as the onchain action, so it does not enter this running balance
+or require a separate USDC authorization.
 
-## Handle a payment challenge
+## Handle an x402 challenge
 
 Aomi's portal handles the full challenge flow for the user. It presents the
 payment terms, opens the connected wallet, and retries the original request
