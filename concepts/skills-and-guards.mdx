@@ -1,7 +1,6 @@
 ---
-title: "Skills"
-sidebarTitle: "Overview"
-description: "How Aomi discovers and activates protocol-specific instructions, tools, and safety constraints for each request."
+title: "Skills and guards"
+description: "How Aomi activates protocol-specific instructions and tools, then enforces the execution boundary with guards."
 ---
 
 Aomi can read and call public smart contracts on supported chains when their ABI or IDL is available. Given a contract address and interface, a capable frontier model can often infer how to read state, construct calldata, and compose a transaction without protocol-specific guidance.
@@ -185,9 +184,19 @@ The `instruction_md` field gives the model the protocol-specific procedure it sh
 
 Instructions improve planning and calldata construction, but they do not enforce policy. Enforcement happens in hooks, guards, signing policy, and the transaction pipeline.
 
-## Hooks and guards
+## The guard system
 
-Skills attach named checks to relevant tools. A binding can run before a call, after a call, or at both points:
+Skills do more than tell the model how a protocol works. They also bind guard data and named checks to the tools that construct or simulate an action. The instructions help the model plan. The guards enforce what the action may contain.
+
+Each active skill can contribute three kinds of protection:
+
+| Layer | What it checks | What happens on failure |
+| --- | --- | --- |
+| Activation | The guard table is valid and belongs to the selected skill. | Aomi rejects the skill as `invalid_guard`. Its instructions and tools do not enter the request. |
+| Before a tool call | The proposed arguments, chain or cluster, slippage, and other declared limits. | The tool does not run. Aomi returns `hook_blocked` with the reason. |
+| After a tool call | The actual contract or program, selector or discriminator, recipient, spender, and every step in a staged or simulated batch. | Aomi replaces the result with a blocked response before signing. |
+
+A hook binding declares where those checks run:
 
 ```json
 {
@@ -197,7 +206,9 @@ Skills attach named checks to relevant tools. A binding can run before a call, a
 }
 ```
 
-Depending on the protocol, these checks can enforce:
+The active guard table provides the exact values that the hooks compare. EVM guards can restrict contract addresses, function selectors, approval spenders, chain IDs, and declared limits. SVM guards can restrict program IDs, instruction discriminators, clusters, and declared limits.
+
+Protocol-specific guards can also inspect decoded arguments. Depending on the protocol, they can enforce:
 
 - known contract and program addresses;
 - allowed function selectors or instruction discriminators;
@@ -206,7 +217,23 @@ Depending on the protocol, these checks can enforce:
 - supported chains;
 - required routing and multicall patterns.
 
-Hooks can pass, narrow or modify a call, or block it. A failed guard is not necessarily a construction error. It means the proposed action falls outside the skill's permitted execution envelope. An invalid guard fails closed rather than allowing the skill to run without protection.
+### Guard outcomes
+
+Guards classify findings by severity:
+
+- **Critical:** block the action because it would likely send funds to the wrong place or violate a hard protocol constraint.
+- **Warning:** attach a visible warning when the action may be intentional but needs attention.
+- **Info:** attach context that helps explain the result without blocking it.
+
+Hooks can pass, narrow or modify a call, annotate the result, or block it. A failed guard is not necessarily a construction error. It means the proposed action falls outside the skill's permitted execution envelope.
+
+### Guards fail closed
+
+Aomi resolves a skill's guard table when the skill activates. If an address, selector, program ID, discriminator, or other guard value is invalid, Aomi deactivates that skill. It does not continue with the instructions while dropping the protection.
+
+The same rule applies at dispatch. A critical pre-call finding stops the tool before it runs. A critical post-call finding stops the staged or simulated result from moving to signing. The agent receives a structured block reason that it can explain to you or use to construct a safer alternative.
+
+Skill instructions cannot weaken these checks. Updating the wording or procedure for a skill does not replace its compiled guard bindings or protocol safety data.
 
 ## App and chain compatibility
 
