@@ -184,6 +184,32 @@ impl DynAomiTool for StreamingTool {
   a routed return envelope.
 </Warning>
 
+## Routed and multistep tools
+
+A tool can suggest a follow-up host action by returning a routed `ToolReturn`.
+Use this when one result naturally supplies the arguments for the next step,
+such as a quote followed by a signature request.
+
+Override `run_with_routes`, then attach an `on_return` step:
+
+```rust
+use aomi_sdk::{RouteStep, ToolReturn};
+use serde_json::json;
+
+ToolReturn::with_route(
+    json!({ "status": "awaiting_signature" }),
+    RouteStep::on_return(
+        "evm_commit_message",
+        json!({ "typed_data": "..." }),
+    )
+    .prompt("Suggested next step: request the signature."),
+)
+```
+
+The route is a continuation hint, not permission to execute. Aomi presents the
+step to the model, preserves any required callback data, and still applies the
+App policy, guards, and signing policy before the next tool runs.
+
 ## The `dyn_aomi_app!` macro
 
 Call `dyn_aomi_app!` once in `src/lib.rs`. It registers the plugin manifest and
@@ -300,11 +326,8 @@ values in order and the terminal payload.
   <Card title="Aomi App" icon="hammer" href="/build/plugins/aomi-app">
     Structure the crate, write its preamble, and configure its package.
   </Card>
-  <Card title="Custom tools" icon="wrench" href="/build/plugins/custom-tools">
-    Design route hints and multi-step tool behavior.
-  </Card>
-  <Card title="Testing" icon="flask" href="/build/plugins/evals-and-testing">
-    Add broader tool and model-behavior evaluations.
+  <Card title="End-to-end testing" icon="flask" href="/build/toolchain/aomi-build#the-end-to-end-test">
+    Test realistic App conversations with a canonical `test.json` journey.
   </Card>
   <Card title="CLI toolchain" icon="terminal" href="/build/toolchain/aomi-build">
     Compile, run, deploy, and activate the plugin.
