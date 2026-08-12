@@ -35,21 +35,20 @@
         "pages": [
           "build/overview",
           "build/first-app",
+          "build/developer-platform",
+          "getting-started/playground",
           {
             "group": "Plugins",
             "icon": "puzzle",
             "pages": [
               "build/plugins/aomi-app",
-              "build/plugins/rust-sdk",
-              "build/plugins/custom-tools",
-              "build/plugins/evals-and-testing"
+              "build/plugins/rust-sdk"
             ]
           },
           {
             "group": "Builder Toolchain",
             "icon": "wrench",
             "pages": [
-              "build/developer-platform",
               "build/toolchain/aomi-build",
               "build/toolchain/aomi-run"
             ]
@@ -75,8 +74,7 @@
               "getting-started/ios"
             ]
           },
-          "build/common-errors",
-          "getting-started/playground"
+          "build/common-errors"
         ]
       },
       {
@@ -177,7 +175,15 @@
     },
     {
       "source": "/build/plugins/evals",
-      "destination": "/build/plugins/evals-and-testing"
+      "destination": "/build/toolchain/aomi-build#the-end-to-end-test"
+    },
+    {
+      "source": "/build/plugins/custom-tools",
+      "destination": "/build/plugins/rust-sdk#routed-and-multistep-tools"
+    },
+    {
+      "source": "/build/plugins/evals-and-testing",
+      "destination": "/build/toolchain/aomi-build#the-end-to-end-test"
     },
     {
       "source": "/build/platform",
@@ -345,11 +351,11 @@
     },
     {
       "source": "/guides/custom-tools",
-      "destination": "/build/plugins/custom-tools"
+      "destination": "/build/plugins/rust-sdk#routed-and-multistep-tools"
     },
     {
       "source": "/guides/evals-testing",
-      "destination": "/build/plugins/evals-and-testing"
+      "destination": "/build/toolchain/aomi-build#the-end-to-end-test"
     },
     {
       "source": "/guides/cli-usage",
