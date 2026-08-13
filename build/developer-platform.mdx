@@ -43,10 +43,11 @@ Start from Aomi's template or import a GitHub repository you already own.
   </Step>
   <Step title="Install the Aomi Build GitHub App">
     **New app** walks you through installing the GitHub App on your **personal
-    account**. One-click creation does not work on an organization install. If
-    you installed on an org, the wizard stops and asks you to install on your
-    personal account instead. (Org-owned repos can still deploy through the
-    [CLI](/build/toolchain/aomi-build).)
+    account**. Organization-owned repos are not yet supported on the web platform.
+
+    **Workaround:** Fork the app repository into your personal GitHub account,
+    deploy from there, then transfer the repository back to your organization
+    using GitHub's repository transfer settings (the deployment will stay live).
   </Step>
   <Step title="Create">
     Choose **Start from the template** to fork
