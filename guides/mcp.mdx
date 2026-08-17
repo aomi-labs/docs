@@ -1,49 +1,65 @@
 ---
 title: "MCP"
-description: "Connect Claude Code, Cursor, or another MCP client to Aomi. Discover tools and stage onchain actions from your coding agent."
+description: "Connect an MCP client to Aomi, run account-owned agent sessions, and approve wallet requests without giving the server your keys."
 ---
 
-Aomi exposes a hosted [Model Context Protocol](https://modelcontextprotocol.io) server. Point a coding agent at it to search Aomi's tool catalog, read chain state, and execute onchain actions inside your Aomi account. You do not need to install the CLI or run a local process.
+Aomi exposes a hosted [Model Context Protocol](https://modelcontextprotocol.io)
+server. Connect Codex, Claude Code, Cursor, or another MCP client to chat with
+the Aomi agent, supervise long-running work, and continue conversations owned
+by your Aomi account. You do not need to run a local MCP process.
 
-This is the direct-connection counterpart to [Skills](/guides/skills). Skills teach your agent to drive the `aomi` CLI on your machine, with local transaction signing. MCP is a server connection: discovery and execution run on Aomi's backend, inside a thread owned by your account, behind the same skill gates and signing policy as every other Aomi surface.
+The default endpoint follows the same conversational execution path as
+[Aomi Chat](https://chat.aomi.dev). A separate direct endpoint exposes the
+lower-level App and tool catalog when you need to orchestrate individual tools
+yourself.
 
 ## Endpoints
 
-| Environment | URL | Transport |
-| --- | --- | --- |
-| Production | `https://chat.aomi.dev/api/mcp` | Streamable HTTP |
-| Staging | `https://chat-staging.aomi.dev/api/mcp` | Streamable HTTP |
+| Environment | Agent chat | Direct tools | Transport |
+| --- | --- | --- | --- |
+| Production | `https://chat.aomi.dev/api/mcp` | `https://chat.aomi.dev/api/mcp/direct` | Streamable HTTP |
+| Staging | `https://chat-staging.aomi.dev/api/mcp` | `https://chat-staging.aomi.dev/api/mcp/direct` | Streamable HTTP |
 
-The server speaks the stateless subset of MCP streamable HTTP: one JSON-RPC message per POST, JSON responses, no SSE push, no server-issued sessions, no batch requests. Any client that supports streamable HTTP with OAuth works.
+Use the agent-chat URL unless you specifically need the direct tool funnel.
+Both endpoints require OAuth and execute as the authenticated Aomi account.
+
+The server uses stateless Streamable HTTP: one JSON-RPC message per POST, JSON
+responses, no SSE push, no MCP batch requests, and no server-issued MCP
+session. Aomi conversation IDs and progress cursors are application data, so
+you can resume work even though the transport is stateless.
 
 <Note>
-Staging is a separate account graph. A sign-in or wallet link on production does not carry over to staging, and vice versa.
+  Production and staging have separate account graphs. A sign-in, wallet link,
+  or conversation in one environment does not carry over to the other.
 </Note>
 
 ## Connect
 
-<Steps>
-  <Step title="Add the server">
-    **Claude Code:**
+<Tabs>
+  <Tab title="Codex">
+    Add the production server, then complete OAuth in your browser:
+
+    ```bash
+    codex mcp add aomi --url https://chat.aomi.dev/api/mcp
+    codex mcp login aomi
+    ```
+
+    Codex desktop, the CLI, and the IDE extension share the same MCP
+    configuration. You can also open `/mcp` to inspect the connection.
+  </Tab>
+  <Tab title="Claude Code">
+    Add the production server:
 
     ```bash
     claude mcp add --transport http aomi https://chat.aomi.dev/api/mcp
     ```
 
-    Or in a project's `.mcp.json`:
-
-    ```json
-    {
-      "mcpServers": {
-        "aomi": {
-          "type": "http",
-          "url": "https://chat.aomi.dev/api/mcp"
-        }
-      }
-    }
-    ```
-
-    **Cursor:** Add the server in `.cursor/mcp.json` for a project or `~/.cursor/mcp.json` globally:
+    Run `/mcp`, select **aomi**, and choose **Authenticate** if the browser flow
+    does not begin automatically.
+  </Tab>
+  <Tab title="Cursor">
+    Add the server in `.cursor/mcp.json` for one project or
+    `~/.cursor/mcp.json` globally:
 
     ```json
     {
@@ -54,86 +70,203 @@ Staging is a separate account graph. A sign-in or wallet link on production does
       }
     }
     ```
+  </Tab>
+  <Tab title="Another client">
+    Configure a Streamable HTTP MCP server at
+    `https://chat.aomi.dev/api/mcp`. The server publishes OAuth discovery on
+    the same origin and supports dynamic client registration and PKCE.
+  </Tab>
+</Tabs>
 
-    **Any other MCP client:** configure a streamable-HTTP server at the URL above. The server advertises protocol version `2025-06-18` and answers OAuth discovery at `/.well-known/oauth-protected-resource` and `/.well-known/oauth-authorization-server` on the same origin.
-  </Step>
-  <Step title="Authorize">
-    The first request returns `401` with a `WWW-Authenticate` challenge, which triggers your client's OAuth flow: dynamic client registration, PKCE, and a browser hop to `chat.aomi.dev/mcp/connect`. Sign in, then approve the client on the consent screen.
+After authorization, ask the client something such as:
 
-    In Claude Code, run `/mcp`, select **aomi**, and choose **Authenticate** if the flow doesn't start on its own.
+```text
+Ask Aomi for my USDC balance on Base, then explain the result.
+```
 
-    The token identifies your Aomi account. Every tool call executes as you: your linked wallets, your skill entitlements, your threads.
-  </Step>
-  <Step title="Link a wallet (for execution)">
-    Discovery works with a bare account. Execution that touches chain state needs an operating wallet. If no wallet is linked, staged transactions return a connect-first error. Link a wallet at [chat.aomi.dev](https://chat.aomi.dev) before staging a transaction.
-  </Step>
-  <Step title="Verify">
-    Ask your agent to call `aomi_get_agent_context`. It returns your MCP thread id, a catalog summary, and the discovery workflow. From there:
+Your client should call `aomi_chat`, retain the returned cursor, and call
+`aomi_check` until the turn is complete or needs you.
 
-    ```text
-    aomi_search_apps("swap") → aomi_search_tools("swap usdc") → aomi_describe_tool → aomi_call_tool
-    ```
-  </Step>
-</Steps>
+## Agent-chat tools
 
-## Tools
-
-The server exposes ten tools in a broad-to-narrow funnel: find the app, find the tool, read its schema, call it.
+The default `/api/mcp` endpoint exposes four tools:
 
 | Tool | What it does |
 | --- | --- |
-| `aomi_get_agent_context` | Return the authenticated context: thread id, catalog summary, discovery workflow. |
-| `aomi_list_apps` | List compact app candidates. |
-| `aomi_search_apps` | Search Apps by name, namespace, or capability. |
-| `aomi_search_tools` | Search tools within one App or across all Apps. |
-| `aomi_select_app` | Load one app's full instructions and namespace catalog. Returns context; does not set server state. |
-| `aomi_list_namespaces` | List an app's capability groups with preview tools. |
-| `aomi_list_tools` | List tools for an app, optionally filtered by namespace. |
-| `aomi_describe_tool` | One tool's exact input schema plus owning-skill instructions. Call before `aomi_call_tool`. |
-| `aomi_call_tool` | Execute a single Aomi tool inside your MCP thread. Skill-owned tools activate their skill automatically. |
-| `aomi_run` | Run several tool calls in one request while intermediate values remain server-side. |
+| `aomi_chat` | Start a turn in a new or existing Aomi conversation. You can also specify an App and an authoritative chain context. |
+| `aomi_check` | Return new messages and activity since the previous cursor. Continue until the status is `complete` or `awaiting_user`. |
+| `aomi_interrupt` | Stop the turn currently processing in a conversation. |
+| `aomi_list_sessions` | List recent conversations owned by the authenticated account so one can be resumed. |
 
-The server is stateless by design: pass the `app` name explicitly on every call (`aomi_select_app` returns context, it does not select anything server-side).
+### Run and supervise a turn
 
-### Multi-step flows with `aomi_run`
+<Steps>
+  <Step title="Start the turn">
+    Call `aomi_chat` with the user's request. Omit `session_id` to create a new
+    conversation, or pass an ID returned by `aomi_list_sessions` to continue
+    one.
 
-Use `aomi_run` when one step supplies input to another, such as a quote feeding a swap or a balance list feeding a loop. It executes the flow in one request. The program language is a small bash-like subset with capture (`q=$(tool k=v)`), pipes (`tool_a | tool_b k=$_.field`), `for` loops, field refs (`$q.quote_id`), and `return`. It accepts only Aomi tool names. Shell commands, conditionals, and arithmetic are not available.
+    ```json
+    {
+      "message": "Show my USDC balance on Base",
+      "chain_context": { "family": "evm", "chain_id": 8453 }
+    }
+    ```
+  </Step>
+  <Step title="Keep the cursor">
+    The response includes a self-contained cursor with the conversation ID and
+    progress offsets. Pass that cursor to `aomi_check` without editing it.
+  </Step>
+  <Step title="Poll for progress">
+    Each check returns only new transcript messages and activity. Continue
+    while the status is `processing`. A longer App task may report tool and
+    subtask progress across several checks.
+  </Step>
+  <Step title="Handle a wallet request">
+    A status of `awaiting_user` includes a safe summary of each pending request
+    and a handoff link. Let the user review and sign, then call `aomi_check`
+    again. Do not report success until a later check returns the confirmed
+    result.
+  </Step>
+</Steps>
 
-```text
-q=$(khalani_quote from=USDC to=ETH amount=1000)
-khalani_swap quote_id=$q.quote_id min_out=$q.amount_out
+Pass `chain_context` only when the active network is known. Aomi deliberately
+does not invent a mainnet default for a headless client.
+
+```json
+{
+  "family": "solana",
+  "cluster": "solana:mainnet"
+}
 ```
 
-It returns `{ value, steps, error?, followups? }`. The `steps` field contains a trace for debugging. If the program fails, fix it and resubmit or use separate `aomi_call_tool` calls.
+The accepted Solana values are `solana:mainnet`, `solana:devnet`, and
+`solana:testnet`. For EVM, pass the positive integer chain ID listed on the
+[EVM chains page](/concepts/chains/evm).
 
-### Follow-up routes
+## Authentication and account ownership
 
-Tool results may include continuation calls in `followup.route_steps`. Examples include an approval before a swap or a commit after staging. Call them in order with `aomi_call_tool`, and preserve opaque ids and calldata exactly.
+The first unauthenticated request receives an OAuth challenge. Your MCP client
+registers itself, creates a PKCE authorization request, and opens Aomi in your
+browser. The connection then has two user-visible steps:
 
-## How execution works
+1. Sign in to Aomi with Para or Privy.
+2. Review the client and OAuth scopes, then choose **Authorize** or **Deny**.
 
-Each tool call uses the same backend path as chat, so the same skill gates and signing policy apply. Your MCP thread id is derived from your account id. All your MCP clients therefore share one thread and its staged transaction state. Pass an explicit `thread_id` to `aomi_call_tool` or `aomi_run` to target a different thread.
+The resulting access token identifies your canonical Aomi account. Aomi
+checks that identity again for every tool call. New conversations are created
+under that account, and an existing conversation can be read, resumed, or
+interrupted only by its owner.
 
-Transactions follow Aomi's stage-and-commit model. Staging tools collect pending transactions, and a commit submits the batch for wallet approval. **In production, the commit always returns pending approval. The server never signs autonomously.** Signing completes on a wallet-connected surface such as [chat.aomi.dev](https://chat.aomi.dev).
+Sign-in identity and signing authority are separate. Para or Privy proves
+which Aomi account is connecting; it does not give an MCP client blanket
+permission to sign. The account remains the owner of conversations, Apps,
+usage, and linked wallets. Each wallet keeps its own address, chain family,
+provider, and signing policy. Read [Accounts and wallets](/concepts/accounts-and-wallets)
+for the complete model.
+
+<Warning>
+  Authorize only MCP clients you trust. An authorized client can start agent
+  work and inspect the Aomi conversations it creates or resumes as your
+  account. Wallet policy still controls whether an onchain request can be
+  signed.
+</Warning>
+
+## Wallet connection and signing
+
+Discovery and offchain agent work can run without a wallet. For onchain work,
+link an EVM or Solana wallet to the same Aomi account at
+[chat.aomi.dev](https://chat.aomi.dev). Connecting a wallet to one browser tab
+is not enough: linking proves that the public address belongs to the account
+and makes it available to other authenticated surfaces, including MCP.
+
+At the start of an MCP turn, Aomi loads the account's linked EVM and Solana
+addresses. An explicit `chain_context` supplies the network; the wallet record
+does not silently choose one. If the account has no compatible linked wallet,
+the agent can explain or discover tools, but it cannot complete the onchain
+request.
+
+MCP remains non-custodial:
+
+- The MCP response contains only review fields such as request ID, kind,
+  destination, value, chain or cluster, and description.
+- Private keys, seed phrases, raw signing material, and reusable signatures do
+  not pass through MCP.
+- A pending request follows that wallet's current signing policy. MCP does not
+  switch wallets or make a locked or manual wallet more permissive.
+
+When `aomi_check` returns `awaiting_user`, approve the request in either place:
+
+<Tabs>
+  <Tab title="Aomi portal">
+    Open the returned `portal_url`, inspect the request in its conversation,
+    and approve or reject it with the linked wallet. Return to the MCP client
+    afterward so it can call `aomi_check` again.
+  </Tab>
+  <Tab title="Aomi CLI">
+    Authenticate the CLI to the same account, resume the MCP conversation, and
+    sign the pending request:
+
+    ```bash
+    npx @aomi-labs/client@latest account login --provider para
+    npx @aomi-labs/client@latest session resume <session-id>
+    npx @aomi-labs/client@latest tx list
+    npx @aomi-labs/client@latest tx sign <request-id>
+    ```
+
+    Use your installed `aomi` command instead of
+    `npx @aomi-labs/client@latest` if the CLI is already installed.
+  </Tab>
+</Tabs>
+
+Signing is a handoff, not the end of the MCP turn. After approval, the client
+must call `aomi_check` again to observe submission, confirmation, rejection, or
+failure. See [Signing](/security/signing) for the wallet-side lifecycle.
+
+## Advanced: direct App tools
+
+Connect to `/api/mcp/direct` when you want the low-level catalog and execution
+funnel instead of an Aomi agent conversation. This endpoint exposes ten tools:
+
+| Stage | Tools |
+| --- | --- |
+| Understand the account and catalog | `aomi_get_agent_context`, `aomi_list_apps`, `aomi_search_apps` |
+| Narrow to a capability | `aomi_select_app`, `aomi_list_namespaces`, `aomi_list_tools`, `aomi_search_tools` |
+| Inspect and execute | `aomi_describe_tool`, `aomi_call_tool`, `aomi_run` |
+
+The direct endpoint is also stateless. Pass the App explicitly on each call;
+`aomi_select_app` returns context but does not change server state. Use
+`aomi_call_tool` for one action and `aomi_run` when intermediate results feed
+later tool calls. Transactions still follow the same account ownership,
+wallet policy, and user-visible signing boundary described above.
 
 ## Limits
 
-- **Stateless transport.** Each POST contains one JSON-RPC message. SSE, server sessions, batching, and long-running server push are not available. Use `aomi_run` to fit multi-step flows into one request.
-- **Non-custodial, always.** MCP tool calls can read state, quote, simulate, and stage transactions. They cannot sign or move funds; wallet approval is a separate, user-visible step.
-- **No network selector.** There is no browser wallet to pick a chain. When the user names a network, pass `chain_id` explicitly on staging tools (e.g. Sepolia is `11155111`).
-- **One turn at a time.** If the thread is processing a chat turn, execution returns `409`. Retry after the turn completes.
-- **Request budget.** Calls are capped at 300 seconds.
-- **Wallet required for execution.** No linked wallet means discovery-only; staged transactions fail until a wallet is linked at [chat.aomi.dev](https://chat.aomi.dev).
+- **One active turn per conversation.** Interrupt or wait for the current turn
+  before starting another one in the same session.
+- **Explicit network context.** Pass a known EVM chain ID or Solana cluster.
+  Omit the field instead of guessing.
+- **User-visible signing.** A wallet request may pause the turn until the user
+  acts in the portal or an authenticated CLI.
+- **Request budget.** Each MCP request is capped at 300 seconds. Use
+  `aomi_check` to supervise work that continues beyond one request.
+- **Stateless transport.** Persist the returned Aomi conversation ID and cursor
+  rather than relying on an MCP transport session.
 
 ## Next
 
 <CardGroup cols={2}>
-  <Card title="Skills" icon="wand-magic-sparkles" href="/guides/skills">
-    The local alternative: teach your agent the CLI workflow, and how the two compare.
+  <Card title="Accounts and wallets" icon="wallet" href="/concepts/accounts-and-wallets">
+    Understand account ownership, wallet links, and per-wallet signing policy.
   </Card>
-
-  <Card title="How execution works" icon="arrow-right-arrow-left" href="/trade/execution">
-    The simulate-before-sign trade flow.
+  <Card title="Supported EVM networks" icon="link" href="/concepts/chains/evm">
+    Find the chain ID to pass from a headless MCP client.
+  </Card>
+  <Card title="Supported Solana clusters" icon="sun" href="/concepts/chains/svm">
+    Find the canonical cluster identifier for a Solana turn.
+  </Card>
+  <Card title="Skills" icon="wand-magic-sparkles" href="/guides/skills">
+    Compare hosted MCP with the local CLI-driven workflow.
   </Card>
 </CardGroup>
 

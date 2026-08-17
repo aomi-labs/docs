@@ -101,32 +101,38 @@ table and the wallet's signing policy still apply to every transaction.
 
 ## Built-in client networks
 
-The standard client includes metadata for these networks. Your active
-`providers.toml` still determines which of them the runtime can reach.
+The standard Aomi client includes wallet-selector metadata for the following
+networks. Use the listed chain ID as `chain_context.chain_id` from MCP or as
+the transaction's network identifier. Your active `providers.toml` still
+determines which networks a self-hosted runtime can reach.
 
 **Mainnets**
 
 | Network | Chain ID |
 | --- | --- |
 | Ethereum | 1 |
-| Optimism | 10 |
-| Polygon | 137 |
-| Monad | 143 |
-| MegaETH | 4326 |
-| Robinhood Chain | 4663 |
+| Arbitrum One | 42161 |
+| OP Mainnet (Optimism) | 10 |
 | Base | 8453 |
-| Arbitrum | 42161 |
-| Linea | 59144 |
+| Polygon | 137 |
+| Linea Mainnet | 59144 |
+| Monad | 143 |
+| Robinhood Chain | 4663 |
+| MegaETH | 4326 |
 
 **Testnets and local networks**
 
 | Network | Chain ID |
 | --- | --- |
-| Monad Testnet | 10143 |
-| Sepolia | 11155111 |
-| Linea Sepolia | 59141 |
 | Base Sepolia | 84532 |
+| Sepolia | 11155111 |
+| Linea Sepolia Testnet | 59141 |
+| Monad Testnet | 10143 |
+| Arc Testnet | 5042002 |
 | Anvil | 31337 |
+
+Arc Testnet displays USDC as its native fee currency. Anvil is available for
+local development but does not appear as a public hosted-network choice.
 
 A batch can contain transactions for more than one configured chain. Each
 transaction keeps its own chain ID, so Aomi routes every simulation and
