@@ -101,15 +101,17 @@ unusable RPC client.
 
 ## Supported clusters
 
-| Cluster | Accepted section names | Public default |
-| --- | --- | --- |
-| Mainnet Beta | `mainnet`, `mainnet-beta`, `mainnet_beta` | `https://api.mainnet-beta.solana.com` |
-| Devnet | `dev`, `devnet` | `https://api.devnet.solana.com` |
-| Testnet | `test`, `testnet` | `https://api.testnet.solana.com` |
-| Localnet | `local`, `localhost`, `localnet` | `http://localhost:8899` |
+| Wallet selector | MCP `chain_context.cluster` | Accepted provider section names | Public default |
+| --- | --- | --- | --- |
+| Solana | `solana:mainnet` | `mainnet`, `mainnet-beta`, `mainnet_beta` | `https://api.mainnet-beta.solana.com` |
+| Solana Devnet | `solana:devnet` | `dev`, `devnet` | `https://api.devnet.solana.com` |
+| Solana Testnet | `solana:testnet` | `test`, `testnet` | `https://api.testnet.solana.com` |
+| Localnet | Not available through hosted MCP | `local`, `localhost`, `localnet` | `http://localhost:8899` |
 
 Every wallet request carries a canonical cluster identifier. Aomi rejects an
 unknown label instead of silently routing the request to a different network.
+The hosted wallet selector and MCP endpoint expose mainnet, devnet, and
+testnet. Localnet remains available to a locally configured runtime.
 
 ## Stage a Solana transaction
 
