@@ -58,7 +58,7 @@ aomi wallet set --solana 5Kd3N...           # persist the keypair once
 aomi tx sign svm:tx-1                       # or pass --solana-private-key per command
 ```
 
-The keypair is accepted as a base58 64-byte secret key (Phantom or Solflare export) or a JSON byte array (`solana-keygen` output), via `--solana-private-key` or `SOLANA_PRIVATE_KEY`. Select the cluster with `--cluster mainnet-beta|devnet|testnet` or `AOMI_SOLANA_CLUSTER`. One `aomi tx sign` invocation handles either Solana or EVM requests, not a mix; multiple Solana requests execute sequentially, and a confirmed transaction is not rolled back if a later one fails.
+The keypair is accepted as a base58 64-byte secret key (Phantom or Solflare export) or a JSON byte array (`solana-keygen` output), via `--solana-private-key` or `SOLANA_PRIVATE_KEY`. Select the cluster with `--cluster mainnet-beta|devnet|testnet` or `AOMI_SOLANA_CLUSTER`; `aomi wallet set --solana` persists it (default `solana:mainnet`), so you only need the flag to override the saved choice. One `aomi tx sign` invocation handles either Solana or EVM requests, not a mix; multiple Solana requests execute sequentially, and a confirmed transaction is not rolled back if a later one fails.
 
 ## Signing
 
@@ -87,7 +87,7 @@ Details that hold during `tx sign`:
 
 ## Relevant configuration
 
-Use `--public-key` to give the agent your wallet address. Use `--private-key` or `PRIVATE_KEY` only when you are ready to sign locally. For Solana, use `--solana-private-key` or `SOLANA_PRIVATE_KEY`. Use `--rpc-url` to override transaction submission for the selected chain.
+Use `--public-key` to give the agent your EVM wallet address; it must be a 0x-prefixed address, and a Solana address here is rejected. Use `--private-key` or `PRIVATE_KEY` only when you are ready to sign locally. For Solana, use `aomi wallet set --solana`, `--solana-private-key`, or `SOLANA_PRIVATE_KEY`. Use `--rpc-url` to override transaction submission for the selected chain.
 
 <Warning>
   Never paste private keys into chat prompts. Pass them only through CLI flags, environment variables, or the protected local state created by `aomi wallet set`.

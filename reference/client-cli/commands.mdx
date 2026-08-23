@@ -111,20 +111,33 @@ aomi chain current
 
 ### wallet
 
-| Command                          | What it does                                          |
-| -------------------------------- | ----------------------------------------------------- |
-| `aomi wallet set <privateKey>`   | Persist an EVM signing key and derived wallet address |
-| `aomi wallet set --solana <key>` | Persist a Solana keypair (base58 secret key)          |
-| `aomi wallet current`            | Show configured EVM and Solana wallets                |
-| `aomi wallet whoami`             | Show the authenticated backend account                |
+| Command                                        | What it does                                                        |
+| ---------------------------------------------- | ------------------------------------------------------------------- |
+| `aomi wallet set <privateKey>`                 | Persist an EVM signing key and derived wallet address               |
+| `aomi wallet set --solana <key> [--cluster c]` | Persist a Solana keypair (base58 secret key) and its cluster        |
+| `aomi wallet current`                          | Show configured EVM and Solana wallets                              |
+| `aomi wallet whoami`                           | Show the authenticated backend account                              |
 
 ```bash
 aomi wallet set 0xYourPrivateKey
 aomi wallet set --solana 5Kd3N...base58...
+aomi wallet set --solana 5Kd3N...base58... --cluster devnet
 aomi wallet current
 ```
 
-`aomi wallet current` reports each configured wallet as `saved signer` (private key on disk) or `address only`.
+Setting a Solana wallet also persists its cluster: `--cluster` if given, otherwise the previously saved cluster, otherwise `solana:mainnet`. Every later command and every wallet request use that saved cluster, so what `aomi wallet current` shows is what the agent sees.
+
+`aomi wallet current` reports each configured wallet as `saved signer` (private key on disk) or `address only`. With `--json` it reports every configured family, using the same family names as the backend (`evm`, `svm`):
+
+```json
+{
+  "active": true,
+  "wallets": [
+    { "family": "evm", "address": "0x5D90...4c9B", "chainId": 1, "hasSavedSigner": true },
+    { "family": "svm", "address": "Gkzr...zXsG", "cluster": "solana:mainnet", "hasSavedSigner": true }
+  ]
+}
+```
 
 <Warning>
   `aomi wallet set` writes the private key to local session state under the state directory with file mode `0600`. The key never leaves your machine because signing is local. Treat the state directory as sensitive. To avoid persisting a key, pass `--private-key` per command or set the `PRIVATE_KEY` environment variable instead.
@@ -212,10 +225,10 @@ These global flags work on the root command and on the subcommands. Flags take p
 | `--model <rig>`              | `AOMI_MODEL`          | Model to apply for the session                                     |
 | `--new-session`              | —                     | Create a fresh active session for this command                     |
 | `--chain <id>`               | `AOMI_CHAIN_ID`       | Active chain for chat and session context                          |
-| `--public-key <address>`     | `AOMI_PUBLIC_KEY`     | Wallet address, so the agent knows your wallet                     |
+| `--public-key <address>`     | `AOMI_PUBLIC_KEY`     | EVM wallet address (0x-prefixed), so the agent knows your wallet   |
 | `--private-key <hex>`        | `PRIVATE_KEY`         | Hex signing key for `aomi tx sign`                                 |
 | `--solana-private-key <key>` | `SOLANA_PRIVATE_KEY`  | Solana keypair (base58 secret key or JSON byte array)              |
-| `--cluster <name>`           | `AOMI_SOLANA_CLUSTER` | Solana cluster: `mainnet-beta` (default), `devnet`, `testnet`      |
+| `--cluster <name>`           | `AOMI_SOLANA_CLUSTER` | Solana cluster: `mainnet-beta` (default), `devnet`, `testnet`; persisted by `wallet set --solana` |
 | `--rpc-url <url>`            | `CHAIN_RPC_URL`       | RPC URL for transaction submission                                 |
 | `--payment-method <method>`  | `AOMI_PAYMENT_METHOD` | Paid-chat settlement rail; accepted value: `coinbase`              |
 | `--json`                     | —                     | Print machine-readable JSON where supported                        |
