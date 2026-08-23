@@ -149,6 +149,8 @@ aomi chain list --json
 aomi wallet current --json
 ```
 
+`aomi wallet current --json` lists each configured wallet with its `family` (`evm` or `svm`, matching the backend), `address`, `chainId` or `cluster`, and whether a signer is saved locally.
+
 ### Simulate before you sign
 
 When a chat asks the agent to act onchain, the transaction is queued locally. Simulate it before signing so no funds move until you are happy with the result. See [Transactions and signing](/reference/client-cli/transactions-and-signing#transaction-flow) for the full walkthrough.
