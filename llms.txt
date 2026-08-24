@@ -13,7 +13,7 @@
 - [How execution works](https://aomi.dev/docs/trade/execution): the simulate-before-sign trade flow.
 
 ## Build on Aomi
-- [Overview](https://aomi.dev/docs/build/overview): why plugins exist, what an App is, and the path to ship one.
+- [Overview](https://aomi.dev/docs/build): why plugins exist, what an App is, and the path to ship one.
 - [Quickstart](https://aomi.dev/docs/build/first-app): zero to a deployed App.
 - [Aomi App](https://aomi.dev/docs/build/plugins/aomi-app): the crate layout, aomi.toml, preamble, and tools.
 - [Rust SDK](https://aomi.dev/docs/build/plugins/rust-sdk): the DynAomiTool trait and the dyn_aomi_app! macro.

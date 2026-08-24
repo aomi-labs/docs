@@ -33,7 +33,7 @@
         "group": "Build on Aomi",
         "icon": "hammer",
         "pages": [
-          "build/overview",
+          "build",
           "build/first-app",
           "build/developer-platform",
           "getting-started/playground",
@@ -367,7 +367,7 @@
     },
     {
       "source": "/concepts/use-cases",
-      "destination": "/build/overview"
+      "destination": "/build"
     },
     {
       "source": "/concepts",
@@ -379,7 +379,7 @@
     },
     {
       "source": "/concepts/what-is-aomi",
-      "destination": "/build/overview"
+      "destination": "/build"
     },
     {
       "source": "/concepts/skills",

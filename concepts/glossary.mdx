@@ -11,7 +11,7 @@ Smart-account execution lets a programmable account handle a batch of approvals 
 
 ### Aomi App
 
-The deployed unit a builder ships. It combines your plugin tools and system prompt on the hosted runtime. Users select an App in the portal, CLI, and Developer Platform. See the [Build overview](/build/overview).
+The deployed unit a builder ships. It combines your plugin tools and system prompt on the hosted runtime. Users select an App in the portal, CLI, and Developer Platform. See the [Build overview](/build).
 
 ### aomi-core namespace
 
@@ -79,7 +79,7 @@ The layer that decides what may be staged at all, before any signature is in pla
 
 ### harness
 
-Aomi's core machine: the system that turns plain-language instructions into verified onchain execution through the build → simulate → sign → broadcast pipeline. Plugins extend the harness with your own tools and prompt. See the [Build overview](/build/overview).
+Aomi's core machine: the system that turns plain-language instructions into verified onchain execution through the build → simulate → sign → broadcast pipeline. Plugins extend the harness with your own tools and prompt. See the [Build overview](/build).
 
 ### headless library
 
@@ -115,11 +115,11 @@ A wallet-signed authorization that changes a wallet's signing mode. EVM uses an 
 
 ### plugin
 
-The thing a builder writes: a small Rust crate compiled to a shared library, declared with the `dyn_aomi_app!` macro and an `aomi.toml` config, wrapping your external APIs as tools with a system prompt. The runtime loads plugins dynamically, with no restart; deployed, a plugin becomes an App. See the [Build overview](/build/overview).
+The thing a builder writes: a small Rust crate compiled to a shared library, declared with the `dyn_aomi_app!` macro and an `aomi.toml` config, wrapping your external APIs as tools with a system prompt. The runtime loads plugins dynamically, with no restart; deployed, a plugin becomes an App. See the [Build overview](/build).
 
 ### preamble
 
-The system prompt that defines an App's role, constraints, and tool usage. A plugin treats it as configuration rather than a suggestion. See the [Build overview](/build/overview).
+The system prompt that defines an App's role, constraints, and tool usage. A plugin treats it as configuration rather than a suggestion. See the [Build overview](/build).
 
 ### Project
 
@@ -135,7 +135,7 @@ A deferred instruction stored as durable state instead of a sleeping process. It
 
 ### runtime
 
-The hosted environment your App runs in: it loads plugins dynamically, manages per-user agent threads, schedules tools and models, simulates every staged transaction, enforces signing policy, and serves every surface from one deployment. You configure it; you don't build it. See the [Build overview](/build/overview).
+The hosted environment your App runs in: it loads plugins dynamically, manages per-user agent threads, schedules tools and models, simulates every staged transaction, enforces signing policy, and serves every surface from one deployment. You configure it; you don't build it. See the [Build overview](/build).
 
 ### signing mode
 
