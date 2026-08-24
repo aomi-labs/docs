@@ -154,14 +154,6 @@
       "destination": "/reference/client-cli"
     },
     {
-      "source": "/build",
-      "destination": "/build/overview"
-    },
-    {
-      "source": "/build/index",
-      "destination": "/build/overview"
-    },
-    {
       "source": "/build/plugins/anatomy",
       "destination": "/build/plugins/aomi-app"
     },
