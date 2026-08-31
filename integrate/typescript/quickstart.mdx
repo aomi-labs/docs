@@ -14,17 +14,17 @@ Create a working Node.js integration in one file. Guest mode does not need an AP
 <Tabs>
   <Tab title="npm">
     ```bash
-    npm install @aomi-labs/client fetch-cookie tough-cookie
+    npm install @aomi-labs/client
     ```
   </Tab>
   <Tab title="pnpm">
     ```bash
-    pnpm add @aomi-labs/client fetch-cookie tough-cookie
+    pnpm add @aomi-labs/client
     ```
   </Tab>
   <Tab title="yarn">
     ```bash
-    yarn add @aomi-labs/client fetch-cookie tough-cookie
+    yarn add @aomi-labs/client
     ```
   </Tab>
 </Tabs>
@@ -46,29 +46,9 @@ export AOMI_BASE_URL="https://chat-staging.aomi.dev"
 ```ts
 // example.ts
 import { Aomi, type MessageEvent } from "@aomi-labs/client";
-import makeFetchCookie from "fetch-cookie";
-import { CookieJar } from "tough-cookie";
 
 const baseUrl = process.env.AOMI_BASE_URL!;
-
-const csrfFetch: typeof fetch = (input, init = {}) => {
-  const request = input instanceof Request ? input : undefined;
-  const method = (init.method ?? request?.method ?? "GET").toUpperCase();
-  const headers = new Headers(init.headers ?? request?.headers);
-
-  if (!["GET", "HEAD", "OPTIONS"].includes(method)) {
-    headers.set("origin", baseUrl);
-    headers.set("sec-fetch-site", "same-origin");
-    headers.set("x-aomi-csrf", "1");
-  }
-
-  return fetch(input, { ...init, headers });
-};
-
-const aomi = new Aomi({
-  baseUrl,
-  fetch: makeFetchCookie(csrfFetch, new CookieJar()),
-});
+const aomi = new Aomi({ baseUrl });
 
 const sessionId = crypto.randomUUID();
 
@@ -99,7 +79,7 @@ npx tsx example.ts
 
 ## What guest mode does
 
-The current Node guest flow uses a Better Auth cookie. `fetch-cookie` persists it between calls; the small wrapper supplies the same-origin CSRF headers required for mutations.
+Guest mode is the SDK default. On the first request, the Node client creates a Better Auth anonymous session and keeps its opaque bearer credential in memory for later calls. You do not need a cookie jar, custom fetch implementation, or API key.
 
 - Guest identity is separate from an Agent session ID.
 - Guest identity is also separate from wallet authority.

@@ -9,7 +9,7 @@ Aomi keeps caller identity, Agent sessions, App access, and wallet authority sep
 
 | Integration | Recommended path | Developer experience |
 | --- | --- | --- |
-| Node.js evaluation | Guest session with a cookie-aware fetch | [TypeScript quickstart](/integrate/typescript/quickstart) |
+| Node.js evaluation | Automatic guest session | [TypeScript quickstart](/integrate/typescript/quickstart) |
 | Signed-in CLI, bot, or server | OAuth device flow | Public client ID and one-time browser approval |
 | Same-origin browser | First-party session | The browser sends the host session cookie |
 | Cross-origin browser | Widget/provider authentication | Origin-bound widget session |
@@ -18,15 +18,12 @@ Aomi keeps caller identity, Agent sessions, App access, and wallet authority sep
 
 ## Guest mode
 
-Guest mode is the default. In Node.js, pass the cookie-aware fetch from the quickstart:
+Guest mode is the default. In Node.js, the client creates an anonymous session on the first request and reuses its in-memory bearer credential:
 
 ```ts
 import { Aomi } from "@aomi-labs/client";
 
-const aomi = new Aomi({
-  baseUrl: process.env.AOMI_BASE_URL!,
-  fetch: cookieAwareFetch,
-});
+const aomi = new Aomi({ baseUrl: process.env.AOMI_BASE_URL! });
 
 console.log(aomi.auth.mode); // "guest"
 await aomi.agent.run("Introduce Aomi in one sentence.");
@@ -42,9 +39,9 @@ The first protected call creates an anonymous session. Guest mode is not a reque
 
 Call `aomi.auth.logout()` to clear the guest session held by the client.
 
-<Warning>
-  Plain Node.js `fetch` does not persist the cookie returned by Better Auth. Use the [tested quickstart wrapper](/integrate/typescript/quickstart) for evaluation, or OAuth for a real CLI or service. Cross-origin browser integrations should use the widget or provisioned browser OAuth flow.
-</Warning>
+<Note>
+  Guest identity lasts for the lifetime of the client process. Use OAuth when a CLI or service needs durable account-owned access. Cross-origin browser integrations should use the widget or provisioned browser OAuth flow.
+</Note>
 
 ## OAuth for a service or CLI
 

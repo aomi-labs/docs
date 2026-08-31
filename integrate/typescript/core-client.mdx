@@ -25,7 +25,7 @@ const agentResult = await aomi.agent.run("Summarize my last action.");
 const catalog = await aomi.raw.pipeline.apps.list();
 ```
 
-The high-level and raw surfaces share the same browser guest session or OAuth grant manager. In Node.js, configure OAuth or a cookie-aware fetch as described in [Authentication](/integrate/authentication).
+The high-level and raw surfaces share the same guest identity or OAuth grant manager. Node.js guest authentication is automatic. Configure OAuth when you need durable account-owned access, as described in [Authentication](/integrate/authentication).
 
 ## Construct the low-level client
 
