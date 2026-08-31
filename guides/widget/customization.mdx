@@ -38,11 +38,11 @@ Use presentation props to fit the widget into a page, panel, or modal.
 | `className`, `style` | Add application-specific layout styles |
 | `showSidebar` | Show or hide thread navigation |
 | `showHeader` | Show or hide the widget header |
-| `walletPosition` | Place the wallet control in the header, footer, or outside the frame |
+| `walletPosition` | Place the wallet control in the header or footer; pass `null` to hide it |
 | `wallets` | Limit presented wallets, chains, and networks |
 | `persistThread` | Restore the active thread after a reload |
 
-These props change presentation. The Application ID continues to control App identity, execution, sponsorship, and fees on the server.
+These props change presentation. The Application ID selects the deployed App; action review and wallet execution remain visible client responsibilities.
 
 ## Apply themes and styles
 
@@ -127,7 +127,7 @@ A headless interface must provide:
 - Submitted, confirmed, expired, and failed operation states.
 
 <Warning>
-  For backend-owned sponsored execution, returning a generic transaction result is not enough. Your interface must follow the operation-specific signing contract and return only the requested owner signatures. Prefer `AomiWidget` unless you need to own this full approval experience.
+  Returning a generic transaction result is not enough. Your interface must narrow each action by `action.request.kind`, show the exact request, and return the result that kind expects. Prefer `AomiWidget` unless you need to own the full approval experience.
 </Warning>
 
 ## Hooks
@@ -140,15 +140,15 @@ All hooks must run beneath `AomiRuntimeProvider`.
 | --- | --- |
 | `useAomiRuntime` | Unified chat, thread, user, notification, event, and wallet API |
 | `useThreadContext` | Low-level thread state and operations |
-| `useCurrentThreadMessages` | Messages for the active thread |
 | `useCurrentThreadMetadata` | Metadata for the active thread |
+
+Read active-thread messages with `useAomiRuntime().getMessages()`.
 
 ### User and wallet controls
 
 | Hook | Purpose |
 | --- | --- |
 | `useUser` | Canonical user and wallet state |
-| `useWalletHandler` | Transaction and signature request queue |
 | `useControl` | Combined App, model, API-key, and secret controls |
 | `useApiKey` | API-key state and actions |
 | `useAuthEndpoints` | Available Apps and models |
@@ -158,10 +158,9 @@ All hooks must run beneath `AomiRuntimeProvider`.
 
 | Hook | Purpose |
 | --- | --- |
-| `useEventContext` | SSE subscriptions and outbound events |
 | `useNotification` | Notice, success, wallet, and error messages |
 
-`pendingWalletRequests` is a discriminated union. Narrow on `request.kind` before reading its payload. Use the exported TypeScript types as the source of truth for complete signatures and payloads.
+Read ordered backend events from `useAomiRuntime().events` and the active lifecycle from `turnState`. `pendingActions` contains canonical Actions; narrow on `action.request.kind` before reading its payload. Use the exported TypeScript types as the source of truth for complete signatures and payloads.
 
 ## Complete custom UI example
 
@@ -181,7 +180,7 @@ export function CustomChat() {
     sendMessage,
     isRunning,
     cancelGeneration,
-    pendingWalletRequests,
+    pendingActions,
   } = useAomiRuntime();
 
   const messages = getMessages(currentThreadId);
@@ -217,10 +216,10 @@ export function CustomChat() {
         )}
       </form>
 
-      <p>{pendingWalletRequests.length} actions need review</p>
+      <p>{pendingActions.length} actions need review</p>
     </main>
   );
 }
 ```
 
-Add an approval component for every wallet-request kind your App can produce. For sponsored execution, show the calls, mandatory fees, owner, executor, network, and terminal status.
+Add an approval component for every action kind your App can produce. Show the calls, signatures, owner, network, simulation evidence, and terminal status available on the request.

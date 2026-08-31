@@ -1,0 +1,42 @@
+---
+title: "Widget"
+description: "Embed Aomi in a browser product with a complete interface and origin-bound authentication."
+---
+
+Use the widget when you want threads, messages, actions, and wallet integration in one browser surface.
+
+## Choose the widget when
+
+- You want a production-ready interface quickly.
+- A standard thread, message, and composer layout fits your product.
+- You want browser wallet, Para, or Privy authentication.
+- You prefer configuration over building every React component.
+
+Use the [headless library](/integrate/ui/headless-library) when you need a fully custom interface.
+
+## Cross-origin authentication
+
+A separate-origin host cannot rely on the Portal's first-party cookie. The widget uses a wallet or provider proof to create an origin-bound session for the embedding application.
+
+That session authenticates the widget's account, thread, and Agent requests without opening another OAuth window on the first message.
+
+<Warning>
+  Serve production embeds over HTTPS, and add every production and development origin to the selected wallet provider's allowlist. Never put a provider secret in browser configuration.
+</Warning>
+
+## Continue with the widget guides
+
+<CardGroup cols={2}>
+  <Card title="Quickstart" icon="rocket" href="/guides/widget/quickstart">
+    Add the widget to a frontend and render the first conversation.
+  </Card>
+  <Card title="Installation" icon="download" href="/guides/widget/installation">
+    Configure the package, environment, and authentication provider.
+  </Card>
+  <Card title="Customization" icon="palette" href="/guides/widget/customization">
+    Change layout, components, and behavior.
+  </Card>
+  <Card title="Troubleshooting" icon="wrench" href="/guides/widget/troubleshooting">
+    Diagnose configuration, origin, and runtime issues.
+  </Card>
+</CardGroup>

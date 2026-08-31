@@ -1,0 +1,137 @@
+---
+title: "Actions and signing"
+description: "Connect EVM or Solana wallet adapters while keeping review, approval, and signing under application control."
+---
+
+Wallet adapters let the Agent SDK ask your application to sign or submit a pending action. The wallet stays in your application, and your UI keeps the approval boundary.
+
+## Adapt a Viem wallet
+
+Install Viem alongside the Aomi client:
+
+```bash
+npm install @aomi-labs/client viem
+```
+
+```ts
+import { Aomi, type EvmWallet } from "@aomi-labs/client";
+import type {
+  Hex,
+  SignTypedDataParameters,
+  WalletClient,
+} from "viem";
+
+function toAomiWallet(wallet: WalletClient): EvmWallet {
+  const account = wallet.account;
+  if (!account) throw new Error("Connect the wallet first");
+
+  return {
+    address: account.address,
+    chainId: () => wallet.chain?.id,
+    sendTransaction: ({ to, data, value }) =>
+      wallet.sendTransaction({
+        account,
+        chain: wallet.chain,
+        to: to as Hex,
+        data: data as Hex | undefined,
+        value: value === undefined ? undefined : BigInt(value),
+      }),
+    signMessage: ({ message }) =>
+      wallet.signMessage({
+        account,
+        message: /^0x(?:[0-9a-fA-F]{2})*$/.test(message)
+          ? { raw: message as Hex }
+          : message,
+      }),
+    signTypedData: ({ typedData }) =>
+      wallet.signTypedData({
+        account,
+        ...(typedData as Omit<SignTypedDataParameters, "account">),
+      }),
+    switchChain: (chainId) => wallet.switchChain({ id: chainId }),
+  };
+}
+
+const aomi = new Aomi({
+  baseUrl: "https://chat-staging.aomi.dev",
+  wallet: { evm: toAomiWallet(walletClient) },
+});
+```
+
+This adapter uses one transaction at a time because Viem's `sendCalls` returns a bundle identifier, while the SDK expects transaction hashes. Add only the methods your wallet actually supports.
+
+<Info>
+  This adapter was type-checked against the Viem and `@aomi-labs/client` versions on Aomi `origin/main`. Personal-message and EIP-712 signing were also exercised with a local Viem test account. Sending a real transaction still requires a connected wallet with the requested chain and funds.
+</Info>
+
+## Review an Agent request
+
+Agent execution is manual by default:
+
+```ts
+const run = aomi.agent.run("Supply 100 USDC to Aave.");
+
+run.on("action", async (action) => {
+  if (action.state !== "pending") return;
+
+  const approved = await showApprovalUI(action);
+
+  if (!approved) {
+    await run.reject(action.id, "User rejected");
+    return;
+  }
+
+  if (!run.session.actions.canExecute(action.id)) {
+    throw new Error(`No wallet capability can execute ${action.request.kind}`);
+  }
+
+  await run.session.actions.execute(action.id);
+});
+
+await run.result();
+```
+
+The only `AgentRun` progress events are `action`, `completed`, and `error`. Simulation details and warnings, when present, are part of `action.request`; they are not a separate event.
+
+Your approval UI should show the request kind, chain, sender, targets, values, simulation evidence, and warnings available on the action. `execute()` calls the configured wallet capability and sends its result back to the Agent.
+
+## Review a Pipeline Build
+
+Pipeline keeps review and commit separate:
+
+```ts
+const build = await aomi.pipeline.evm.stage({
+  chainId: 8453,
+  calls: [{ to: contract, data: calldata, value: 0n }],
+});
+
+const simulated = await build.simulate();
+
+renderReview({
+  summary: simulated.summary,
+  actions: simulated.actions,
+  simulation: simulated.simulation,
+});
+
+if (await userApproved()) {
+  const result = await simulated.commit();
+  renderResult(result);
+}
+```
+
+Pipeline commit does not automatically use the wallet configured on `Aomi`. A commit can return `committed`, `submitted`, or `awaiting_wallet`. In the last case, inspect `result.action` and complete it through the action flow required by your application.
+
+<Warning>
+  Guest access on staging can read the Pipeline catalog but cannot execute Pipeline mutations. Use the OAuth scopes provisioned for your integration before testing stage, simulate, build, or commit against `chat-staging.aomi.dev`.
+</Warning>
+
+## Keep the boundary explicit
+
+- Never store a private key in browser code or docs examples.
+- Do not infer approval from a successful simulation.
+- Verify that the active wallet matches the requested sender.
+- Ask before switching chains or clusters.
+- Treat unattended execution as a separate, explicit product decision.
+- Keep guest identity, account authentication, and wallet authority separate.
+
+Read [Transaction safety](/security/transaction-safety) for the broader execution model.

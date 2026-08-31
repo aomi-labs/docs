@@ -1,0 +1,123 @@
+---
+title: "Authentication"
+description: "Choose guest, OAuth, widget, or host-managed access for an Aomi integration."
+---
+
+Aomi keeps caller identity, Agent sessions, App access, and wallet authority separate. Choose the caller authentication path that matches where your code runs.
+
+## Choose an authentication path
+
+| Integration | Recommended path | Developer experience |
+| --- | --- | --- |
+| Node.js evaluation | Guest session with a cookie-aware fetch | [TypeScript quickstart](/integrate/typescript/quickstart) |
+| Signed-in CLI, bot, or server | OAuth device flow | Public client ID and one-time browser approval |
+| Same-origin browser | First-party session | The browser sends the host session cookie |
+| Cross-origin browser | Widget/provider authentication | Origin-bound widget session |
+| Existing token broker | Low-level token provider | Advanced escape hatch |
+| MCP client | OAuth with PKCE | Exact Agent or Pipeline MCP resource |
+
+## Guest mode
+
+Guest mode is the default. In Node.js, pass the cookie-aware fetch from the quickstart:
+
+```ts
+import { Aomi } from "@aomi-labs/client";
+
+const aomi = new Aomi({
+  baseUrl: process.env.AOMI_BASE_URL!,
+  fetch: cookieAwareFetch,
+});
+
+console.log(aomi.auth.mode); // "guest"
+await aomi.agent.run("Introduce Aomi in one sentence.");
+```
+
+The first protected call creates an anonymous session. Guest mode is not a request with no identity.
+
+- The SDK keeps the guest credential with the client.
+- Reuse an Agent `sessionId` to continue a conversation.
+- Guest-safe Agent calls and Pipeline catalog reads depend on environment policy.
+- Guest action resolution and Pipeline execution can be restricted.
+- A connected wallet does not silently upgrade a guest into an account.
+
+Call `aomi.auth.logout()` to clear the guest session held by the client.
+
+<Warning>
+  Plain Node.js `fetch` does not persist the cookie returned by Better Auth. Use the [tested quickstart wrapper](/integrate/typescript/quickstart) for evaluation, or OAuth for a real CLI or service. Cross-origin browser integrations should use the widget or provisioned browser OAuth flow.
+</Warning>
+
+## OAuth for a service or CLI
+
+Use a provisioned **public** client. Never put a client secret in a CLI, browser, desktop app, or distributed package.
+
+```ts
+import { Aomi, oauth } from "@aomi-labs/client";
+
+const aomi = new Aomi({
+  baseUrl: process.env.AOMI_BASE_URL!,
+  auth: oauth({
+    clientId: process.env.AOMI_OAUTH_CLIENT_ID!,
+    store: grantStore,
+    onVerification({ verificationUriComplete, verificationUri, userCode }) {
+      console.log(
+        `Open ${verificationUriComplete ?? verificationUri} and confirm ${userCode}`,
+      );
+    },
+  }),
+});
+
+await aomi.auth.login({ for: ["agent", "pipeline"] });
+console.log(await aomi.auth.status());
+```
+
+Calling `login()` is optional. Agent and Pipeline calls can acquire or refresh their exact grants lazily.
+
+The SDK manages:
+
+- Separate Agent and Pipeline resource audiences.
+- Least-privilege scopes for the requested operation.
+- `offline_access` for refreshable device grants.
+- Refresh rotation and one retry after an expired credential.
+- Revocation and local clearing during `logout()`.
+
+## Persist device grants
+
+Device grants are memory-only unless you provide an `AomiOAuthGrantStore`.
+
+```ts
+import type { AomiOAuthGrantStore } from "@aomi-labs/client";
+
+const grantStore: AomiOAuthGrantStore = {
+  async load() {
+    return encryptedStore.readGrantSnapshot();
+  },
+  async save(grants) {
+    await encryptedStore.replaceGrantSnapshot([...grants]);
+  },
+};
+```
+
+<Warning>
+  Treat the stored value like a password. It can contain rotating refresh grants. Use an encrypted database, secret manager, OS keychain, or an owner-only local file. Never print or commit it.
+</Warning>
+
+Use the store interface exported by your installed client version. See the runnable device example in the [`aomi` repository](https://github.com/aomi-labs/aomi/tree/main/apps/examples/headless-client/src/oauth).
+
+## Browser and widget access
+
+For a separate-origin web application, use [widget authentication](/integrate/ui/widget). Its wallet or provider proof creates an origin-bound session for that host application.
+
+Standalone browser OAuth is available only to provisioned integrations. It uses a redirect URI, PKCE, and memory-only browser credentials. Do not copy the device-flow grant store into browser code.
+
+## Exact resource tokens
+
+OAuth access tokens are issued for an exact resource and are not interchangeable:
+
+| Surface | Resource path |
+| --- | --- |
+| Agent REST | `/v1/agent` |
+| Pipeline REST | `/v1/pipeline` |
+| Agent MCP | `/v1/agent/mcp` |
+| Pipeline MCP | `/v1/pipeline/mcp` |
+
+The SDK chooses the correct OAuth resource. An opaque guest session can cover the guest-safe scopes allowed by the environment, but it does not gain protected OAuth scopes. A host that supplies its own OAuth token must bind it to the exact resource and required scopes.

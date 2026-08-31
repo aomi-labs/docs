@@ -16,7 +16,6 @@
         "icon": "rocket",
         "pages": [
           "trade/portal",
-          "guides/mcp",
           "guides/skills",
           {
             "group": "Client CLI",
@@ -27,6 +26,51 @@
               "reference/client-cli/transactions-and-signing"
             ]
           }
+        ]
+      },
+      {
+        "group": "Integrate",
+        "icon": "code",
+        "pages": [
+          "integrate/overview",
+          {
+            "group": "TypeScript SDK",
+            "icon": "typescript",
+            "iconType": "brands",
+            "pages": [
+              "integrate/typescript/quickstart",
+              "integrate/typescript/agent",
+              "integrate/typescript/pipeline",
+              "integrate/typescript/core-client",
+              "integrate/typescript/errors"
+            ]
+          },
+          "integrate/authentication",
+          "integrate/actions-and-signing",
+          {
+            "group": "UI Integrations",
+            "icon": "window",
+            "pages": [
+              "integrate/ui/headless-library",
+              "integrate/ui/widget",
+              "guides/widget/quickstart",
+              "guides/widget/installation",
+              "guides/widget/customization",
+              "guides/widget/deploy/ship-on-vercel",
+              "guides/widget/troubleshooting"
+            ]
+          },
+          {
+            "group": "HTTP API",
+            "icon": "brackets-curly",
+            "pages": [
+              "integrate/api/overview",
+              "integrate/api/agent",
+              "integrate/api/pipeline"
+            ]
+          },
+          "guides/mcp",
+          "integrate/recipes"
         ]
       },
       {
@@ -51,17 +95,6 @@
             "pages": [
               "build/toolchain/aomi-build",
               "build/toolchain/aomi-run"
-            ]
-          },
-          {
-            "group": "Widget Library",
-            "icon": "window",
-            "pages": [
-              "guides/widget/quickstart",
-              "guides/widget/installation",
-              "guides/widget/customization",
-              "guides/widget/deploy/ship-on-vercel",
-              "guides/widget/troubleshooting"
             ]
           },
           {
@@ -120,7 +153,7 @@
         ]
       },
       {
-        "group": "Examples",
+        "group": "Case Studies",
         "icon": "rectangle-code",
         "pages": [
           "examples/overview",
@@ -259,11 +292,27 @@
     },
     {
       "source": "/reference",
-      "destination": "/reference/overview"
+      "destination": "/integrate/overview"
     },
     {
       "source": "/reference/index",
-      "destination": "/reference/overview"
+      "destination": "/integrate/overview"
+    },
+    {
+      "source": "/reference/overview",
+      "destination": "/integrate/overview"
+    },
+    {
+      "source": "/reference/api-reference",
+      "destination": "/integrate/api/overview"
+    },
+    {
+      "source": "/reference/apps-and-authentication",
+      "destination": "/integrate/authentication"
+    },
+    {
+      "source": "/reference/sessions",
+      "destination": "/integrate/typescript/agent#manage-sessions"
     },
     {
       "source": "/reference/simulation",
@@ -271,19 +320,19 @@
     },
     {
       "source": "/reference/apps-auth",
-      "destination": "/reference/apps-and-authentication"
+      "destination": "/integrate/authentication"
     },
     {
       "source": "/guides/widget/headless",
-      "destination": "/guides/widget/customization#build-a-headless-ui"
+      "destination": "/integrate/ui/headless-library"
     },
     {
       "source": "/guides/widget/headless/build-custom-ui",
-      "destination": "/guides/widget/customization#complete-custom-ui-example"
+      "destination": "/integrate/ui/headless-library"
     },
     {
       "source": "/guides/widget/headless/hooks",
-      "destination": "/guides/widget/customization#hooks"
+      "destination": "/integrate/ui/headless-library"
     },
     {
       "source": "/guides/widget/authentication",
@@ -299,15 +348,15 @@
     },
     {
       "source": "/guides/headless-library",
-      "destination": "/guides/widget/customization#build-a-headless-ui"
+      "destination": "/integrate/ui/headless-library"
     },
     {
       "source": "/guides/headless/hooks",
-      "destination": "/guides/widget/customization#hooks"
+      "destination": "/integrate/ui/headless-library"
     },
     {
       "source": "/guides/headless/build-custom-ui",
-      "destination": "/guides/widget/customization#complete-custom-ui-example"
+      "destination": "/integrate/ui/headless-library"
     },
     {
       "source": "/build/frontend-vercel",
@@ -319,7 +368,7 @@
     },
     {
       "source": "/getting-started/quickstart",
-      "destination": "/reference/client-cli"
+      "destination": "/integrate/typescript/quickstart"
     },
     {
       "source": "/build/deploy",
