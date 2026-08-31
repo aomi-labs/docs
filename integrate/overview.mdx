@@ -1,0 +1,71 @@
+---
+title: "SDKs and API"
+sidebarTitle: "Overview"
+description: "Choose the Aomi integration surface for a TypeScript service, custom UI, widget, raw HTTP client, or MCP client."
+---
+
+Use **Integrate** when you want to call Aomi from an existing product or service. Use [Build on Aomi](/build) when you want to create and deploy a new App.
+
+## Choose an integration
+
+| You are building | Start here | Why |
+| --- | --- | --- |
+| Node.js evaluation | [TypeScript quickstart](/integrate/typescript/quickstart) | Make a guest Agent call with automatic guest authentication. |
+| Node.js service, CLI, or automation | [Authentication](/integrate/authentication#oauth-for-a-service-or-cli) | Use device OAuth and the TypeScript SDK for account-owned access. |
+| Stateful agent experience | [Agent SDK](/integrate/typescript/agent) | Run multi-turn sessions, observe activity, and handle actions. |
+| Deterministic transaction flow | [Pipeline SDK](/integrate/typescript/pipeline) | Discover operations, build, simulate, review, and commit. |
+| Custom React interface | [Headless library](/integrate/ui/headless-library) | Own the UI while Aomi manages chat and thread state. |
+| Ready-made browser interface | [Widget](/integrate/ui/widget) | Embed the complete Aomi surface with wallet authentication. |
+| Non-TypeScript integration | [HTTP API](/integrate/api/overview) | Call the versioned Agent and Pipeline resources directly. |
+| AI coding client | [MCP](/guides/mcp) | Connect Codex, Claude Code, Cursor, or another MCP client. |
+| New Aomi App | [Build an App](/build/first-app) | Author a plugin and deploy an App to the hosted runtime. |
+
+## Start with the TypeScript SDK
+
+`@aomi-labs/client` works in Node.js and browsers. The `Aomi` class gives you three product-level surfaces:
+
+```ts
+import { Aomi } from "@aomi-labs/client";
+
+const aomi = new Aomi({
+  baseUrl: process.env.AOMI_BASE_URL!,
+});
+
+aomi.agent;    // stateful Agent turns
+aomi.pipeline; // stateless Build flows
+aomi.auth;     // guest or OAuth lifecycle
+aomi.raw;      // wire-close client for advanced control
+```
+
+<CardGroup cols={2}>
+  <Card title="Run an Agent turn" icon="message" href="/integrate/typescript/agent">
+    Send a prompt, reuse a session, observe actions, and interrupt work.
+  </Card>
+  <Card title="Build with Pipeline" icon="diagram-project" href="/integrate/typescript/pipeline">
+    Discover live operations and keep simulation separate from commit.
+  </Card>
+  <Card title="Choose authentication" icon="key" href="/integrate/authentication">
+    Start as a guest or add OAuth for account-owned access.
+  </Card>
+  <Card title="Handle signing" icon="signature" href="/integrate/actions-and-signing">
+    Keep wallet review and execution inside your application.
+  </Card>
+</CardGroup>
+
+## The three boundaries
+
+| Boundary | What it controls |
+| --- | --- |
+| Guest session or OAuth grant | Who is calling the Agent or Pipeline API and what the caller may access. |
+| App access | Which deployed App the caller may use. This is separate from account authentication. |
+| Wallet adapter | Which exact action the user can review, sign, and submit. Connecting a wallet does not grant unattended signing. |
+
+<Note>
+  This section tracks the API stack on Aomi `origin/main`. Published npm tags can lag that source during rollout, so use the package version or build provisioned for your environment and verify its exported types. Agent and Pipeline availability can also differ between staging and production.
+</Note>
+
+## Next steps
+
+- [Make your first guest Agent call](/integrate/typescript/quickstart)
+- [Understand guest and OAuth access](/integrate/authentication)
+- [Browse complete integration recipes](/integrate/recipes)

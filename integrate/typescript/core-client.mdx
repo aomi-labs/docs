@@ -1,0 +1,47 @@
+---
+title: "Core client"
+description: "Choose between the high-level Aomi facade and the wire-close AomiClient transport."
+---
+
+Start with `Aomi`. Reach for the core client only when you need direct control over a versioned API operation.
+
+## Choose a layer
+
+| Layer | Use it for |
+| --- | --- |
+| `Aomi` | Product-oriented Agent, Pipeline, authentication, and wallet flows. Recommended for new integrations. |
+| `aomi.raw` | Direct Agent sessions, Pipeline directories, account state, and other wire-close calls without a second client. |
+| `AomiClient` | Advanced integrations that want to construct only the low-level transport. |
+| `Session` | Compatibility surface for applications already using the older session-oriented client. |
+
+## Share one client and one auth state
+
+```ts
+import { Aomi } from "@aomi-labs/client";
+
+const aomi = new Aomi({ baseUrl: import.meta.env.VITE_AOMI_BASE_URL });
+
+const agentResult = await aomi.agent.run("Summarize my last action.");
+const catalog = await aomi.raw.pipeline.apps.list();
+```
+
+The high-level and raw surfaces share the same guest identity or OAuth grant manager. Node.js guest authentication is automatic. Configure OAuth when you need durable account-owned access, as described in [Authentication](/integrate/authentication).
+
+## Construct the low-level client
+
+```ts
+import { AomiClient } from "@aomi-labs/client";
+
+const client = new AomiClient({
+  baseUrl: import.meta.env.VITE_AOMI_BASE_URL,
+});
+
+const page = await client.agent.sessions.list({ limit: 20 });
+const apps = await client.pipeline.apps.list();
+```
+
+Prefer typed Agent and Pipeline transports over the generic request escape hatch. They normalize errors, encode parameters, and apply mutation headers consistently.
+
+## When raw HTTP is a better fit
+
+Use the [HTTP API](/integrate/api/overview) when your application is not written in TypeScript or already owns OAuth token acquisition. Staging does not currently publish `/openapi.json`.

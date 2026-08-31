@@ -1,0 +1,61 @@
+---
+title: "React headless library"
+sidebarTitle: "Headless library"
+description: "Build a custom React interface with AomiRuntimeProvider and useAomiRuntime."
+---
+
+Use the `@aomi-labs/react` **headless library** when you want Aomi to manage Agent state while your components control every pixel.
+
+## Install
+
+```bash
+npm install @aomi-labs/react @assistant-ui/react react react-dom
+```
+
+## Add the provider
+
+```tsx
+import { AomiRuntimeProvider } from "@aomi-labs/react";
+
+export function Providers({ children }: { children: React.ReactNode }) {
+  return (
+    <AomiRuntimeProvider backendUrl={import.meta.env.VITE_AOMI_BASE_URL}>
+      {children}
+    </AomiRuntimeProvider>
+  );
+}
+```
+
+## Send a message
+
+```tsx
+import { useAomiRuntime } from "@aomi-labs/react";
+
+function Composer() {
+  const { sendMessage, isRunning, cancelGeneration } = useAomiRuntime();
+
+  return isRunning ? (
+    <button onClick={cancelGeneration}>Stop</button>
+  ) : (
+    <button onClick={() => sendMessage("Show my Base balances")}>Send</button>
+  );
+}
+```
+
+`useAomiRuntime()` exposes the common integration state:
+
+| Area | Examples |
+| --- | --- |
+| Threads | `currentThreadId`, `createThread`, `selectThread`, `renameThread` |
+| Chat | `sendMessage`, `getMessages`, `isRunning`, `cancelGeneration` |
+| Actions | `pendingActions`, `actionAttempts`, `executeAction`, `respondToAction`, `rejectAction` |
+| Events | Ordered `events` and backend-owned `turnState` |
+| User state | Current EVM, Solana, connection, and extension state |
+
+`executeAction(id)` uses the capabilities configured beneath the provider. Use `respondToAction(id, result)` only when your application executed the request itself and has the correctly typed result.
+
+<Note>
+  `@aomi-labs/react` does not choose a wallet provider. Supply your own provider tree or use the widget package for a complete integration.
+</Note>
+
+For a complete custom interface, continue to [Widget customization](/guides/widget/customization).

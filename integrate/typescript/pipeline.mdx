@@ -1,0 +1,115 @@
+---
+title: "Pipeline SDK"
+description: "Discover Pipeline operations, validate live schemas, build and simulate actions, then cross an explicit commit boundary."
+---
+
+Pipeline is the stateless integration surface for deterministic operations. It discovers live capabilities, builds chain actions, simulates them, and keeps commit explicit.
+
+<Info>
+  The **Pipeline SDK** is a callable product surface. The [transaction pipeline](/concepts/transaction-pipeline) is the broader build → simulate → sign → broadcast safety model.
+</Info>
+
+## Discover the catalog
+
+Do not hard-code a second registry of Apps or skills. Read the catalog exposed by your environment:
+
+```ts
+const [apps, skills] = await Promise.all([
+  aomi.raw.pipeline.apps.list(),
+  aomi.raw.pipeline.skills.list(),
+]);
+
+console.log(apps.entries);
+console.log(skills.entries);
+```
+
+## Inspect an operation
+
+Operation descriptors include the current input schema:
+
+```ts
+const echo = await aomi.pipeline
+  .app("default")
+  .operation("dummy_echo");
+
+console.log(echo.description);
+console.log(echo.inputSchema);
+```
+
+This descriptor is available on staging and accepts a `message` string. Catalog contents vary by environment, so discover the App and operation before relying on them. The SDK validates Build arguments against the descriptor schema.
+
+## Build and simulate
+
+```ts
+const scope = aomi.pipeline.app(selectedApp);
+const descriptor = await scope.operation(selectedOperation);
+
+renderForm(descriptor.inputSchema);
+
+const build = await scope.build(selectedOperation, formValues);
+
+console.log(build.summary);
+console.log(build.actions);
+console.log(build.simulation);
+console.log(build.digest);
+```
+
+`build()` returns a simulated EVM or SVM Build. It does not commit the operation.
+
+<Warning>
+  Render `summary`, `actions`, `simulation`, and warnings before offering a commit control. Do not turn a successful simulation into implicit approval.
+</Warning>
+
+## Commit explicitly
+
+```ts
+const result = await build.commit();
+
+switch (result.status) {
+  case "committed":
+  case "submitted":
+    console.log(result.receipts);
+    break;
+  case "awaiting_wallet":
+    showPendingAction(result.action);
+    break;
+}
+```
+
+Pipeline commit does not automatically execute the wallet configured on `Aomi`. If it returns `awaiting_wallet`, `result.action` is the pending action your host must review and complete.
+
+Commit uses the portable Build digest as its default idempotency key. Supply your own key when it needs to match an application-level request:
+
+```ts
+await build.commit({ idempotencyKey: checkoutAttemptId });
+```
+
+## Direct EVM lifecycle
+
+Use the chain-specific surface when you already have calls:
+
+```ts
+const staged = await aomi.pipeline.evm.stage({
+  chainId: 8453,
+  calls: [{ to: contract, data: calldata, value: 0n }],
+});
+
+const simulated = await staged.simulate();
+const committed = await simulated.commit();
+```
+
+TypeScript prevents a merely staged Build from being passed to the high-level commit method.
+
+<Warning>
+  On staging, guest sessions can read the catalog but cannot execute Pipeline mutations. Use a grant with `pipeline:execute` to test build, stage, simulate, or commit.
+</Warning>
+
+## Read skill instructions
+
+```ts
+const instructions = await aomi.pipeline
+  .skill("leveraged-lending")
+  .instructions();
+```
+
+Skill and App operations remain runtime-discovered. Avoid documenting a fixed list of catalog entries in your integration.

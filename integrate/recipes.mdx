@@ -1,0 +1,54 @@
+---
+title: "Integration recipes"
+description: "Copy practical Agent, Pipeline, OAuth, wallet, React, and widget patterns into an Aomi integration."
+---
+
+Recipes are runnable developer integrations. For examples of products already built with Aomi, see [Case studies](/examples/overview).
+
+## Headless TypeScript
+
+<CardGroup cols={2}>
+  <Card title="Guest Agent" icon="message" href="/integrate/typescript/quickstart">
+    Make two stateful Node.js turns without configuring OAuth.
+  </Card>
+  <Card title="Agent events" icon="wave-square" href="/integrate/typescript/agent#observe-a-run">
+    Render action revisions, simulation evidence, and completion.
+  </Card>
+  <Card title="Pipeline Build" icon="diagram-project" href="/integrate/typescript/pipeline#build-and-simulate">
+    Discover an operation, validate arguments, simulate, and review.
+  </Card>
+  <Card title="Device OAuth" icon="key" href="/integrate/authentication#oauth-for-a-service-or-cli">
+    Authorize a CLI, bot, or server process with a public client.
+  </Card>
+</CardGroup>
+
+## Signing and UI
+
+<CardGroup cols={2}>
+  <Card title="Manual wallet approval" icon="signature" href="/integrate/actions-and-signing#review-an-agent-request">
+    Keep the request visible and resolve it only after user approval.
+  </Card>
+  <Card title="Custom React UI" icon="react" href="/integrate/ui/headless-library">
+    Compose your own chat, thread, and action components.
+  </Card>
+  <Card title="Widget integration" icon="window" href="/integrate/ui/widget">
+    Embed the complete interface with origin-bound authentication.
+  </Card>
+  <Card title="Raw HTTP" icon="code" href="/integrate/api/overview">
+    Use exact-resource OAuth from a non-TypeScript service.
+  </Card>
+</CardGroup>
+
+## Runnable source
+
+The Aomi repository contains complete examples under [`apps/examples`](https://github.com/aomi-labs/aomi/tree/main/apps/examples):
+
+- `headless-client/src/agent/guest.ts`
+- `headless-client/src/pipeline/guest.ts`
+- `headless-client/src/walkthrough.ts`
+- `headless-client/src/oauth/device.ts`
+- `headless-client/src/oauth/supplied-token.ts`
+- `headless-client/src/wallet-terminal.ts`
+- `widget-consumer/`
+
+Use the tag matching your installed `@aomi-labs/client` version. Avoid copying examples from an unreleased branch into production code.

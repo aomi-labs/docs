@@ -1,0 +1,110 @@
+---
+title: "Agent SDK"
+description: "Run stateful Agent turns, observe activity, reuse sessions, interrupt work, and manage conversation history."
+---
+
+The Agent SDK turns a prompt into one stateful run. Keep the returned `AgentRun` when you need progress events or control over the run.
+
+The snippets below assume an `aomi` instance created with the [Node guest quickstart](/integrate/typescript/quickstart) or [OAuth device flow](/integrate/authentication#oauth-for-a-service-or-cli).
+
+## Run a turn
+
+```ts
+const result = await aomi.agent.run("Explain my USDC balance on Base.");
+
+console.log(result.sessionId);
+console.log(result.messages);
+```
+
+`AgentRun` is Promise-like. You can await it directly or call `result()`.
+
+## Observe a run
+
+Attach listeners immediately after creating the run:
+
+```ts
+const run = aomi.agent.run("Swap half my USDC and supply the rest.");
+
+run.on("action", (action) => renderAction(action));
+run.on("completed", (result) => renderMessages(result.messages));
+run.on("error", ({ error }) => reportError(error));
+
+const result = await run.result();
+console.log(result.messages);
+```
+
+| Event | Use it for |
+| --- | --- |
+| `action` | Render a pending, resolved, rejected, or failed action. Its request can include simulation evidence. |
+| `completed` | Update your UI when the run reaches a terminal result. |
+| `error` | Capture transport, authorization, and execution failures. |
+
+## Continue a conversation
+
+Pass the same `sessionId` to each turn:
+
+```ts
+const sessionId = crypto.randomUUID();
+
+await aomi.agent.run("Remember my preferred chain is Base.", { sessionId });
+const next = await aomi.agent.run("Which chain do I prefer?", { sessionId });
+```
+
+An Agent session is the persisted conversation. It is not the guest or OAuth credential used to authorize the caller.
+
+## Interrupt work
+
+```ts
+const run = aomi.agent.run("Research several lending markets.");
+
+stopButton.addEventListener("click", () => {
+  void run.interrupt();
+});
+
+await run.result();
+```
+
+## Manage sessions
+
+Session management is available through the wire-close client on the same `Aomi` instance:
+
+```ts
+const sessions = aomi.raw.agent.sessions;
+
+const page = await sessions.list({ limit: 20 });
+const current = await sessions.get(sessionId);
+await sessions.update(sessionId, { title: "Base lending research" });
+await sessions.update(sessionId, { archived: true });
+await sessions.delete(sessionId);
+```
+
+Use cursor pagination for user-facing session lists. Use `sessions.all()` only when the complete list is small enough to load into memory.
+
+Renaming, archiving, and deleting sessions require the scopes configured for the signed-in account; staging guest access can be read-only.
+
+## Handle actions
+
+Agent wallet execution is manual by default. Review the request, then resolve or reject it:
+
+```ts
+const run = aomi.agent.run("Supply 100 USDC to Aave.");
+
+run.on("action", async (action) => {
+  if (action.state !== "pending") return;
+
+  if (!(await confirmRequest(action))) {
+    await run.reject(action.id, "User rejected");
+    return;
+  }
+
+  if (!run.session.actions.canExecute(action.id)) {
+    throw new Error("No configured capability can execute this action");
+  }
+
+  await run.session.actions.execute(action.id);
+});
+
+await run.result();
+```
+
+See [Actions and signing](/integrate/actions-and-signing) for wallet adapters and review boundaries.

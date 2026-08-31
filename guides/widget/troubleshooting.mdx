@@ -1,6 +1,6 @@
 ---
 title: "Troubleshooting"
-description: "Resolve widget authentication, wallet, and sponsored transaction issues with focused checks and fixes."
+description: "Resolve widget authentication, wallet, and action issues with focused checks and fixes."
 ---
 
 | You see | Check |
@@ -8,11 +8,10 @@ description: "Resolve widget authentication, wallet, and sponsored transaction i
 | Widget does not render | Package styles, `apiUrl`, and Application ID |
 | Origin rejected | The exact scheme, host, and port registered for the App |
 | Sign-in does not complete | Provider environment and the active browser session |
-| Wallet cannot sign | The active wallet supports personal-message signing |
+| Wallet cannot sign | The active wallet supports the requested message, typed-data, EVM, or Solana method |
 | Owner or network mismatch | Switch back to the owner and network shown in the request |
-| AA account unavailable | The App supports the selected network and the owner is bound |
-| Fee balance insufficient | The executor holds the asset required for the disclosed fee |
-| Sponsorship unavailable | Retry later or contact the App operator; there is no unsponsored fallback |
+| Action cannot execute | The configured wallet exposes the capability required by `action.request.kind` |
+| Pipeline returns `403` | Guest access can browse the staging catalog but cannot execute Pipeline mutations |
 | Operation expired | Start the action again and sign the new request |
 
 Do not include session tokens, provider credentials, full signatures, or secret configuration in support messages.

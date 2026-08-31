@@ -1,0 +1,102 @@
+---
+title: "TypeScript quickstart"
+description: "Install @aomi-labs/client and run a two-turn Agent conversation from Node.js with guest access."
+---
+
+Create a working Node.js integration in one file. Guest mode does not need an API key or OAuth client.
+
+<Note>
+  This example uses the `Aomi` facade from Aomi `origin/main`. If the current npm tag does not export `Aomi`, use the prerelease or build provisioned for your environment.
+</Note>
+
+## Install
+
+<Tabs>
+  <Tab title="npm">
+    ```bash
+    npm install @aomi-labs/client
+    ```
+  </Tab>
+  <Tab title="pnpm">
+    ```bash
+    pnpm add @aomi-labs/client
+    ```
+  </Tab>
+  <Tab title="yarn">
+    ```bash
+    yarn add @aomi-labs/client
+    ```
+  </Tab>
+</Tabs>
+
+Add a TypeScript runner if your project does not already have one:
+
+```bash
+npm install --save-dev tsx @types/node
+```
+
+Set the API origin supplied for your environment:
+
+```bash
+export AOMI_BASE_URL="https://chat-staging.aomi.dev"
+```
+
+## Run two Agent turns
+
+```ts
+// example.ts
+import { Aomi, type MessageEvent } from "@aomi-labs/client";
+
+const baseUrl = process.env.AOMI_BASE_URL!;
+const aomi = new Aomi({ baseUrl });
+
+const sessionId = crypto.randomUUID();
+
+await aomi.agent.run("Remember that my demo color is cobalt.", {
+  sessionId,
+});
+
+const result = await aomi.agent.run("Reply with only my demo color.", {
+  sessionId,
+});
+
+console.log(lastAgentText(result.messages));
+
+function lastAgentText(messages: readonly MessageEvent[]) {
+  return [...messages]
+    .reverse()
+    .find((message) => message.sender === "agent")?.content;
+}
+```
+
+Reusing `sessionId` continues the same conversation. Persist that ID with your application's conversation record.
+
+Run it with your TypeScript runner:
+
+```bash
+npx tsx example.ts
+```
+
+## What guest mode does
+
+Guest mode is the SDK default. On the first request, the Node client creates a Better Auth anonymous session and keeps its opaque bearer credential in memory for later calls. You do not need a cookie jar, custom fetch implementation, or API key.
+
+- Guest identity is separate from an Agent session ID.
+- Guest identity is also separate from wallet authority.
+- Guest-safe Agent calls and Pipeline catalog reads may be available.
+- Protected actions and account-owned data require the access configured for your environment.
+
+<Warning>
+  This guest pattern is useful for evaluation, not a substitute for service authentication. For account-owned sessions or protected actions, use the [OAuth device flow](/integrate/authentication#oauth-for-a-service-or-cli). For a browser product, use [Widget authentication](/integrate/ui/widget) or your provisioned browser OAuth flow.
+</Warning>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Agent SDK" icon="robot" href="/integrate/typescript/agent">
+    Observe progress, manage sessions, interrupt work, and handle actions.
+  </Card>
+  <Card title="Authentication" icon="key" href="/integrate/authentication">
+    Add account-owned access with a public OAuth client.
+  </Card>
+</CardGroup>

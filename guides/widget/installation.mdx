@@ -4,14 +4,14 @@ sidebarTitle: "Installation"
 description: "Install AomiWidget, connect it to your App, and choose browser, Para, or Privy authentication."
 ---
 
-Install `AomiWidget` to add application-bound chat, wallet authentication, and transaction approval to your React app. Your frontend selects the App and sign-in method. Aomi controls execution, fees, sponsorship, and broadcast on the server.
+Install `AomiWidget` to add application-bound chat, wallet authentication, and transaction approval to your React app. Your frontend selects the App and sign-in method, and the connected wallet handles requests the user approves.
 
 ## Prerequisites
 
 Before you start, you need:
 
 - An activated Aomi App and its numeric Application ID.
-- The exact partner origin registered for the App, including its scheme, host, and port.
+- An HTTPS origin for production, added to the selected wallet provider's allowlist.
 - React 18 or 19 running in the browser.
 - A decision between browser-wallet, Para, or Privy authentication.
 
@@ -85,7 +85,7 @@ The widget needs one client component and one environment file. It does not requ
 | Variable | Purpose |
 | --- | --- |
 | `AOMI_API_URL` | The Aomi origin that serves widget sessions, chat, and account APIs |
-| `AOMI_APPLICATION_ID` | The deployed App and its server-owned execution policy |
+| `AOMI_APPLICATION_ID` | The deployed App selected by the widget |
 | `PARA_API_KEY` | Para's public browser identifier; required for Para mode |
 | `PRIVY_APP_ID` | Privy's public browser identifier; required for Privy mode |
 | `WALLETCONNECT_PROJECT_ID` | Public WalletConnect project identifier; required only when WalletConnect is enabled |
@@ -130,13 +130,13 @@ Authentication establishes the user session. Wallet ownership establishes which 
 
 | Mode | Use it when | User experience |
 | --- | --- | --- |
-| Browser wallet | Users already have MetaMask, Rabby, Coinbase Wallet, or another compatible wallet | Connect a wallet and sign a SIWE message |
+| Browser wallet | Users already have a compatible EVM or Solana wallet | Connect a wallet and sign SIWE or SIWS, depending on the wallet |
 | Para | You want Para social login and embedded wallets | Sign in with Para, then use the active embedded or connected wallet |
 | Privy | You want Privy login and embedded wallets | Sign in with Privy, then use the active embedded wallet |
 
 <Tabs>
   <Tab title="Browser wallet">
-    Browser mode authenticates an existing EOA. It does not require a Para or Privy provider import.
+    Browser mode authenticates an existing EVM or Solana wallet. It does not require a Para or Privy provider import.
 
     ```tsx
     "use client";
@@ -200,7 +200,7 @@ Authentication establishes the user session. Wallet ownership establishes which 
           auth={{
             kind: "embedded_wallet",
             provider: "privy",
-            environment: "production",
+            environment: "PROD",
           }}
           height="calc(100dvh - 32px)"
         />
@@ -215,18 +215,18 @@ For Vite, use `import.meta.env.VITE_AOMI_APPLICATION_ID` and `import.meta.env.VI
 <Info>
   These examples intentionally include only public browser configuration.
   [Quickstart](/guides/widget/quickstart) explains how the widget exchanges a
-  wallet or provider proof for an origin-bound access token. `AomiWidget`
-  receives no paymaster URL, gas policy, fee rate, treasury, or executor
-  address; Aomi resolves those settings from the Application ID.
+  wallet or provider proof for an origin-bound access token. The current
+  `AomiWidget` executes supported action requests with the connected client
+  wallet; it does not enable account abstraction or sponsorship automatically.
 </Info>
 
 ## Verify the setup
 
-1. Open the page from the registered origin.
+1. Open the page from the HTTPS origin configured with your wallet provider.
 2. Sign in and connect or create a wallet.
 3. Confirm the thread list and composer load without an App-key prompt.
 4. Send a message and confirm a response appears.
 5. Switch wallets or networks and confirm the widget updates the active owner.
-6. For a transaction-enabled App, confirm the approval dialog shows the calls, fees, owner, executor, and network before signing.
+6. For a transaction-enabled App, confirm the approval dialog shows the request, owner, and network before signing.
 
 If setup fails, see [Widget Troubleshooting](/guides/widget/troubleshooting).
