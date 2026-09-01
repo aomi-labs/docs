@@ -140,7 +140,7 @@ Agent and Pipeline grants are separate. Signing authority is separate again:
 | `403 Forbidden` | Do not reuse an Agent token for Pipeline or the reverse. |
 | Guest REST token rejected | MCP requires OAuth for its exact `/mcp` resource; a guest REST bearer is not an MCP grant. |
 | Browser does not open | Use the MCP client's manual login command and inspect its OAuth status. |
-| `invalid_scope` during login | Every scope in an authorization must be valid for the one resource it names. A registration made before this resource published its current scopes will ask for the wrong set: remove the server from your MCP client and add it again so it registers fresh, then log in. |
+| `invalid_scope` during login | Nothing your client asked for is usable at the resource it named. An authorization is reduced to the scopes that resource allows, so a broad request is not itself a problem — this means the request and the resource do not match at all. Check that the server URL is the one you meant. |
 | `invalid_target` during login | Each authorization must name exactly one known Aomi resource. Add Agent and Pipeline as separate servers so each authorizes against its own resource. |
 | Session not found | Confirm you authenticated to the environment and account that owns it. |
 | Action remains pending | Complete review in the portal or authenticated CLI, then call `aomi_check` again. |
