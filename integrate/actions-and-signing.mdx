@@ -1,5 +1,5 @@
 ---
-title: "Actions and signing"
+title: "Wallet and signing"
 description: "Connect EVM or Solana wallet adapters while keeping review, approval, and signing under application control."
 ---
 
@@ -53,7 +53,7 @@ function toAomiWallet(wallet: WalletClient): EvmWallet {
 }
 
 const aomi = new Aomi({
-  baseUrl: "https://chat-staging.aomi.dev",
+  baseUrl: process.env.AOMI_BASE_URL!,
   wallet: { evm: toAomiWallet(walletClient) },
 });
 ```
@@ -82,7 +82,7 @@ run.on("action", async (action) => {
   }
 
   if (!run.session.actions.canExecute(action.id)) {
-    throw new Error(`No wallet capability can execute ${action.request.kind}`);
+    throw new Error(`No wallet capability can execute ${action.request.type}`);
   }
 
   await run.session.actions.execute(action.id);
@@ -122,7 +122,7 @@ if (await userApproved()) {
 Pipeline commit does not automatically use the wallet configured on `Aomi`. A commit can return `committed`, `submitted`, or `awaiting_wallet`. In the last case, inspect `result.action` and complete it through the action flow required by your application.
 
 <Warning>
-  Guest access on staging can read the Pipeline catalog but cannot execute Pipeline mutations. Use the OAuth scopes provisioned for your integration before testing stage, simulate, build, or commit against `chat-staging.aomi.dev`.
+  Guest access on staging can read the Pipeline catalog but cannot execute Pipeline mutations. Use the OAuth scopes provisioned for your integration before testing stage, simulate, build, or commit.
 </Warning>
 
 ## Keep the boundary explicit

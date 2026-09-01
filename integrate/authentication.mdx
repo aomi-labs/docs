@@ -9,7 +9,7 @@ Aomi keeps caller identity, Agent sessions, App access, and wallet authority sep
 
 | Integration | Recommended path | Developer experience |
 | --- | --- | --- |
-| Node.js evaluation | Automatic guest session | [TypeScript quickstart](/integrate/typescript/quickstart) |
+| Node.js evaluation | Automatic guest session | [Client SDK quickstart](/integrate/client-sdk#quickstart) |
 | Signed-in CLI, bot, or server | OAuth device flow | Public client ID and one-time browser approval |
 | Same-origin browser | First-party session | The browser sends the host session cookie |
 | Cross-origin browser | Widget/provider authentication | Origin-bound widget session |
@@ -118,3 +118,5 @@ OAuth access tokens are issued for an exact resource and are not interchangeable
 | Pipeline MCP | `/v1/pipeline/mcp` |
 
 The SDK chooses the correct OAuth resource. An opaque guest session can cover the guest-safe scopes allowed by the environment, but it does not gain protected OAuth scopes. A host that supplies its own OAuth token must bind it to the exact resource and required scopes.
+
+The MCP resources require their own scopes — `mcp:agent` for Agent MCP and `mcp:pipeline` for Pipeline MCP. REST tokens exclude the `mcp:*` scopes, so a token minted for `/v1/agent` cannot reach `/v1/agent/mcp`, and the reverse also holds.
