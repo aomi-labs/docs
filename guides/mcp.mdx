@@ -30,7 +30,7 @@ Use Agent MCP for conversational work. Use Pipeline MCP when your MCP client nee
 </Note>
 
 <Note>
-  Agent and Pipeline are separate MCP resources with separate grants. Add and authorize each one you intend to use; a client registered for Agent cannot call Pipeline, and the reverse.
+  Agent and Pipeline are separate MCP resources. Add and authorize each one you intend to use: your MCP client registers separately and holds a separate token for each, and every token is issued for exactly one resource. An Agent token is not accepted at the Pipeline resource, or the reverse.
 </Note>
 
 ## Connect Agent MCP
@@ -140,8 +140,8 @@ Agent and Pipeline grants are separate. Signing authority is separate again:
 | `403 Forbidden` | Do not reuse an Agent token for Pipeline or the reverse. |
 | Guest REST token rejected | MCP requires OAuth for its exact `/mcp` resource; a guest REST bearer is not an MCP grant. |
 | Browser does not open | Use the MCP client's manual login command and inspect its OAuth status. |
-| `invalid_scope` during login | The stored client registration predates the scopes this resource grants. Remove the server from your MCP client and add it again so it registers fresh, then log in. |
-| `invalid_target` during login | The client is authorizing against a resource it did not register for. Add Agent and Pipeline as separate servers rather than reusing one. |
+| `invalid_scope` during login | Every scope in an authorization must be valid for the one resource it names. A registration made before this resource published its current scopes will ask for the wrong set: remove the server from your MCP client and add it again so it registers fresh, then log in. |
+| `invalid_target` during login | Each authorization must name exactly one known Aomi resource. Add Agent and Pipeline as separate servers so each authorizes against its own resource. |
 | Session not found | Confirm you authenticated to the environment and account that owns it. |
 | Action remains pending | Complete review in the portal or authenticated CLI, then call `aomi_check` again. |
 
