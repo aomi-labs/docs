@@ -1,0 +1,176 @@
+---
+title: "Agent API"
+description: "Run stateful Agent turns, observe activity, reuse sessions, interrupt work, and manage conversation history — from the TypeScript SDK or raw HTTP."
+---
+
+The Agent API owns conversation state. It is one resource with two ways to call it: the TypeScript SDK's `aomi.agent` surface, or the versioned REST resource at `/v1/agent` for any other language. Both are documented on this page.
+
+The TypeScript snippets assume an `aomi` instance created with the [Client SDK quickstart](/integrate/client-sdk#quickstart) or [OAuth device flow](/integrate/authentication#oauth-for-a-service-or-cli).
+
+## Run a turn
+
+```ts
+const result = await aomi.agent.run("Explain my USDC balance on Base.");
+
+console.log(result.sessionId);
+console.log(result.messages);
+```
+
+`AgentRun` is Promise-like. You can await it directly or call `result()`.
+
+## Observe a run
+
+Attach listeners immediately after creating the run:
+
+```ts
+const run = aomi.agent.run("Swap half my USDC and supply the rest.");
+
+run.on("action", (action) => renderAction(action));
+run.on("completed", (result) => renderMessages(result.messages));
+run.on("error", ({ error }) => reportError(error));
+
+const result = await run.result();
+console.log(result.messages);
+```
+
+| Event | Use it for |
+| --- | --- |
+| `action` | Render an action as it moves through its states (`pending`, `submitted`, `completed`, `rejected`, `expired`, `failed`). Its request can include simulation evidence. |
+| `completed` | Update your UI when the run reaches a terminal result. |
+| `error` | Capture transport, authorization, and execution failures. |
+
+## Continue a conversation
+
+Pass the same `sessionId` to each turn:
+
+```ts
+const sessionId = crypto.randomUUID();
+
+await aomi.agent.run("Remember my preferred chain is Base.", { sessionId });
+const next = await aomi.agent.run("Which chain do I prefer?", { sessionId });
+```
+
+An Agent session is the persisted conversation. It is not the guest or OAuth credential used to authorize the caller.
+
+## Interrupt work
+
+```ts
+const run = aomi.agent.run("Research several lending markets.");
+
+stopButton.addEventListener("click", () => {
+  void run.interrupt();
+});
+
+await run.result();
+```
+
+## Manage sessions
+
+Session management is available through the wire-close client on the same `Aomi` instance:
+
+```ts
+const sessions = aomi.raw.agent.sessions;
+
+const page = await sessions.list({ limit: 20 });
+const current = await sessions.get(sessionId);
+await sessions.update(sessionId, { title: "Base lending research" });
+await sessions.update(sessionId, { archived: true });
+await sessions.delete(sessionId);
+```
+
+Use cursor pagination for user-facing session lists. Use `sessions.all()` only when the complete list is small enough to load into memory.
+
+Renaming, archiving, and deleting sessions require the scopes configured for the signed-in account; staging guest access can be read-only.
+
+## Handle actions
+
+Agent wallet execution is manual by default. Review the request, then resolve or reject it:
+
+```ts
+const run = aomi.agent.run("Supply 100 USDC to Aave.");
+
+run.on("action", async (action) => {
+  if (action.state !== "pending") return;
+
+  if (!(await confirmRequest(action))) {
+    await run.reject(action.id, "User rejected");
+    return;
+  }
+
+  if (!run.session.actions.canExecute(action.id)) {
+    throw new Error("No configured capability can execute this action");
+  }
+
+  await run.session.actions.execute(action.id);
+});
+
+await run.result();
+```
+
+See [Wallet and signing](/integrate/actions-and-signing) for wallet adapters and review boundaries.
+
+## Call the REST resource directly
+
+Use raw HTTP when your application is not written in TypeScript or already owns OAuth token acquisition. Start a turn, reduce the returned ordered events, and continue from the opaque cursor until a `turn_state_changed` event is terminal or needs user input. See [Authentication](/integrate/authentication#exact-resource-tokens) for the `/v1/agent` resource audience and scopes.
+
+| Method | Path | Purpose |
+| --- | --- | --- |
+| `POST` | `/v1/agent/chat` | Start a turn. |
+| `GET` | `/v1/agent/chat/{sessionId}` | Read new progress and messages. |
+| `POST` | `/v1/agent/chat/{sessionId}/interrupt` | Interrupt active work. |
+| `POST` | `/v1/agent/chat/{sessionId}/actions/{actionId}/result` | Resolve or reject an action. |
+| `GET` | `/v1/agent/sessions` | List sessions with cursor pagination. |
+| `GET` | `/v1/agent/sessions/{sessionId}` | Read one session. |
+| `PATCH` | `/v1/agent/sessions/{sessionId}` | Rename or archive a session. |
+| `DELETE` | `/v1/agent/sessions/{sessionId}` | Delete a session. |
+
+### Start a turn
+
+```bash
+curl -X POST "$AOMI_BASE_URL/v1/agent/chat" \
+  -H "Authorization: Bearer $AOMI_AGENT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: turn-8b5f" \
+  -d '{"sessionId":"demo-session-8b5f","message":"Explain my USDC balance on Base"}'
+```
+
+The response is an event page:
+
+```json
+{
+  "session_id": "demo-session-8b5f",
+  "cursor": "opaque-cursor",
+  "events": [],
+  "has_more": true
+}
+```
+
+Messages, tool activity, actions, errors, and lifecycle changes are entries in `events`; they are not separate top-level response fields.
+
+### Check progress
+
+```bash
+curl "$AOMI_BASE_URL/v1/agent/chat/$SESSION_ID?cursor=$CURSOR&wait=30000" \
+  -H "Authorization: Bearer $AOMI_AGENT_TOKEN"
+```
+
+`wait` is bounded to 30 seconds. Apply events in sequence order and repeat while `has_more` is true or the latest turn state is `processing`. Stop at `complete`, `failed`, `interrupted`, or `awaiting_action`.
+
+Keep the cursor opaque. An expired cursor returns `410`, and a malformed or cross-session cursor returns `400 invalid_cursor`; in either case, request the session without a cursor and reconcile the returned event page.
+
+### Manage sessions over HTTP
+
+```bash
+curl "$AOMI_BASE_URL/v1/agent/sessions?limit=20" \
+  -H "Authorization: Bearer $AOMI_AGENT_TOKEN"
+```
+
+Session ownership comes from the authenticated caller. Do not use a wallet address as an ownership key.
+
+### Submit an action result
+
+Action resolution requires its own permission and an idempotency key. Submit only the result produced by the reviewed request. Never replace the action payload with caller-authored transaction fields.
+
+The action result body includes the action `revision` and the typed `result`. Guest access on staging does not include `agent:actions:resolve`.
+
+For TypeScript integrations, prefer the SDK sections above so action types and progress polling remain synchronized with the released client.

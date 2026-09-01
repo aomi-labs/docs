@@ -90,7 +90,7 @@ The widget needs one client component and one environment file. It does not requ
 | `PRIVY_APP_ID` | Privy's public browser identifier; required for Privy mode |
 | `WALLETCONNECT_PROJECT_ID` | Public WalletConnect project identifier; required only when WalletConnect is enabled |
 
-These are public browser identifiers, not provider secrets. Aomi still verifies the provider tenant and token server-side. Restart the development server after changing them.
+The two `AOMI_*` names are conventions for your own build: the widget receives those values through the `apiUrl` and `applicationId` props, so name them whatever your framework prefers. The three provider identifiers are different — the library reads `NEXT_PUBLIC_PARA_API_KEY`, `NEXT_PUBLIC_PRIVY_APP_ID`, and `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` from the environment directly, so those exact names must exist at build time (see the Vite mapping below). All of them are public browser identifiers, not provider secrets. Aomi still verifies the provider tenant and token server-side. Restart the development server after changing them.
 
 <Accordion title="Map provider variables in Vite">
   The provider entry points use the same public identifiers as the Next.js build. Map your `VITE_*` values in `vite.config.ts`:

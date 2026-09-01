@@ -15,38 +15,51 @@
         "group": "Try Aomi",
         "icon": "rocket",
         "pages": [
-          "trade/portal",
-          "guides/skills",
           {
-            "group": "Client CLI",
-            "icon": "terminal",
+            "group": "Human",
+            "icon": "user",
             "pages": [
-              "reference/client-cli",
-              "reference/client-cli/commands",
-              "reference/client-cli/transactions-and-signing"
+              "trade/portal",
+              "build/developer-platform"
+            ]
+          },
+          {
+            "group": "Agents",
+            "icon": "robot",
+            "pages": [
+              "guides/skills",
+              "guides/mcp",
+              {
+                "group": "CLI",
+                "icon": "terminal",
+                "pages": [
+                  "reference/client-cli",
+                  "reference/client-cli/commands",
+                  "reference/client-cli/transactions-and-signing"
+                ]
+              }
             ]
           }
         ]
       },
       {
-        "group": "Integrate",
+        "group": "Integrate Aomi",
         "icon": "code",
         "pages": [
-          "integrate/overview",
-          {
-            "group": "TypeScript SDK",
-            "icon": "typescript",
-            "iconType": "brands",
-            "pages": [
-              "integrate/typescript/quickstart",
-              "integrate/typescript/agent",
-              "integrate/typescript/pipeline",
-              "integrate/typescript/core-client",
-              "integrate/typescript/errors"
-            ]
-          },
+          "integrate/client-sdk",
+          "integrate/agent",
+          "integrate/pipeline",
           "integrate/authentication",
           "integrate/actions-and-signing",
+          "integrate/recipes"
+        ]
+      },
+      {
+        "group": "Build on Aomi",
+        "icon": "hammer",
+        "pages": [
+          "build",
+          "build/first-app",
           {
             "group": "UI Integrations",
             "icon": "window",
@@ -57,30 +70,10 @@
               "guides/widget/installation",
               "guides/widget/customization",
               "guides/widget/deploy/ship-on-vercel",
-              "guides/widget/troubleshooting"
+              "guides/widget/troubleshooting",
+              "getting-started/playground"
             ]
           },
-          {
-            "group": "HTTP API",
-            "icon": "brackets-curly",
-            "pages": [
-              "integrate/api/overview",
-              "integrate/api/agent",
-              "integrate/api/pipeline"
-            ]
-          },
-          "guides/mcp",
-          "integrate/recipes"
-        ]
-      },
-      {
-        "group": "Build on Aomi",
-        "icon": "hammer",
-        "pages": [
-          "build",
-          "build/first-app",
-          "build/developer-platform",
-          "getting-started/playground",
           {
             "group": "Plugins",
             "icon": "puzzle",
@@ -174,6 +167,58 @@
     ]
   },
   "redirects": [
+    {
+      "source": "/integrate/typescript/agent",
+      "destination": "/integrate/agent"
+    },
+    {
+      "source": "/integrate/typescript/pipeline",
+      "destination": "/integrate/pipeline"
+    },
+    {
+      "source": "/integrate/typescript/quickstart",
+      "destination": "/integrate/client-sdk"
+    },
+    {
+      "source": "/integrate/typescript/core-client",
+      "destination": "/integrate/client-sdk"
+    },
+    {
+      "source": "/integrate/typescript/errors",
+      "destination": "/integrate/client-sdk"
+    },
+    {
+      "source": "/integrate/typescript",
+      "destination": "/integrate/client-sdk"
+    },
+    {
+      "source": "/integrate/api/agent",
+      "destination": "/integrate/agent"
+    },
+    {
+      "source": "/integrate/api/pipeline",
+      "destination": "/integrate/pipeline"
+    },
+    {
+      "source": "/integrate/api/overview",
+      "destination": "/integrate/client-sdk"
+    },
+    {
+      "source": "/integrate/api",
+      "destination": "/integrate/client-sdk"
+    },
+    {
+      "source": "/integrate/overview",
+      "destination": "/integrate/client-sdk"
+    },
+    {
+      "source": "/integrate",
+      "destination": "/integrate/client-sdk"
+    },
+    {
+      "source": "/trade",
+      "destination": "/trade/portal"
+    },
     {
       "source": "/payments",
       "destination": "/concepts/payments"
@@ -481,7 +526,7 @@
     "primary": {
       "type": "button",
       "label": "Get Started",
-      "href": "/reference/client-cli"
+      "href": "/integrate/client-sdk"
     }
   },
   "contextual": {

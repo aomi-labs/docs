@@ -1,0 +1,277 @@
+---
+title: "Client SDK"
+description: "Install @aomi-labs/client, run your first Agent turns, choose a client layer, and handle errors — the TypeScript entry point for integrating Aomi."
+---
+
+Use **Integrate Aomi** when you want to call Aomi from an existing product or service with TypeScript or raw HTTP. Use [Try Aomi](/trade/portal) for the no-code surfaces (Portal, skills, MCP, CLI), and [Build on Aomi](/build) when you want to create and deploy a new App.
+
+`@aomi-labs/client` works in Node.js and browsers. The `Aomi` class gives you four surfaces:
+
+```ts
+import { Aomi } from "@aomi-labs/client";
+
+const aomi = new Aomi({
+  baseUrl: process.env.AOMI_BASE_URL!,
+});
+
+aomi.agent;    // stateful Agent turns
+aomi.pipeline; // stateless Build flows
+aomi.auth;     // guest or OAuth lifecycle
+aomi.raw;      // wire-close client for advanced control
+```
+
+<Warning>
+  This section documents the unified `Aomi` facade as it exists on Aomi `origin/main`. The latest published `@aomi-labs/client` on npm (0.5.x) does not yet export the `Aomi` class — until the unified client ships, install the prerelease or build provisioned for your environment and verify its exported types before pinning. Agent and Pipeline availability can also differ between staging and production.
+</Warning>
+
+## Choose an integration
+
+| You are building | Start here | Why |
+| --- | --- | --- |
+| Node.js evaluation | [Quickstart](#quickstart) below | Make a guest Agent call with automatic guest authentication. |
+| Node.js service, CLI, or automation | [Authentication](/integrate/authentication#oauth-for-a-service-or-cli) | Use device OAuth and this SDK for account-owned access. |
+| Stateful agent experience | [Agent API](/integrate/agent) | Run multi-turn sessions, observe activity, and handle actions. |
+| Deterministic transaction flow | [Pipeline API](/integrate/pipeline) | Discover operations, build, simulate, review, and commit. |
+| Custom React interface | [Headless library](/integrate/ui/headless-library) | Own the UI while Aomi manages chat and thread state. |
+| Ready-made browser interface | [Widget](/integrate/ui/widget) | Embed the complete Aomi surface with wallet authentication. |
+| Non-TypeScript integration | [Agent API](/integrate/agent#call-the-rest-resource-directly) or [Pipeline API](/integrate/pipeline#call-the-rest-resource-directly) | Every operation is documented for the versioned REST resources too. |
+| AI coding client | [MCP](/guides/mcp) | Connect Codex, Claude Code, Cursor, or another MCP client. |
+| New Aomi App | [Build an App](/build/first-app) | Author a plugin and deploy an App to the hosted runtime. |
+
+## Quickstart
+
+Create a working Node.js integration in one file. Guest mode does not need an API key or OAuth client.
+
+<Tabs>
+  <Tab title="npm">
+    ```bash
+    npm install @aomi-labs/client
+    ```
+  </Tab>
+  <Tab title="pnpm">
+    ```bash
+    pnpm add @aomi-labs/client
+    ```
+  </Tab>
+  <Tab title="yarn">
+    ```bash
+    yarn add @aomi-labs/client
+    ```
+  </Tab>
+</Tabs>
+
+Add a TypeScript runner if your project does not already have one:
+
+```bash
+npm install --save-dev tsx @types/node
+```
+
+Set the API origin supplied for your environment:
+
+```bash
+export AOMI_BASE_URL="https://chat.aomi.dev"
+```
+
+### Run two Agent turns
+
+```ts
+// example.ts
+import { Aomi, type MessageEvent } from "@aomi-labs/client";
+
+const baseUrl = process.env.AOMI_BASE_URL!;
+const aomi = new Aomi({ baseUrl });
+
+const sessionId = crypto.randomUUID();
+
+await aomi.agent.run("Remember that my demo color is cobalt.", {
+  sessionId,
+});
+
+const result = await aomi.agent.run("Reply with only my demo color.", {
+  sessionId,
+});
+
+console.log(lastAgentText(result.messages));
+
+function lastAgentText(messages: readonly MessageEvent[]) {
+  return [...messages]
+    .reverse()
+    .find((message) => message.sender === "agent")?.content;
+}
+```
+
+Reusing `sessionId` continues the same conversation. Persist that ID with your application's conversation record.
+
+Run it with your TypeScript runner:
+
+```bash
+npx tsx example.ts
+```
+
+### What guest mode does
+
+Guest mode is the SDK default. On the first request, the Node client creates a Better Auth anonymous session and keeps its opaque bearer credential in memory for later calls. You do not need a cookie jar, custom fetch implementation, or API key.
+
+- Guest identity is separate from an Agent session ID.
+- Guest identity is also separate from wallet authority.
+- Guest-safe Agent calls and Pipeline catalog reads may be available.
+- Protected actions and account-owned data require the access configured for your environment.
+
+<Warning>
+  This guest pattern is useful for evaluation, not a substitute for service authentication. For account-owned sessions or protected actions, use the [OAuth device flow](/integrate/authentication#oauth-for-a-service-or-cli). For a browser product, use [Widget authentication](/integrate/ui/widget) or your provisioned browser OAuth flow.
+</Warning>
+
+## Choose a client layer
+
+Start with `Aomi`. Reach for the core client only when you need direct control over a versioned API operation.
+
+| Layer | Use it for |
+| --- | --- |
+| `Aomi` | Product-oriented Agent, Pipeline, authentication, and wallet flows. Recommended for new integrations. |
+| `aomi.raw` | Direct Agent sessions, Pipeline directories, account state, and other wire-close calls without a second client. |
+| `AomiClient` | Advanced integrations that want to construct only the low-level transport. |
+| `Session` | Compatibility surface for applications already using the older session-oriented client. |
+
+### Share one client and one auth state
+
+```ts
+import { Aomi } from "@aomi-labs/client";
+
+const aomi = new Aomi({ baseUrl: import.meta.env.VITE_AOMI_BASE_URL });
+
+const agentResult = await aomi.agent.run("Summarize my last action.");
+const catalog = await aomi.raw.pipeline.apps.list();
+```
+
+The high-level and raw surfaces share the same guest identity or OAuth grant manager. Node.js guest authentication is automatic. Configure OAuth when you need durable account-owned access, as described in [Authentication](/integrate/authentication).
+
+### Construct the low-level client
+
+```ts
+import { AomiClient } from "@aomi-labs/client";
+
+const client = new AomiClient({
+  baseUrl: import.meta.env.VITE_AOMI_BASE_URL,
+});
+
+const page = await client.agent.sessions.list({ limit: 20 });
+const apps = await client.pipeline.apps.list();
+```
+
+Prefer typed Agent and Pipeline transports over the generic request escape hatch. They normalize errors, encode parameters, and apply mutation headers consistently.
+
+## Errors and retries
+
+The client exposes typed errors for the failure classes an integration normally needs to handle.
+
+```ts
+import {
+  AgentApiError,
+  PipelineApiError,
+  PipelineSchemaError,
+} from "@aomi-labs/client";
+```
+
+### Handle API errors
+
+```ts
+try {
+  await aomi.agent.run("Check my positions.");
+} catch (error) {
+  if (error instanceof AgentApiError) {
+    console.error(error.code, error.requestId);
+
+    if (error.retryable) {
+      scheduleRetry();
+    }
+  }
+}
+```
+
+`AgentApiError` and `PipelineApiError` expose:
+
+| Property | Description |
+| --- | --- |
+| `status` | HTTP status code. |
+| `code` | Stable machine-readable error code. |
+| `retryable` | Whether the failure is normally safe to retry. |
+| `requestId` | Identifier to include in support or server-log searches. |
+| `details` | Optional structured context. Do not assume one shape for every code. |
+
+### Handle schema errors
+
+`PipelineSchemaError` is local. It means the supplied arguments do not match the live operation schema.
+
+```ts
+try {
+  await aomi.pipeline
+    .app(selectedApp)
+    .build(selectedOperation, formValues);
+} catch (error) {
+  if (error instanceof PipelineSchemaError) {
+    showFieldErrors(error);
+  }
+}
+```
+
+Refresh the operation descriptor before retrying. The live catalog can change independently of your application release.
+
+### Retry safely
+
+- Retry only when `retryable` is true or the endpoint reference explicitly permits it.
+- Reuse the same idempotency key when retrying one logical mutation.
+- Respect `Retry-After` when the service returns it.
+- Keep Agent progress cursors opaque. If a cursor expires, fetch from the beginning and reconcile by event ID.
+- Never retry a wallet signature prompt without showing the user the exact current request again.
+
+### Authentication failures
+
+| Status | First check |
+| --- | --- |
+| `401` | The guest session or access token is missing, expired, or invalid. |
+| `403` | The token has the wrong resource audience or lacks the required scope. |
+| `409` | An idempotency key was reused with different input, or a Build became stale. |
+| `429` | The caller reached an environment or account limit. |
+
+See [Authentication](/integrate/authentication) for the supported identity paths.
+
+## The three boundaries
+
+| Boundary | What it controls |
+| --- | --- |
+| Guest session or OAuth grant | Who is calling the Agent or Pipeline API and what the caller may access. |
+| App access | Which deployed App the caller may use. This is separate from account authentication. |
+| Wallet adapter | Which exact action the user can review, sign, and submit. Connecting a wallet does not grant unattended signing. |
+
+## Calling the API directly
+
+The versioned HTTP surface has two public resources: `/v1/agent` for stateful turns, progress, actions, and sessions, and `/v1/pipeline` for stateless catalog discovery and Build execution. These roots identify OAuth resource audiences; they are not directory endpoints.
+
+Keep the origin in environment configuration. Use the URL provisioned for your integration — production and staging can expose different API versions during a rollout.
+
+Request conventions, whichever language you call from:
+
+- Send and receive JSON unless an endpoint returns a document.
+- Send `Idempotency-Key` with every mutation — Agent and Pipeline mutations reject requests without one — and reuse one key only for retries of the same logical request.
+- Keep Agent cursors opaque.
+- Capture `X-Request-Id` from every failed response.
+- Respect `Retry-After` on throttled or deferred requests.
+
+The API stack serves its contract at `/openapi.json`, but the published version can differ per environment during a rollout. Pin types from the released TypeScript client or the endpoint contracts on the [Agent API](/integrate/agent#call-the-rest-resource-directly) and [Pipeline API](/integrate/pipeline#call-the-rest-resource-directly) pages instead of fetching that document at startup.
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Agent API" icon="robot" href="/integrate/agent">
+    Observe progress, manage sessions, interrupt work, and handle actions.
+  </Card>
+  <Card title="Pipeline API" icon="diagram-project" href="/integrate/pipeline">
+    Discover live operations and keep simulation separate from commit.
+  </Card>
+  <Card title="Authentication" icon="key" href="/integrate/authentication">
+    Start as a guest or add OAuth for account-owned access.
+  </Card>
+  <Card title="Wallet and signing" icon="signature" href="/integrate/actions-and-signing">
+    Keep wallet review and execution inside your application.
+  </Card>
+</CardGroup>

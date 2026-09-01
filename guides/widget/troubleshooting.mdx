@@ -6,11 +6,11 @@ description: "Resolve widget authentication, wallet, and action issues with focu
 | You see | Check |
 | --- | --- |
 | Widget does not render | Package styles, `apiUrl`, and Application ID |
-| Origin rejected | The exact scheme, host, and port registered for the App |
+| Origin rejected | The origin is HTTPS (or loopback over HTTP) and matches the scheme, host, and port that created the session |
 | Sign-in does not complete | Provider environment and the active browser session |
 | Wallet cannot sign | The active wallet supports the requested message, typed-data, EVM, or Solana method |
 | Owner or network mismatch | Switch back to the owner and network shown in the request |
-| Action cannot execute | The configured wallet exposes the capability required by `action.request.kind` |
+| Action cannot execute | The configured wallet exposes the capability required by `action.request.type` |
 | Pipeline returns `403` | Guest access can browse the staging catalog but cannot execute Pipeline mutations |
 | Operation expired | Start the action again and sign the new request |
 

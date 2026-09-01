@@ -11,7 +11,9 @@ Application ID.
 
 The widget runs on your application's origin. It does not reuse cookies from
 `chat.aomi.dev`. Instead, it creates a widget session for the signed-in user and
-binds that session to your registered origin.
+binds that session to the exact origin that created it. There is no origin
+registration or allowlist: any HTTPS origin can mint a session, and the session
+is only valid when presented from that same origin.
 
 ## Understand the boundary
 
@@ -21,14 +23,14 @@ Your host application and Aomi have distinct responsibilities:
 | --- | --- |
 | Your application | The Application ID, browser wallet or embedded-wallet provider, public provider identifier, initial thread, and widget presentation |
 | `AomiWidget` | Sign-in, wallet connection, threads, chat, transaction review, and signing requests |
-| Aomi | Origin validation, the user's Aomi account, and the App configuration selected by the Application ID |
+| Aomi | Origin binding of the widget session, the user's Aomi account, and the App configuration selected by the Application ID |
 | User wallet | Wallet ownership proof and any signature required by the active signing policy |
 
 ```mermaid
 flowchart LR
     H["Your React application<br/>Application ID and provider choice"] --> W["AomiWidget<br/>chat, threads, and wallet UI"]
     P["Browser wallet, Para, or Privy"] --> W
-    W -->|"widget session from your registered origin"| A["Aomi"]
+    W -->|"origin-bound widget session"| A["Aomi"]
     A --> R["Your App<br/>tools and execution settings"]
     R -->|"transaction request when needed"| W
     W -->|"review and sign"| P
@@ -45,14 +47,13 @@ flowchart LR
 You need:
 
 - An activated Aomi App and its numeric Application ID.
-- The exact origin that will host the widget registered for the App. Include the
-  scheme, host, and port, such as `https://app.example.com`.
 - React 18 or 19 running in the browser.
 - A browser-wallet, Para, or Privy integration choice.
 
-Hosted integrations must use HTTPS. A local HTTP origin works only with an Aomi
-service running in development mode. If you use Para or Privy, also allow your
-host origin in that provider's project settings when the provider requires it.
+Hosted integrations must use HTTPS. HTTP is accepted only on loopback hosts
+(`localhost`, `127.0.0.1`, `[::1]`) for local development. If you use Para or
+Privy, also allow your host origin in that provider's project settings when the
+provider requires it.
 
 ## 1. Install the widget
 
@@ -217,16 +218,20 @@ configured authentication and approval flow.
 
 ## 5. Verify the integration
 
-1. Open the widget from the exact registered origin.
-2. Sign in or connect a browser wallet.
+1. Open the widget from the origin your application is served from.
+2. Sign in or connect a browser wallet. Browser-wallet sign-in uses a SIWE or
+   SIWS signature from an externally owned account; smart-contract wallets
+   (Safe, Coinbase Smart Wallet, Base Account) cannot sign in through the
+   widget.
 3. Confirm the thread list and composer load without an App-key prompt.
 4. Send a message and confirm your selected App responds.
 5. If the App creates transactions, confirm the widget shows the request before
    the wallet asks for a signature.
 6. Repeat the check from the production HTTPS origin before launch.
 
-If the origin is rejected, compare the full scheme, host, and port with the
-registered value. If an embedded provider does not open, check its public
+If the origin is rejected, check that it is HTTPS (or a loopback host over
+HTTP) and that the session is presented from the same scheme, host, and port
+that created it. If an embedded provider does not open, check its public
 identifier, environment, provider import, and allowed origins.
 
 <CardGroup cols={3}>
