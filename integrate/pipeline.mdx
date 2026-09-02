@@ -34,24 +34,11 @@ The catalog is the runtime's own registry of Apps, skills, and core operations, 
   The **Pipeline API** is a callable product surface. The [transaction pipeline](/concepts/transaction-pipeline) is the broader build → simulate → sign → broadcast safety model.
 </Info>
 
-## Read chain state
-
-Each chain namespace also exposes read operations ahead of the Build lifecycle, for fetching the state your application composes transactions from. They are curated aliases onto the runtime's core tool namespaces (`evm-core`, `svm-reads`):
-
-| Operation | EVM tool | SVM tool |
-| --- | --- | --- |
-| `account` | `get_account_info` | `svm_get_account_info` |
-| `contract` / `program` | `get_contract` | `svm_get_program` |
-| `balance` / `token-holdings` | `get_erc20_balance` | `svm_get_token_holdings` |
-| `context` | `get_time_and_onchain_context` | `svm_get_context` |
-
-List them with `GET /v1/pipeline/evm` or `GET /v1/pipeline/svm` and invoke with `POST`, like an App operation. For the live input schema, read the underlying tool's descriptor — `GET /v1/pipeline/apps/default/operations/{tool}` — which is the guaranteed-schema path; the chain-level `GET` returns only a pointer descriptor.
-
-The aliases are a curated subset. The rest of the core namespaces — including `encode_and_call`, `simulate_batch`, and `sync_chain` on EVM — is discoverable and invocable through the default App's operations catalog at `/v1/pipeline/apps/default/operations`. The SDK does not yet expose typed methods for any of these; call them through the raw transport or HTTP.
-
 ## Build a transaction with Pipeline
 
 The direct lane takes chain actions you already have and walks them through the full lifecycle: stage them into a Build, simulate that Build on a fork, review the evidence, then cross the explicit commit boundary.
+
+Unlike the Agent lane, no [UserState](/integrate/agent#communicate-wallet-context-with-userstate) travels with these calls — the resource is stateless, so every input is explicit (chain, calls, instructions) and everything the harness cannot execute on its own comes back to you as a pending action. When the Agent drives this same build engine inside a conversation, that lifecycle state rides UserState instead.
 
 <Tabs>
   <Tab title="EVM">
@@ -171,6 +158,21 @@ The direct lane takes chain actions you already have and walks them through the 
   Do not turn a successful simulation into implicit approval. Simulation evidence is informative, not signing authority. And on staging, guest sessions can read the catalog but cannot execute Pipeline mutations — use a grant with `pipeline:execute` to test stage, simulate, build, or commit.
 </Warning>
 
+## Read chain state
+
+Each chain namespace also exposes read operations alongside the Build lifecycle, for fetching the state your application composes transactions from. They are curated aliases onto the runtime's core tool namespaces (`evm-core`, `svm-reads`):
+
+| Operation | EVM tool | SVM tool |
+| --- | --- | --- |
+| `account` | `get_account_info` | `svm_get_account_info` |
+| `contract` / `program` | `get_contract` | `svm_get_program` |
+| `balance` / `token-holdings` | `get_erc20_balance` | `svm_get_token_holdings` |
+| `context` | `get_time_and_onchain_context` | `svm_get_context` |
+
+List them with `GET /v1/pipeline/evm` or `GET /v1/pipeline/svm` and invoke with `POST`, like an App operation. For the live input schema, read the underlying tool's descriptor — `GET /v1/pipeline/apps/default/operations/{tool}` — which is the guaranteed-schema path; the chain-level `GET` returns only a pointer descriptor.
+
+The aliases are a curated subset. The rest of the core namespaces — including `encode_and_call`, `simulate_batch`, and `sync_chain` on EVM — is discoverable and invocable through the default App's operations catalog at `/v1/pipeline/apps/default/operations`. The SDK does not yet expose typed methods for any of these; call them through the raw transport or HTTP.
+
 ## Catalog with Apps and Skills
 
 Do not hard-code a second registry of Apps or skills. Read the catalog exposed by your environment:
@@ -184,6 +186,52 @@ const [apps, skills] = await Promise.all([
 console.log(apps.entries);
 console.log(skills.entries);
 ```
+
+### Browse it like a filesystem
+
+The catalog is a hypermedia tree: every `GET` returns a JSON node with a `path`, a `kind`, and `href`s you can follow, so a client walks capabilities the same way it would walk directories. Start at `GET /v1/pipeline` and you get a directory whose children are more directories:
+
+```json
+{
+  "kind": "directory",
+  "path": "/v1/pipeline",
+  "entries": [
+    { "name": "core", "kind": "directory", "href": "/v1/pipeline/core" },
+    { "name": "evm", "kind": "directory", "href": "/v1/pipeline/evm" },
+    { "name": "svm", "kind": "directory", "href": "/v1/pipeline/svm" },
+    { "name": "apps", "kind": "directory", "href": "/v1/pipeline/apps" },
+    { "name": "skills", "kind": "directory", "href": "/v1/pipeline/skills" }
+  ]
+}
+```
+
+The tree that produces:
+
+```text
+/v1/pipeline
+├── core/                        (empty directory today)
+├── evm/
+│   ├── account, contract, …     operation   GET=descriptor   POST=invoke
+│   └── build, stage, simulate, commit
+├── svm/                         same shape, SVM names
+├── apps/                        paged listing from the backend catalog
+│   └── {app}/
+│       └── operations/
+│           └── {operation}      GET=descriptor   POST=invoke
+└── skills/
+    └── {skill}/
+        ├── SKILL.md             document (text/markdown)
+        └── operations/
+            └── {operation}      GET=descriptor   POST=invoke
+```
+
+Three node kinds:
+
+| Kind | `GET` | `POST` |
+| --- | --- | --- |
+| `directory` | List children (`entries`, with `next` on paged listings) | — |
+| `operation` | Read the descriptor (`inputSchema`, method, `href`) | Execute it |
+| `document` | Return the file (`SKILL.md` as markdown) | — |
 
 ## Inspect an operation
 

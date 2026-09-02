@@ -12,7 +12,7 @@ Begin at a live catalog collection such as `/v1/pipeline/apps` or `/v1/pipeline/
 
 ## Read operations
 
-Beyond the Build lifecycle, each chain namespace exposes curated read aliases: `account`, `contract`, `balance`, and `context` on EVM; `account`, `program`, `token-holdings`, `context`, and `sign-data` on SVM. `GET /v1/pipeline/{chain}` lists them and `POST /v1/pipeline/{chain}/{operation}` invokes them; each alias forwards to the corresponding core tool on the default App (for example `evm/balance` → `apps/default/operations/get_erc20_balance`). The chain-level `GET` returns a pointer descriptor only — for the live input schema, read the tool's descriptor at `GET /v1/pipeline/apps/default/operations/{tool}`. The wider core namespaces (including `encode_and_call`, `simulate_batch`, and `sync_chain` on EVM) are reachable the same way through the App operations catalog. These aliases are not yet in the generated endpoint pages below because the published contract omits them.
+Beyond the Build lifecycle, each chain namespace exposes curated read aliases: `account`, `contract`, `balance`, and `context` on EVM; `account`, `program`, `token-holdings`, `context`, and `sign-data` on SVM. `GET /v1/pipeline/{chain}` lists them and `POST /v1/pipeline/{chain}/{operation}` invokes them; each alias forwards to the corresponding core tool on the default App. The chain-level `GET` returns a pointer descriptor only — for the live input schema, read the tool's descriptor at `GET /v1/pipeline/apps/default/operations/{tool}`. These aliases are not yet in the generated endpoint pages below because the published contract omits them.
 
 ## Invoke or Build
 
