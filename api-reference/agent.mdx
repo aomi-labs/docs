@@ -1,0 +1,35 @@
+---
+title: "Agent REST API"
+sidebarTitle: "How turns work"
+description: "The /v1/agent event model: turns, ordered event pages, opaque cursors, terminal states, sessions, and action results."
+---
+
+The Agent resource lives at `/v1/agent` and owns conversation state. For TypeScript, the [Agent API](/integrate/agent) SDK surface drives this same resource for you. See the [Overview](/api-reference/overview) for authentication and request conventions.
+
+## The event loop
+
+Start a turn with `POST /v1/agent/chat`, then poll `GET /v1/agent/chat/{sessionId}` until the turn reaches a terminal state. Every response is an event page:
+
+```json
+{
+  "session_id": "demo-session-8b5f",
+  "cursor": "opaque-cursor",
+  "events": [],
+  "has_more": true
+}
+```
+
+Messages, tool activity, actions, errors, and lifecycle changes are entries in `events`; they are not separate top-level response fields.
+
+- Apply events in sequence order, and repeat while `has_more` is true or the latest turn state is `processing`.
+- Stop at `complete`, `failed`, `interrupted`, or `awaiting_action`.
+- `wait` long-polls and is bounded to 30 seconds (`wait=30000`, in milliseconds).
+- Keep the cursor opaque. An expired cursor returns `410`, and a malformed or cross-session cursor returns `400 invalid_cursor`; in either case, request the session without a cursor and reconcile the returned event page.
+
+## Sessions
+
+Session ownership comes from the authenticated caller. Do not use a wallet address as an ownership key.
+
+## Action results
+
+Action resolution requires its own permission (`agent:actions:resolve`) and an idempotency key. Submit only the result produced by the reviewed request — never replace the action payload with caller-authored transaction fields. The action result body includes the action `revision` and the typed `result`.
