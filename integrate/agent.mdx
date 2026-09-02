@@ -76,6 +76,37 @@ const next = await aomi.agent.run("Which chain do I prefer?", { sessionId });
 
 An Agent session is the persisted conversation. It is not the guest or OAuth credential used to authorize the caller.
 
+## Communicate wallet context with UserState
+
+Each turn can carry a `UserState` — the contractual snapshot of the caller's wallet context that the harness builds and signs against:
+
+```ts
+await aomi.agent.run("Swap 1 ETH to USDC.", {
+  sessionId,
+  userState: {
+    connection: { is_connected: true },
+    evm: { address: account, chain_id: 8453 },
+  },
+});
+```
+
+When you configure `wallet:` on the `Aomi` constructor, the SDK derives this from the adapter automatically, so most integrations never build it by hand. Pass it explicitly when your application tracks the connection itself.
+
+The contract is strict and schema-validated on the backend — a `userState` with unknown fields is rejected:
+
+| Block | Fields |
+| --- | --- |
+| `connection` | `is_connected`, `provider`, `provider_label`, `auth_method` |
+| `evm` | `address`, `chain_id`, `ens_name` |
+| `svm` | `address`, `cluster`, `wallet_name`, `transport`, `capabilities` |
+| `preferences`, `ext` | Free-form objects for application data |
+
+Inside the harness, the turn's UserState is live, not a one-shot parameter. Tools that stage work post updates into it: pending transactions and signature requests accumulate in per-chain buckets (`evm_txs`, `solana_txs`, `evm_sigs`, `solana_sigs`), and each staged transaction carries its simulation verdict. You never handle those buckets directly — they surface as the [actions](#handle-actions) on the run, and the raw transaction payloads never pass through the model. Sign or reject the action, and the result is absorbed back into the same state before the next read.
+
+<Note>
+  Account abstraction and sponsorship are deliberately not part of `UserState`. They are backend authority, resolved per execution — the client never sends or stores them.
+</Note>
+
 ## Interrupt work
 
 ```ts
