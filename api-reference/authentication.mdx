@@ -1,0 +1,31 @@
+---
+title: "Authentication reference"
+sidebarTitle: "Authentication"
+description: "Exact-resource OAuth audiences, required scopes, and authentication failure statuses for the versioned Aomi API."
+---
+
+Every access token is issued for an exact resource. For choosing and configuring an authentication path in TypeScript — guest mode, device OAuth, grant stores, widget sessions — see [Authentication](/integrate/authentication) in the Integrate section.
+
+## Exact resource tokens
+
+OAuth access tokens are issued for an exact resource and are not interchangeable:
+
+| Surface | Resource path |
+| --- | --- |
+| Agent REST | `/v1/agent` |
+| Pipeline REST | `/v1/pipeline` |
+| Agent MCP | `/v1/agent/mcp` |
+| Pipeline MCP | `/v1/pipeline/mcp` |
+
+The SDK chooses the correct OAuth resource. An opaque guest session can cover the guest-safe scopes allowed by the environment, but it does not gain protected OAuth scopes. A host that supplies its own OAuth token must bind it to the exact resource and required scopes.
+
+The MCP resources require their own scopes — `mcp:agent` for Agent MCP and `mcp:pipeline` for Pipeline MCP. REST tokens exclude the `mcp:*` scopes, so a token minted for `/v1/agent` cannot reach `/v1/agent/mcp`, and the reverse also holds.
+
+## Authentication failures
+
+| Status | First check |
+| --- | --- |
+| `401` | The guest session or access token is missing, expired, or invalid. |
+| `403` | The token has the wrong resource audience or lacks the required scope. |
+| `409` | An idempotency key was reused with different input, or a Build became stale. |
+| `429` | The caller reached an environment or account limit. |

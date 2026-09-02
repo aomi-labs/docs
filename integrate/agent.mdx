@@ -5,6 +5,30 @@ description: "Run stateful Agent turns, observe activity, reuse sessions, interr
 
 The Agent API owns conversation state. It is one resource with two ways to call it: the TypeScript SDK's `aomi.agent` surface, or the versioned REST resource at `/v1/agent` for any other language. Both are documented on this page.
 
+```mermaid
+sequenceDiagram
+    participant App as Your application
+    participant SDK as Aomi SDK<br/>aomi.agent
+    participant API as Aomi backend<br/>/v1/agent
+    App->>SDK: agent.run(prompt, { sessionId })
+    SDK->>API: POST /v1/agent/chat<br/>Idempotency-Key
+    API-->>SDK: event page { cursor, events, has_more }
+    loop until the turn state is terminal
+        SDK->>API: GET /v1/agent/chat/{sessionId}?cursor&wait
+        API-->>SDK: new events: messages, tool activity, actions
+        SDK-->>App: run.on("action" | "completed" | "error")
+    end
+    opt the agent stages a transaction
+        SDK-->>App: pending action with simulation evidence
+        App->>SDK: review, then execute or reject
+        SDK->>API: POST .../actions/{actionId}/result
+    end
+    API-->>SDK: turn_state_changed: complete
+    SDK-->>App: result.messages
+```
+
+The SDK runs this loop for you — `agent.run()` starts the turn and keeps polling the cursor until a terminal state, surfacing progress through events. A raw HTTP caller drives the same loop directly with the endpoints in the [Agent REST API reference](/api-reference/agent).
+
 The TypeScript snippets assume an `aomi` instance created with the [Client SDK quickstart](/integrate/client-sdk#quickstart) or [OAuth device flow](/integrate/authentication#oauth-for-a-service-or-cli).
 
 ## Run a turn
@@ -109,68 +133,38 @@ await run.result();
 
 See [Wallet and signing](/integrate/actions-and-signing) for wallet adapters and review boundaries.
 
-## Call the REST resource directly
+## Handle errors
 
-Use raw HTTP when your application is not written in TypeScript or already owns OAuth token acquisition. Start a turn, reduce the returned ordered events, and continue from the opaque cursor until a `turn_state_changed` event is terminal or needs user input. See [Authentication](/integrate/authentication#exact-resource-tokens) for the `/v1/agent` resource audience and scopes.
+Failed Agent calls throw a typed `AgentApiError`:
 
-| Method | Path | Purpose |
-| --- | --- | --- |
-| `POST` | `/v1/agent/chat` | Start a turn. |
-| `GET` | `/v1/agent/chat/{sessionId}` | Read new progress and messages. |
-| `POST` | `/v1/agent/chat/{sessionId}/interrupt` | Interrupt active work. |
-| `POST` | `/v1/agent/chat/{sessionId}/actions/{actionId}/result` | Resolve or reject an action. |
-| `GET` | `/v1/agent/sessions` | List sessions with cursor pagination. |
-| `GET` | `/v1/agent/sessions/{sessionId}` | Read one session. |
-| `PATCH` | `/v1/agent/sessions/{sessionId}` | Rename or archive a session. |
-| `DELETE` | `/v1/agent/sessions/{sessionId}` | Delete a session. |
+```ts
+import { AgentApiError } from "@aomi-labs/client";
 
-### Start a turn
+try {
+  await aomi.agent.run("Check my positions.");
+} catch (error) {
+  if (error instanceof AgentApiError) {
+    console.error(error.code, error.requestId);
 
-```bash
-curl -X POST "$AOMI_BASE_URL/v1/agent/chat" \
-  -H "Authorization: Bearer $AOMI_AGENT_TOKEN" \
-  -H "Content-Type: application/json" \
-  -H "Idempotency-Key: turn-8b5f" \
-  -d '{"sessionId":"demo-session-8b5f","message":"Explain my USDC balance on Base"}'
-```
-
-The response is an event page:
-
-```json
-{
-  "session_id": "demo-session-8b5f",
-  "cursor": "opaque-cursor",
-  "events": [],
-  "has_more": true
+    if (error.retryable) {
+      scheduleRetry();
+    }
+  }
 }
 ```
 
-Messages, tool activity, actions, errors, and lifecycle changes are entries in `events`; they are not separate top-level response fields.
+`AgentApiError` exposes:
 
-### Check progress
+| Property | Description |
+| --- | --- |
+| `status` | HTTP status code. |
+| `code` | Stable machine-readable error code. |
+| `retryable` | Whether the failure is normally safe to retry. |
+| `requestId` | Identifier to include in support or server-log searches. |
+| `details` | Optional structured context. Do not assume one shape for every code. |
 
-```bash
-curl "$AOMI_BASE_URL/v1/agent/chat/$SESSION_ID?cursor=$CURSOR&wait=30000" \
-  -H "Authorization: Bearer $AOMI_AGENT_TOKEN"
-```
+Retry only when `retryable` is true, reuse the same idempotency key when retrying one logical mutation, and never retry a wallet signature prompt without showing the user the exact current request again. For `401`/`403` failures, see [Authentication failures](/api-reference/authentication#authentication-failures).
 
-`wait` is bounded to 30 seconds. Apply events in sequence order and repeat while `has_more` is true or the latest turn state is `processing`. Stop at `complete`, `failed`, `interrupted`, or `awaiting_action`.
+## Call the REST resource directly
 
-Keep the cursor opaque. An expired cursor returns `410`, and a malformed or cross-session cursor returns `400 invalid_cursor`; in either case, request the session without a cursor and reconcile the returned event page.
-
-### Manage sessions over HTTP
-
-```bash
-curl "$AOMI_BASE_URL/v1/agent/sessions?limit=20" \
-  -H "Authorization: Bearer $AOMI_AGENT_TOKEN"
-```
-
-Session ownership comes from the authenticated caller. Do not use a wallet address as an ownership key.
-
-### Submit an action result
-
-Action resolution requires its own permission and an idempotency key. Submit only the result produced by the reviewed request. Never replace the action payload with caller-authored transaction fields.
-
-The action result body includes the action `revision` and the typed `result`. Guest access on staging does not include `agent:actions:resolve`.
-
-For TypeScript integrations, prefer the SDK sections above so action types and progress polling remain synchronized with the released client.
+Not using TypeScript, or already own OAuth token acquisition? The same resource is documented endpoint by endpoint in the [Agent REST API reference](/api-reference/agent).

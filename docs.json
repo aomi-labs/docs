@@ -9,8 +9,12 @@
   },
   "favicon": "/favicon.svg",
   "navigation": {
-    "pages": [
-      "index",
+    "tabs": [
+      {
+        "tab": "Home",
+        "icon": "house",
+        "pages": [
+          "index",
       {
         "group": "Try Aomi",
         "icon": "rocket",
@@ -162,6 +166,75 @@
         "pages": [
           "resources/changelog",
           "resources/faq"
+        ]
+      }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "icon": "brackets-curly",
+        "openapi": "api-reference/openapi.json",
+        "pages": [
+          {
+            "group": "API Reference",
+            "pages": [
+              "api-reference/overview",
+              "api-reference/authentication"
+            ]
+          },
+          {
+            "group": "Agent",
+            "pages": [
+              "api-reference/agent",
+              "POST /v1/agent/chat",
+              "GET /v1/agent/chat/{sessionId}",
+              "POST /v1/agent/chat/{sessionId}/interrupt",
+              "POST /v1/agent/chat/{sessionId}/actions/{actionId}/result",
+              "GET /v1/agent/sessions",
+              "GET /v1/agent/sessions/{sessionId}",
+              "PATCH /v1/agent/sessions/{sessionId}",
+              "DELETE /v1/agent/sessions/{sessionId}"
+            ]
+          },
+          {
+            "group": "Pipeline",
+            "pages": [
+              "api-reference/pipeline",
+              "GET /v1/pipeline",
+              "GET /v1/pipeline/core",
+              "GET /v1/pipeline/apps",
+              "GET /v1/pipeline/apps/{app}",
+              "GET /v1/pipeline/apps/{app}/operations",
+              "GET /v1/pipeline/apps/{app}/operations/{operation}",
+              "POST /v1/pipeline/apps/{app}/operations/{operation}",
+              "GET /v1/pipeline/skills",
+              "GET /v1/pipeline/skills/{skill}",
+              "GET /v1/pipeline/skills/{skill}/SKILL.md",
+              "GET /v1/pipeline/skills/{skill}/operations",
+              "GET /v1/pipeline/skills/{skill}/operations/{operation}",
+              "POST /v1/pipeline/skills/{skill}/operations/{operation}",
+              {
+                "group": "EVM lifecycle",
+                "pages": [
+                  "GET /v1/pipeline/evm",
+                  "POST /v1/pipeline/evm/build",
+                  "POST /v1/pipeline/evm/stage",
+                  "POST /v1/pipeline/evm/simulate",
+                  "POST /v1/pipeline/evm/commit"
+                ]
+              },
+              {
+                "group": "SVM lifecycle",
+                "pages": [
+                  "GET /v1/pipeline/svm",
+                  "POST /v1/pipeline/svm/build",
+                  "POST /v1/pipeline/svm/stage",
+                  "POST /v1/pipeline/svm/simulate",
+                  "POST /v1/pipeline/svm/commit"
+                ]
+              }
+            ]
+          }
         ]
       }
     ]

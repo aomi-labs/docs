@@ -3,7 +3,33 @@ title: "Authentication"
 description: "Choose guest, OAuth, widget, or host-managed access for an Aomi integration."
 ---
 
-Aomi keeps caller identity, Agent sessions, App access, and wallet authority separate. Choose the caller authentication path that matches where your code runs.
+Aomi keeps caller identity, Agent sessions, App access, and wallet authority separate:
+
+```mermaid
+flowchart LR
+    subgraph app["Your application"]
+        CRED["<b>Caller identity</b><br/>guest session or OAuth grant"]
+        WAL["<b>Wallet authority</b><br/>adapter + user approval<br/><i>keys never leave here</i>"]
+    end
+    subgraph aomi["Aomi"]
+        GATE["<b>Resource gate</b><br/>exact audience + scopes<br/><code>/v1/agent</code> · <code>/v1/pipeline</code>"]
+        APPACC["<b>App access</b><br/>which deployed App"]
+        WORK["<b>Sessions and Builds</b><br/>owned by the caller"]
+    end
+    CRED -->|"Authorization: Bearer"| GATE
+    GATE --> APPACC
+    APPACC --> WORK
+    WORK -.->|"pending action"| WAL
+    WAL -.->|"reviewed, signed result"| GATE
+```
+
+| Boundary | What it controls |
+| --- | --- |
+| Guest session or OAuth grant | Who is calling the Agent or Pipeline API and what the caller may access. |
+| App access | Which deployed App the caller may use. This is separate from account authentication. |
+| Wallet adapter | Which exact action the user can review, sign, and submit. Connecting a wallet does not grant unattended signing. |
+
+Choose the caller authentication path that matches where your code runs.
 
 ## Choose an authentication path
 
@@ -15,6 +41,30 @@ Aomi keeps caller identity, Agent sessions, App access, and wallet authority sep
 | Cross-origin browser | Widget/provider authentication | Origin-bound widget session |
 | Existing token broker | Low-level token provider | Advanced escape hatch |
 | MCP client | OAuth with PKCE | Exact Agent or Pipeline MCP resource |
+
+The two paths most integrations start with — automatic guest and device OAuth — acquire their credential like this:
+
+```mermaid
+sequenceDiagram
+    participant App as Your application
+    participant SDK as aomi.auth
+    participant Aomi as Aomi backend
+    participant User as User's browser
+    alt Guest (default)
+        App->>SDK: first protected call
+        SDK->>Aomi: create anonymous session
+        Aomi-->>SDK: opaque bearer, kept in memory
+    else Device OAuth
+        App->>SDK: auth.login({ for: ["agent", "pipeline"] })
+        SDK->>Aomi: device authorization request<br/>public clientId
+        Aomi-->>SDK: verificationUri + userCode
+        SDK-->>User: open URI, confirm code
+        User->>Aomi: approve the grant
+        Aomi-->>SDK: resource-bound tokens<br/>refresh via offline_access
+    end
+    SDK->>Aomi: Authorization: Bearer …<br/>one exact resource per token
+    Aomi-->>App: authorized Agent or Pipeline calls
+```
 
 ## Guest mode
 
@@ -106,17 +156,6 @@ For a separate-origin web application, use [widget authentication](/integrate/ui
 
 Standalone browser OAuth is available only to provisioned integrations. It uses a redirect URI, PKCE, and memory-only browser credentials. Do not copy the device-flow grant store into browser code.
 
-## Exact resource tokens
+## Tokens over raw HTTP
 
-OAuth access tokens are issued for an exact resource and are not interchangeable:
-
-| Surface | Resource path |
-| --- | --- |
-| Agent REST | `/v1/agent` |
-| Pipeline REST | `/v1/pipeline` |
-| Agent MCP | `/v1/agent/mcp` |
-| Pipeline MCP | `/v1/pipeline/mcp` |
-
-The SDK chooses the correct OAuth resource. An opaque guest session can cover the guest-safe scopes allowed by the environment, but it does not gain protected OAuth scopes. A host that supplies its own OAuth token must bind it to the exact resource and required scopes.
-
-The MCP resources require their own scopes — `mcp:agent` for Agent MCP and `mcp:pipeline` for Pipeline MCP. REST tokens exclude the `mcp:*` scopes, so a token minted for `/v1/agent` cannot reach `/v1/agent/mcp`, and the reverse also holds.
+Supplying your own OAuth tokens? The exact resource audiences, required scopes, and failure statuses are documented in the [Authentication reference](/api-reference/authentication).

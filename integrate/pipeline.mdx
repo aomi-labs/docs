@@ -1,15 +1,177 @@
 ---
 title: "Pipeline API"
-description: "Discover Pipeline operations, validate live schemas, build and simulate actions, then cross an explicit commit boundary — from the TypeScript SDK or raw HTTP."
+description: "Build, simulate, and commit EVM or SVM transactions through the Aomi harness — full lifecycle walkthroughs, catalog discovery, and App operations."
 ---
 
-Pipeline is the stateless integration surface for deterministic operations. It discovers live capabilities, builds chain actions, simulates them, and keeps commit explicit. It is one resource with two ways to call it: the TypeScript SDK's `aomi.pipeline` surface, or the versioned REST resource at `/v1/pipeline`. Both are documented on this page.
+The Pipeline API directly exposes the Aomi harness to external clients and agents. It discovers live capabilities, builds chain actions, simulates them, and keeps commit explicit.
+
+```mermaid
+flowchart LR
+    subgraph client["Your application"]
+        SDK["<b>aomi.pipeline</b><br/><i>TypeScript SDK</i>"]
+        RAW["<b>Raw HTTP</b>"]
+    end
+    subgraph harness["Aomi harness"]
+        API["<b>/v1/pipeline</b><br/><i>stateless resource</i>"]
+        CAT["<b>Live catalog</b><br/>apps · skills · core"]
+        LIFE["<b>Build engine</b><br/>stage → simulate → commit"]
+        FORK["<b>Fork simulation</b>"]
+    end
+    CHAIN["<b>EVM · SVM chains</b>"]
+    SDK --> API
+    RAW --> API
+    API --> CAT
+    API --> LIFE
+    LIFE --> FORK
+    CAT -.->|"descriptors + live schemas"| client
+    LIFE -.->|"awaiting_wallet action"| client
+    LIFE -->|"committed"| CHAIN
+```
+
+The catalog is the runtime's own registry of Apps, skills, and core operations, and the build engine is the same stage → simulate → commit machinery the Agent uses — minus the conversation. The resource is stateless: nothing is stored between calls, state lives in your application or on chain, and anything requiring a signature comes back to you as a pending action.
 
 <Info>
   The **Pipeline API** is a callable product surface. The [transaction pipeline](/concepts/transaction-pipeline) is the broader build → simulate → sign → broadcast safety model.
 </Info>
 
-## Discover the catalog
+## Read chain state
+
+Each chain namespace also exposes read operations ahead of the Build lifecycle, for fetching the state your application composes transactions from. They are curated aliases onto the runtime's core tool namespaces (`evm-core`, `svm-reads`):
+
+| Operation | EVM tool | SVM tool |
+| --- | --- | --- |
+| `account` | `get_account_info` | `svm_get_account_info` |
+| `contract` / `program` | `get_contract` | `svm_get_program` |
+| `balance` / `token-holdings` | `get_erc20_balance` | `svm_get_token_holdings` |
+| `context` | `get_time_and_onchain_context` | `svm_get_context` |
+
+List them with `GET /v1/pipeline/evm` or `GET /v1/pipeline/svm` and invoke with `POST`, like an App operation. For the live input schema, read the underlying tool's descriptor — `GET /v1/pipeline/apps/default/operations/{tool}` — which is the guaranteed-schema path; the chain-level `GET` returns only a pointer descriptor.
+
+The aliases are a curated subset. The rest of the core namespaces — including `encode_and_call`, `simulate_batch`, and `sync_chain` on EVM — is discoverable and invocable through the default App's operations catalog at `/v1/pipeline/apps/default/operations`. The SDK does not yet expose typed methods for any of these; call them through the raw transport or HTTP.
+
+## Build a transaction with Pipeline
+
+The direct lane takes chain actions you already have and walks them through the full lifecycle: stage them into a Build, simulate that Build on a fork, review the evidence, then cross the explicit commit boundary.
+
+<Tabs>
+  <Tab title="EVM">
+    **1 · Stage.** Staging turns raw calls — a target, calldata, and value — into a chain-specific Build without executing anything:
+
+    ```ts
+    const staged = await aomi.pipeline.evm.stage({
+      chainId: 8453,
+      calls: [{ to: contract, data: calldata, value: 0n }],
+    });
+    ```
+
+    A staged Build carries your actions and a portable `digest`, nothing more. It has not touched a chain and has no simulation evidence yet.
+
+    **2 · Simulate.** Simulation runs the staged Build against a fork of the live chain and returns what would actually happen:
+
+    ```ts
+    const simulated = await staged.simulate();
+
+    console.log(simulated.summary);
+    console.log(simulated.actions);
+    console.log(simulated.simulation);
+    console.log(simulated.digest);
+    ```
+
+    If you do not need the intermediate staged Build, `aomi.pipeline.evm.build({ chainId, calls })` stages and simulates in one call.
+
+    **3 · Review.** Render `summary`, `actions`, `simulation`, and any warnings before offering a commit control. This is the approval boundary that belongs to your application:
+
+    ```ts
+    renderReview({
+      summary: simulated.summary,
+      actions: simulated.actions,
+      simulation: simulated.simulation,
+    });
+    ```
+
+    **4 · Commit.** Commit revalidates the simulated Build and executes it:
+
+    ```ts
+    const result = await simulated.commit();
+
+    switch (result.status) {
+      case "committed":
+      case "submitted":
+        console.log(result.receipts);
+        break;
+      case "awaiting_wallet":
+        showPendingAction(result.action);
+        break;
+    }
+    ```
+
+    - `committed` and `submitted` return `receipts` for the executed transactions.
+    - `awaiting_wallet` means the harness cannot execute on its own: `result.action` is the pending action your application must review and complete through its wallet flow. Pipeline commit does not automatically execute the wallet configured on `Aomi`.
+
+    Commit uses the portable Build digest as its default idempotency key. Supply your own key when it needs to match an application-level request:
+
+    ```ts
+    await simulated.commit({ idempotencyKey: checkoutAttemptId });
+    ```
+
+    TypeScript enforces the lifecycle: a merely staged Build cannot be passed to commit — only a simulated one can.
+  </Tab>
+  <Tab title="SVM">
+    **1 · Stage.** The Solana input is an ordered instruction bundle that lands inside one atomic transaction. Hand Pipeline the instructions and let the harness assemble the transaction, or preserve venue-supplied bytes exactly as built:
+
+    ```ts
+    // From instructions — the harness assembles the transaction
+    const staged = await aomi.pipeline.svm.stage({
+      kind: "instructions",
+      instructions: [
+        {
+          programId: program,
+          accounts: accountMetas,
+          data: instructionData, // base64 by default
+        },
+      ],
+      cluster: "mainnet-beta",
+      feePayer: payer,
+    });
+
+    // Or from a prebuilt transaction — venue bytes preserved verbatim
+    const stagedTx = await aomi.pipeline.svm.stage({
+      kind: "transaction",
+      transaction: { transaction: base64Transaction },
+    });
+    ```
+
+    **2 · Simulate.** `aomi.pipeline.svm.build(input)` stages and simulates in one call; otherwise simulate the staged Build to get the real outcome:
+
+    ```ts
+    const simulated = await staged.simulate();
+    ```
+
+    **3 · Review.** Same boundary as EVM — render the evidence before offering a commit control:
+
+    ```ts
+    renderReview({
+      summary: simulated.summary,
+      actions: simulated.actions,
+      simulation: simulated.simulation,
+    });
+    ```
+
+    **4 · Commit.** Commit returns the same `committed` / `submitted` / `awaiting_wallet` statuses with the same idempotency rules:
+
+    ```ts
+    const result = await simulated.commit();
+    ```
+
+    Because the bundle is atomic, the instructions execute in order inside a single transaction or not at all — there is no partially applied state to reason about.
+  </Tab>
+</Tabs>
+
+<Warning>
+  Do not turn a successful simulation into implicit approval. Simulation evidence is informative, not signing authority. And on staging, guest sessions can read the catalog but cannot execute Pipeline mutations — use a grant with `pipeline:execute` to test stage, simulate, build, or commit.
+</Warning>
+
+## Catalog with Apps and Skills
 
 Do not hard-code a second registry of Apps or skills. Read the catalog exposed by your environment:
 
@@ -38,7 +200,9 @@ console.log(echo.inputSchema);
 
 This descriptor is available on staging and accepts a `message` string. Catalog contents vary by environment, so discover the App and operation before relying on them. The SDK validates Build arguments against the descriptor schema.
 
-## Build and simulate
+## Build from an App operation
+
+Where the direct lanes take calls or instructions you already built, an App operation builds them for you — the operation resolves your arguments into staged, simulated chain actions:
 
 ```ts
 const scope = aomi.pipeline.app(selectedApp);
@@ -54,55 +218,7 @@ console.log(build.simulation);
 console.log(build.digest);
 ```
 
-`build()` returns a simulated EVM or SVM Build. It does not commit the operation.
-
-<Warning>
-  Render `summary`, `actions`, `simulation`, and warnings before offering a commit control. Do not turn a successful simulation into implicit approval.
-</Warning>
-
-## Commit explicitly
-
-```ts
-const result = await build.commit();
-
-switch (result.status) {
-  case "committed":
-  case "submitted":
-    console.log(result.receipts);
-    break;
-  case "awaiting_wallet":
-    showPendingAction(result.action);
-    break;
-}
-```
-
-Pipeline commit does not automatically execute the wallet configured on `Aomi`. If it returns `awaiting_wallet`, `result.action` is the pending action your host must review and complete.
-
-Commit uses the portable Build digest as its default idempotency key. Supply your own key when it needs to match an application-level request:
-
-```ts
-await build.commit({ idempotencyKey: checkoutAttemptId });
-```
-
-## Direct EVM lifecycle
-
-Use the chain-specific surface when you already have calls:
-
-```ts
-const staged = await aomi.pipeline.evm.stage({
-  chainId: 8453,
-  calls: [{ to: contract, data: calldata, value: 0n }],
-});
-
-const simulated = await staged.simulate();
-const committed = await simulated.commit();
-```
-
-TypeScript prevents a merely staged Build from being passed to the high-level commit method.
-
-<Warning>
-  On staging, guest sessions can read the catalog but cannot execute Pipeline mutations. Use a grant with `pipeline:execute` to test build, stage, simulate, or commit.
-</Warning>
+`build()` returns a simulated EVM or SVM Build — the same object as step 2 of the lifecycle above. Review and commit it exactly the same way.
 
 ## Read skill instructions
 
@@ -114,70 +230,28 @@ const instructions = await aomi.pipeline
 
 Skill and App operations remain runtime-discovered. Avoid documenting a fixed list of catalog entries in your integration.
 
+## Handle errors
+
+Failed Pipeline calls throw a typed `PipelineApiError`, which exposes the same `status`, `code`, `retryable`, `requestId`, and `details` properties as [`AgentApiError`](/integrate/agent#handle-errors).
+
+`PipelineSchemaError` is different: it is thrown locally, before any request, when the supplied arguments do not match the live operation schema.
+
+```ts
+import { PipelineSchemaError } from "@aomi-labs/client";
+
+try {
+  await aomi.pipeline
+    .app(selectedApp)
+    .build(selectedOperation, formValues);
+} catch (error) {
+  if (error instanceof PipelineSchemaError) {
+    showFieldErrors(error);
+  }
+}
+```
+
+Refresh the operation descriptor before retrying. The live catalog can change independently of your application release.
+
 ## Call the REST resource directly
 
-Pipeline over raw HTTP is a stateless capability filesystem. Begin at a live catalog collection such as `/v1/pipeline/apps` or `/v1/pipeline/skills` and follow returned links instead of constructing an independent catalog. See [Authentication](/integrate/authentication#exact-resource-tokens) for the `/v1/pipeline` resource audience and scopes.
-
-| Path | Contains |
-| --- | --- |
-| `/v1/pipeline/apps` | Available Apps. |
-| `/v1/pipeline/apps/{app}/operations` | Operations exposed by one App. |
-| `/v1/pipeline/skills` | Available skills. |
-| `/v1/pipeline/skills/{skill}/operations` | Operations activated by one skill. |
-| `/v1/pipeline/skills/{skill}/SKILL.md` | Canonical skill instructions. |
-| `/v1/pipeline/evm` | EVM Build operations. |
-| `/v1/pipeline/svm` | Solana Build operations. |
-
-### Discover an operation
-
-```bash
-curl "$AOMI_BASE_URL/v1/pipeline/apps/default/operations/dummy_echo" \
-  -H "Authorization: Bearer $AOMI_PIPELINE_TOKEN"
-```
-
-The descriptor includes the current JSON Schema. The staging `dummy_echo` operation requires a `message` string. Validate arguments against the live schema before invoking or building any operation.
-
-### Invoke an operation
-
-```bash
-curl -X POST "$AOMI_BASE_URL/v1/pipeline/apps/default/operations/dummy_echo" \
-  -H "Authorization: Bearer $AOMI_PIPELINE_TOKEN" \
-  -H "Content-Type: application/json" \
-  -H "Idempotency-Key: echo-demo-1" \
-  -d '{"message":"hello from Pipeline"}'
-```
-
-Use invocation for operations whose returned value is the desired result. Use a Build when the operation produces chain actions that require simulation and commit.
-
-### Build lifecycle over HTTP
-
-EVM and SVM expose separate `stage`, `simulate`, `build`, and `commit` operations.
-
-```text
-operation + arguments
-        ↓
-      build
-        ↓
-simulated portable Build
-        ↓
-  application review
-        ↓
-      commit
-```
-
-- `stage` creates a chain-specific Build without simulation.
-- `simulate` consumes a staged Build and returns a simulated Build.
-- `build` resolves operations, stages actions, and simulates in one call.
-- `commit` accepts only a simulated Build and revalidates it before execution.
-
-Commit requires an idempotency key. Reuse the same key only when retrying the same Build.
-
-<Note>
-  Staging guest sessions can read the catalog, including operation descriptors and skill instructions, but Pipeline execution requires a grant with `pipeline:execute`.
-</Note>
-
-<Warning>
-  Simulation evidence is informative, not signing authority. Your application must still render the action and cross an explicit approval boundary.
-</Warning>
-
-For typed Build states and wallet result handling, prefer the SDK sections above.
+Not using TypeScript, or already own OAuth token acquisition? The same resource is documented endpoint by endpoint in the [Pipeline REST API reference](/api-reference/pipeline).
