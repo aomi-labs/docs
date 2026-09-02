@@ -15,7 +15,7 @@ Aomi exposes separate Model Context Protocol resources for stateful Agent work a
 Use Agent MCP for conversational work. Use Pipeline MCP when your MCP client needs explicit catalog and operation control.
 
 <Warning>
-  `/api/mcp` and `/api/mcp/direct` are removed and return `404` on staging. Use the exact Agent or Pipeline resource.
+  `/api/mcp` and `/api/mcp/direct` are removed and return `404`. Use the exact Agent or Pipeline resource.
 </Warning>
 
 ## Endpoints
@@ -29,19 +29,23 @@ Use Agent MCP for conversational work. Use Pipeline MCP when your MCP client nee
   Confirm that the `/v1` resources are enabled in your target environment before production rollout. Staging and production have separate accounts, grants, and conversations.
 </Note>
 
+<Note>
+  Agent and Pipeline are separate MCP resources. Add and authorize each one you intend to use: your MCP client registers separately and holds a separate token for each, and every token is issued for exactly one resource. An Agent token is not accepted at the Pipeline resource, or the reverse.
+</Note>
+
 ## Connect Agent MCP
 
 <Tabs>
   <Tab title="Codex">
     ```bash
-    codex mcp add aomi-agent --url https://chat-staging.aomi.dev/v1/agent/mcp
+    codex mcp add aomi-agent --url https://chat.aomi.dev/v1/agent/mcp
     codex mcp login aomi-agent
     ```
   </Tab>
   <Tab title="Claude Code">
     ```bash
     claude mcp add --transport http aomi-agent \
-      https://chat-staging.aomi.dev/v1/agent/mcp
+      https://chat.aomi.dev/v1/agent/mcp
     ```
 
     Run `/mcp`, select **aomi-agent**, and authenticate if the browser flow does not start automatically.
@@ -51,7 +55,7 @@ Use Agent MCP for conversational work. Use Pipeline MCP when your MCP client nee
     {
       "mcpServers": {
         "aomi-agent": {
-          "url": "https://chat-staging.aomi.dev/v1/agent/mcp"
+          "url": "https://chat.aomi.dev/v1/agent/mcp"
         }
       }
     }
@@ -100,7 +104,7 @@ Do not report transaction success until a later check returns the confirmed resu
 
 ```bash
 codex mcp add aomi-pipeline \
-  --url https://chat-staging.aomi.dev/v1/pipeline/mcp
+  --url https://chat.aomi.dev/v1/pipeline/mcp
 codex mcp login aomi-pipeline
 ```
 
@@ -136,6 +140,8 @@ Agent and Pipeline grants are separate. Signing authority is separate again:
 | `403 Forbidden` | Do not reuse an Agent token for Pipeline or the reverse. |
 | Guest REST token rejected | MCP requires OAuth for its exact `/mcp` resource; a guest REST bearer is not an MCP grant. |
 | Browser does not open | Use the MCP client's manual login command and inspect its OAuth status. |
+| `invalid_scope` during login | Nothing your client asked for is usable at the resource it named. An authorization is reduced to the scopes that resource allows, so a broad request is not itself a problem — this means the request and the resource do not match at all. Check that the server URL is the one you meant. |
+| `invalid_target` during login | Each authorization must name exactly one known Aomi resource. Add Agent and Pipeline as separate servers so each authorizes against its own resource. |
 | Session not found | Confirm you authenticated to the environment and account that owns it. |
 | Action remains pending | Complete review in the portal or authenticated CLI, then call `aomi_check` again. |
 
