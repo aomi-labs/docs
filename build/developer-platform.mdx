@@ -1,6 +1,6 @@
 ---
 title: "Developer Console"
-description: "Create, deploy, activate, and operate Aomi Apps from build.aomi.dev. Learn when the browser workflow is more useful than the CLI."
+description: "A visual guide to build.aomi.dev: sign in, create and deploy Aomi Apps, connect Telegram, and monitor activity."
 ---
 
 [build.aomi.dev](https://build.aomi.dev) is the hosted control plane for Aomi Apps.
@@ -13,7 +13,7 @@ integrations, transactions, usage, logs, and metrics.
 <Info>
   The platform and the CLI drive the same backend lifecycle. Nothing you do in
   one is invisible to the other: a project connected by `aomi-build connect`
-  shows up in the Projects list, and an app activated from the browser answers
+  shows up in the Projects list, and an App activated from the browser answers
   `aomi-build deploy status`.
 </Info>
 
@@ -23,10 +23,72 @@ integrations, transactions, usage, logs, and metrics.
 | --------------- | ---------------------------------------------------------- |
 | **Project**     | A GitHub repository connected to Build.                    |
 | **App**         | A deployable unit inside a project. One repo can ship several. |
-| **Deployment**  | A published build of an app that can go live.              |
-| **Environment** | The API keys and secrets configured for an app. Not billing. |
+| **Deployment**  | A published build of an App that can go live.              |
+| **Environment** | The API keys and secrets configured for an App. Not billing. |
 
-## Ship your first app from the browser
+## Find your way around
+
+Use **Projects** for day-to-day work on a connected repository. **Build** starts
+from an idea or a template. **Operate** groups deployment history, transactions,
+observability, usage, and logs. **Account** groups provider keys, integrations,
+and settings.
+
+**Overview** summarizes your Projects, live deployments, credits, and tokens.
+A connected Project does not by itself mean you have a live deployment: the
+example below has two Projects and zero live deployments.
+
+<Frame caption="Overview is an account snapshot. Open Projects to work on an App.">
+  <img src="/images/developer-console/overview.png" alt="Overview showing two Projects, zero live deployments, and shortcuts to deploy, transactions, health, and usage" />
+</Frame>
+
+<Note>
+  Screenshots were captured on September 14, 2026. Repository names, SDK
+  versions, counts, and status badges show that account at capture time.
+  Follow the current requirements and status shown in your own console.
+</Note>
+
+## Sign in and check your Projects
+
+Open [build.aomi.dev](https://build.aomi.dev) and click **Continue with GitHub**.
+Use the account that owns the repositories you want to connect. Before you
+sign in, account-specific pages show **SIGN IN** badges.
+
+<Frame caption="Sign in with GitHub to see your connected repositories and deployment history.">
+  <img src="/images/developer-console/github-sign-in.png" alt="Projects page before sign-in with Continue with GitHub and SIGN IN badges in the sidebar" />
+</Frame>
+
+After sign-in, **Projects** lists your repositories and their Apps. Click a
+Project to open it, or **New app** to connect another repository. The SDK banner
+shows the version your Apps need; an **Outdated** badge and **Upgrade** button
+identify a Project that needs attention. See [SDK upgrades](#when-the-platform-bumps-the-sdk).
+
+<Frame caption="Compare each Project’s SDK badge with the requirement above the list.">
+  <img src="/images/developer-console/projects-sdk-upgrade.png" alt="Projects listing nightshift and goal-digger with Outdated badges and Upgrade buttons" />
+</Frame>
+
+## Start from an idea in Build
+
+Open **Build** to describe the App you want to create. The composer offers
+shortcuts such as **Arb bot**, **OpenAPI agent**, and **Plan from idea**, plus
+starting templates including **Arbitrage Bot**, **OpenAPI Agent**, and
+**Trading Agent**. Use **Browse all** to see more templates.
+
+Describe the task, the APIs or protocols it needs, and the result a user should
+get. For example:
+
+> Create an App that uses a public market-data API to compare token prices and
+> explain the results. Keep its tools read-only.
+
+The page lays out the workflow: describe, review the plan and files, compile,
+smoke-test, then ship to **Projects**. Review the generated work and its test
+results before deploying. A prompt or template selection is only the start;
+confirm deployment and activation before treating the App as live.
+
+<Frame caption="Start with a description or template, then review the plan and files.">
+  <img src="/images/developer-console/build-composer.png" alt="Build composer with a description field, prompt shortcuts, and Arbitrage Bot, OpenAPI Agent, and Trading Agent templates" />
+</Frame>
+
+## Ship your first App from the browser
 
 Start from Aomi's template or import a GitHub repository you already own.
 
@@ -57,13 +119,13 @@ Start from Aomi's template or import a GitHub repository you already own.
   </Step>
   <Step title="Deploy and activate">
     The wizard deploys the commit, waits for the platform build, and activates
-    the release onto the live runtime. If the app declares required secrets in
+    the release onto the live runtime. If the App declares required secrets in
     its manifest, the wizard blocks activation until you set them. An App
     never goes live with an empty key it needs.
   </Step>
   <Step title="Live">
     The final step links straight into [chat.aomi.dev](https://chat.aomi.dev)
-    with your app selected, so the first test message is one click away.
+    with your App selected, so the first test message is one click away.
   </Step>
 </Steps>
 
@@ -84,9 +146,8 @@ Every Project has one page with five tabs:
   be **promoted** or **deactivated** from its row.
 * **Providers.** See which model keys fund this Project's Apps.
   Key management itself lives on the global [Providers](#model-provider-keys) page.
-* **Environment.** View the variables declared by the App manifest alongside
-  (with descriptions and required flags) and the keys already configured in the
-  vault. Values are write-only: you can set, replace, or delete a secret, but
+* **Environment.** View the variables declared by the App manifest, including
+  descriptions and required flags, alongside the keys configured in the vault. Values are write-only: you can set, replace, or delete a secret, but
   the platform never echoes one back.
 * **Chat.** Open your live App from chat.aomi.dev with the App
   preselected. If the App's SDK is outdated, the tab points you to
@@ -117,37 +178,105 @@ Key material is write-only: after you paste a key, only its stored prefix is
 ever displayed. Each key can be assigned to specific projects, and each key
 row shows the tokens and cost it has accrued.
 
+Click **Add key** beside the provider you want to use, then configure its
+Project assignments. These keys fund model inference. Put API credentials
+used by your App’s tools in the Project’s **Environment** tab instead.
+
+<Frame caption="Provider keys fund models; tool secrets belong in the Project’s Environment tab.">
+  <img src="/images/developer-console/providers.png" alt="Providers page with OpenAI, Anthropic, and OpenRouter sections, each with an Add key button" />
+</Frame>
+
 ## Integrations
 
-**Account → Integrations** turns a deployed app into a bot. Telegram is live:
-paste a BotFather token, attach one or more Apps, pick the primary one and a
-thread mode, and Aomi hosts the bot and wires the webhook. The full walkthrough
-is [Telegram](/build/telegram). You can re-edit a
-bot's attached apps at any time without re-entering the token. Discord and
-Slack appear on the page but are not available yet.
+Open **Account → Integrations** and select **Telegram** to connect a bot to
+one or more deployed Apps. The page includes BotFather instructions and a
+copyable slash-command list. Discord and Slack are marked **Soon**.
+
+<Frame caption="Create the bot in BotFather, then register it in Aomi.">
+  <img src="/images/developer-console/telegram-integration.png" alt="Telegram Integrations page with BotFather setup instructions and slash-command examples" />
+</Frame>
+
+1. In Telegram, send `/newbot` to **@BotFather** and copy the token.
+2. In the console, click **Add bot** and paste the token into **Bot token**.
+   Add an optional label.
+3. Choose **Single thread** or **Multiple threads**, select the Apps the bot
+   serves, and pick a **Primary** App for new conversations.
+4. Click **Register bot**. Aomi verifies the token and configures the webhook.
+5. Check the bot’s **Active** badge, then open it in Telegram and test a message.
+
+The screenshot below shows the registration form before App selection, so
+**Register bot** is disabled. The existing bot underneath shows an **Active**
+integration and its attached App. That badge confirms the integration status;
+check the App’s deployment separately in **Projects**.
+
+<Frame caption="Select the attached Apps and a primary App before registering. Change apps edits an existing bot.">
+  <img src="/images/developer-console/telegram-register-bot.png" alt="Telegram registration form with a masked token, thread mode, App checkboxes, Primary selection, and an existing Active bot" />
+</Frame>
+
+Use **Change apps** to update an existing bot without re-entering its token.
+Users can switch between attached Apps with `/app`. For thread modes, user
+setup, and signing permissions, follow the [Telegram walkthrough](/build/telegram).
 
 ## Operate
 
-The Operate section is read-your-own-apps observability, scoped to the
-projects you own:
+Use the pages under **Operate** to understand deployments and App activity.
+Where available, use **All projects** to narrow the view to one Project.
 
-* **Deployments.** View deployment history across all your Projects, filtered by
-  project and by current/previous status.
-* **Transactions.** View the onchain transactions your Apps' users execute, with
-  hash, status, and fee detail per row (EVM and SVM).
-* **Usage.** View credits and tokens per App per day. When your Apps price their
-  tools, this page also carries the **partner payments ledger**: what each
-  priced tool charges, who the beneficiary is, and the accrue → settle trail.
-* **Logs.** View runtime logs for your Apps.
-* **Observability.** View per-App runtime metrics from Aomi's monitoring,
-  with links into the relevant dashboards.
+| Page | What to check |
+| --- | --- |
+| **Deployments** | Deployment history across your Projects and current or previous releases. |
+| **Transactions** | Onchain actions from your Apps’ users, with transaction details when activity exists. |
+| **Observability** | App health, chat and tool-call counts, transactions, error rate, and latency. |
+| **Usage** | Credits and tokens per App, plus the partner payments ledger for priced tools. |
+| **Logs** | Runtime logs when you need to investigate App behavior. |
+
+### Transactions and empty states
+
+**No transactions yet** means there are no transaction records in the current
+view. A deployed App or a chat message alone does not establish that an onchain
+transaction occurred. Open **Projects**, test the App, and return here after
+onchain activity. Check the Project filter if you do not see the record you expect.
+
+<Frame caption="Transaction records appear after onchain activity from your Apps.">
+  <img src="/images/developer-console/transactions-empty.png" alt="Transactions page with All projects selected and No transactions yet" />
+</Frame>
+
+### Read App health and activity separately
+
+**Observability** shows each App’s health badge alongside **Chats 24h**,
+**Tool calls 24h**, **Tx 24h**, **Error rate**, and **P95 latency**. The
+**Payment health** summary shows priced calls and accrued, settled, and
+outstanding amounts.
+
+A **healthy** badge is not evidence of recent usage. In this capture, both
+Apps show **healthy** while activity counts are zero and some metrics say
+**No data**. Treat **No data** as unavailable measurement, not a measured zero.
+The **platform** scope label identifies metrics that cover the wider platform;
+do not read them as traffic from only your selected App.
+
+<Frame caption="Read health, activity counts, and metric scope together.">
+  <img src="/images/developer-console/observability.png" alt="Observability showing healthy App badges, zero activity, No data metrics, and payment health" />
+</Frame>
+
+## Settings
+
+Open **Account → Settings** to see the available account controls. The overview
+marks **General** and **Billing** as **Available**, and **Secrets** as
+**Project-scoped**. Manage tool secrets in the Project’s **Environment** tab.
+Open **Billing** for the payment setup options available to your account;
+inspect App consumption under **Operate → Usage**.
+
+For Telegram setup, use **Account → Integrations** in the main sidebar.
+For App health, use **Operate → Observability**. Their names also appear
+inside Settings, but those Settings cards are marked **Soon** in this capture.
+
+<Frame caption="Use availability badges to distinguish working settings from upcoming controls.">
+  <img src="/images/developer-console/settings.png" alt="Settings overview with General and Billing Available, Secrets Project-scoped, and other cards marked Soon" />
+</Frame>
 
 <Note>
-  Two honest limits. The billing **statement** view can show clearly-flagged
-  example data while the backend statement API catches up to the design. And
-  most of **Settings** is staged, not live: billing setup happens on
-  [chat.aomi.dev](https://chat.aomi.dev) settings, and per-project secrets
-  live in the project's Environment tab, not in Settings.
+  If a billing statement is labeled as example data, do not treat it as your
+  actual usage or charges. Use the available account billing and usage views.
 </Note>
 
 ## Web or CLI?
