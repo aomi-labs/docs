@@ -48,7 +48,6 @@ The widget needs one client component and one environment file. It does not requ
     ├── src/
     │   ├── App.tsx            # Mounts AomiWidget
     │   └── main.tsx
-    ├── vite.config.ts         # Maps provider browser identifiers
     ├── .env.local             # Public widget configuration
     └── package.json
     ```
@@ -90,35 +89,11 @@ The widget needs one client component and one environment file. It does not requ
 | `PRIVY_APP_ID` | Privy's public browser identifier; required for Privy mode |
 | `WALLETCONNECT_PROJECT_ID` | Public WalletConnect project identifier; required only when WalletConnect is enabled |
 
-The two `AOMI_*` names are conventions for your own build: the widget receives those values through the `apiUrl` and `applicationId` props, so name them whatever your framework prefers. The three provider identifiers are different — the library reads `NEXT_PUBLIC_PARA_API_KEY`, `NEXT_PUBLIC_PRIVY_APP_ID`, and `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` from the environment directly, so those exact names must exist at build time (see the Vite mapping below). All of them are public browser identifiers, not provider secrets. Aomi still verifies the provider tenant and token server-side. Restart the development server after changing them.
+These names are conventions for your host application. Pass values to `apiUrl`, `applicationId`, and the selected `auth` object. In current source, Para accepts `auth.apiKey` and Privy accepts `auth.appId`; do not rely on a published package reading your framework's environment variables internally. Use `process.env.NEXT_PUBLIC_*` in Next.js or `import.meta.env.VITE_*` in Vite at the call site. These identifiers are public; provider secrets stay on your server.
 
-<Accordion title="Map provider variables in Vite">
-  The provider entry points use the same public identifiers as the Next.js build. Map your `VITE_*` values in `vite.config.ts`:
-
-  ```ts
-  import { defineConfig, loadEnv } from "vite";
-  import react from "@vitejs/plugin-react";
-
-  export default defineConfig(({ mode }) => {
-    const env = loadEnv(mode, process.cwd(), "");
-
-    return {
-      plugins: [react()],
-      define: {
-        "process.env.NEXT_PUBLIC_PARA_API_KEY": JSON.stringify(
-          env.VITE_PARA_API_KEY,
-        ),
-        "process.env.NEXT_PUBLIC_PRIVY_APP_ID": JSON.stringify(
-          env.VITE_PRIVY_APP_ID,
-        ),
-        "process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID": JSON.stringify(
-          env.VITE_WALLETCONNECT_PROJECT_ID,
-        ),
-      },
-    };
-  });
-  ```
-</Accordion>
+<Note>
+  Explicit provider props describe the current source contract. Check your installed widget release and provider allowlists before using the example. See [package and API compatibility](/integrate/client-sdk#check-compatibility).
+</Note>
 
 <Warning>
   Never put an App key, provider secret, paymaster URL, gas-policy credential, treasury address, or fee configuration in browser code.
@@ -174,6 +149,7 @@ Authentication establishes the user session. Wallet ownership establishes which 
           auth={{
             kind: "embedded_wallet",
             provider: "para",
+            apiKey: process.env.NEXT_PUBLIC_PARA_API_KEY!,
             environment: "PROD",
           }}
           height="calc(100dvh - 32px)"
@@ -200,6 +176,7 @@ Authentication establishes the user session. Wallet ownership establishes which 
           auth={{
             kind: "embedded_wallet",
             provider: "privy",
+            appId: process.env.NEXT_PUBLIC_PRIVY_APP_ID!,
             environment: "PROD",
           }}
           height="calc(100dvh - 32px)"

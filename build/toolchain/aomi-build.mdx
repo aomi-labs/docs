@@ -8,7 +8,9 @@ description: "Take a plugin from scaffold to activation with aomi-build. Follow 
 This page takes a plugin from your own GitHub repo to live on Aomi. You work in your own repo the whole time. You never open a PR against `aomi-labs/community-apps`, and you never need write access to it. The backend does that part for you through the Aomi GitHub App. The walkthrough comes first; the [complete command reference](#command-reference) follows it.
 
 <Info>
-**Verified 2026-07-14** against a live community deploy on `https://api.aomi.dev`. Command output on this page is real, not illustrative. Version numbers move: always trust `aomi-build sdk check` over any number written here.
+**Verified 2026-09-22** against published `aomi-sdk` 5.1.1 at commit
+`2ef3e04`. Version numbers move: always trust `aomi-build sdk check` over any
+number written here.
 </Info>
 
 <Note>
@@ -34,7 +36,7 @@ That is the full list. No GitHub personal access token. No database access. No a
 ## Step 1: install the CLI
 
 ```bash
-cargo install --git https://github.com/aomi-labs/aomi-sdk --features cli aomi-sdk
+cargo install aomi-sdk --locked --features cli
 ```
 
 Confirm it is there:
@@ -101,18 +103,18 @@ aomi-build sdk check --backend https://api.aomi.dev
 When your pin matches, you see:
 
 ```text
-Required aomi-sdk: 3.0.3
+Required aomi-sdk: 5.1.1
 Manifest: /path/to/my-app/Cargo.toml
-Dependency: exact 3.0.3
-Lockfile: matches 3.0.3
+Dependency: exact 5.1.1
+Lockfile: matches 5.1.1
 SDK check passed.
 ```
 
 When it is stale, it tells you exactly what is wrong and stops:
 
 ```text
-  - Cargo.toml pins aomi-sdk 3.0.2, but this backend requires 3.0.3.
-  - Cargo.lock resolves aomi-sdk 3.0.2, but this backend requires 3.0.3.
+  - Cargo.toml pins aomi-sdk 5.1.0, but this backend requires 5.1.1.
+  - Cargo.lock resolves aomi-sdk 5.1.0, but this backend requires 5.1.1.
 
 Fix: aomi-build sdk fix --path /path/to/my-app/Cargo.toml
 Error: SDK check failed
@@ -126,11 +128,11 @@ aomi-build sdk fix --backend https://api.aomi.dev
 
 ```text
     Updating crates.io index
-    Updating aomi-sdk v3.0.2 -> v3.0.3
-Required aomi-sdk: 3.0.3
+    Updating aomi-sdk v5.1.0 -> v5.1.1
+Required aomi-sdk: 5.1.1
 Manifest: /path/to/my-app/Cargo.toml
-Dependency: exact 3.0.3
-Lockfile: matches 3.0.3
+Dependency: exact 5.1.1
+Lockfile: matches 5.1.1
 SDK check passed.
 ```
 
@@ -337,7 +339,8 @@ dyn_aomi_app!(
 
 The third argument marks whether the key is required. Use `false` when the plugin still loads and does useful work without it. The Binance App in aomi-sdk is the reference for this pattern.
 
-Read the value at tool call time with `resolve_secret_value`, which checks three sources in order:
+For an operator-owned credential, read the value at tool call time with
+`resolve_secret_value`, which checks three sources in order:
 
 ```rust
 let key = resolve_secret_value(ctx, arg_value, "API_FOOTBALL_KEY", "no key set")?;
@@ -346,8 +349,27 @@ let key = resolve_secret_value(ctx, arg_value, "API_FOOTBALL_KEY", "no key set")
 
 That order is why the same code path works locally, where the value comes from an env var, and deployed, where it comes from the host vault. For a key you own and are comfortable shipping in a public App, a fourth option is to add a default in code as the final fallback, so every user gets live data without setting anything.
 
+If every user supplies a separate credential, mark the declaration and use the
+context-only resolver:
+
+```rust
+const USER_API_KEY: Secret =
+    Secret::new("USER_API_KEY", "Your vendor API key.", true).user_owned();
+
+let key = resolve_user_secret_value(
+    &ctx,
+    "USER_API_KEY",
+    "Add USER_API_KEY in App settings before using this tool.",
+)?;
+```
+
+User-owned credentials never fall back to a tool argument or process
+environment variable. A missing user value therefore cannot silently use an
+operator credential.
+
 <Warning>
 Only bundle a key in code if you are fine with it being public. A public App's source and its built release are readable. Never hardcode a credential you would not put in a public repo.
+Never log, persist, or return values from either secret resolver.
 </Warning>
 
 ## Find and test your App
@@ -405,7 +427,7 @@ When you ask for help, send three clean blocks, each a command plus its output: 
 
 ## Command reference
 
-<Info>Reference verified against aomi-sdk@08b21f9 on 2026-06-29 and updated against current source. `deploy status` and `deploy activate` are the canonical forms. Bare `aomi-build status` and `aomi-build activate` remain aliases for one release cycle. Prefer the `deploy`-prefixed forms.</Info>
+<Info>Reference verified against published `aomi-sdk` 5.1.1 at commit `2ef3e04` on 2026-09-22. `deploy status` and `deploy activate` are the canonical forms.</Info>
 
 Beyond deploying, `aomi-build` scaffolds, compiles, and end to end tests a plugin. The full path from "external API docs" to "tested plugin" is a six stage pipeline. Every stage runs on its own, and `new-app` is the one shot orchestrator for the first stages plus the compile.
 

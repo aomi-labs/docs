@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+// Mintlify pre-injects React hooks: https://www.mintlify.com/docs/customize/react-components
 
 export function WidgetPlayground() {
 const PRESETS = {
@@ -18,12 +18,11 @@ const PRESETS = {
   Mono: { background: "#ffffff", foreground: "#111111", muted: "#737373", panel: "#eeeeee", sidebar: "#f8f8f8", primary: "#111111", radius: 0 },
 };
 
-const CONTROL_OPTIONS = ["Model", "App", "API Key", "Wallet", "Network"];
+const CONTROL_OPTIONS = ["Model", "App", "Wallet", "Network"];
 
 const controlLabel = {
   Model: "Auto",
   App: "Basic Apps",
-  "API Key": "API key",
   Wallet: "Wallet",
   Network: "Base",
 };
@@ -150,7 +149,7 @@ function copyToClipboard(text) {
   const [showSidebar, setShowSidebar] = useState(true);
   const [walletPosition, setWalletPosition] = useState("footer");
   const [controlPlacement, setControlPlacement] = useState("composer");
-  const [controls, setControls] = useState({ Model: true, App: true, "API Key": false, Wallet: false, Network: true });
+  const [controls, setControls] = useState({ Model: true, App: true, Wallet: false, Network: true });
   const [codeTab, setCodeTab] = useState("jsx");
   const [copied, setCopied] = useState(false);
 

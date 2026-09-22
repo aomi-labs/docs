@@ -12,7 +12,7 @@ Begin at a live catalog collection such as `/v1/pipeline/apps` or `/v1/pipeline/
 
 ## Read operations
 
-Beyond the Build lifecycle, each chain namespace exposes curated read aliases: `account`, `contract`, `balance`, and `context` on EVM; `account`, `program`, `token-holdings`, `context`, and `sign-data` on SVM. `GET /v1/pipeline/{chain}` lists them and `POST /v1/pipeline/{chain}/{operation}` invokes them; each alias forwards to the corresponding core tool on the default App. The chain-level `GET` returns a pointer descriptor only — for the live input schema, read the tool's descriptor at `GET /v1/pipeline/apps/default/operations/{tool}`. These aliases are not yet in the generated endpoint pages below because the published contract omits them.
+Beyond the Build lifecycle, each chain namespace exposes curated read aliases: `account`, `contract`, `encode-call`, `token-holdings`, and `context` on EVM; `account`, `program`, `token-holdings`, and `context` on SVM. `GET /v1/pipeline/{chain}` lists them and `POST /v1/pipeline/{chain}/{operation}` invokes them. Read each operation's `GET` descriptor for its current input schema before invoking it.
 
 ## Invoke or Build
 
@@ -38,6 +38,10 @@ simulated portable Build
 - `simulate` consumes a staged Build and returns a simulated Build.
 - `build` resolves operations, stages actions, and simulates in one call.
 - `commit` accepts only a simulated Build and revalidates it before execution.
+
+A Build is versioned and carries `status`, `actions`, `origin`, `expiresAt`, `digest`, and a server attestation. A simulated Build also carries typed simulation evidence: balance and approval changes, fees, warnings, guard results, gas, and logs. Treat the Build as opaque between lifecycle calls; do not edit its actions, digest, or attestation.
+
+Successful EVM and SVM commit responses use `status: "committed"`. EVM returns `digest`, `result`, and `requests`; SVM returns `digest`, `results`, and `requests`. Each item in `requests` is an `ActionRequest` for the application to resolve through its signing or execution boundary. Commit does not return `submitted` or `awaiting_wallet` as Pipeline status values.
 
 Commit requires an idempotency key. Reuse the same key only when retrying the same Build.
 

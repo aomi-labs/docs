@@ -3,21 +3,21 @@ title: "aomi-run"
 description: "Test a compiled plugin locally against a real LLM and inspect which tools it selects before you deploy."
 ---
 
-<Info>Verified against aomi-sdk@08b21f9 on 2026-06-29.</Info>
+<Info>Verified against published `aomi-sdk` 5.1.1 at commit `2ef3e04` on 2026-09-22.</Info>
 
 [`aomi-run`](https://github.com/aomi-labs/aomi-sdk/tree/main/sdk/bin/run) is the local dev runtime. It ships as a binary from the [`aomi-sdk` crate on crates.io](https://crates.io/crates/aomi-sdk). It loads a compiled plugin, reads its manifest, and opens an interactive REPL connected to Anthropic, OpenAI, or OpenRouter. It does not require a backend or deployment. Use it to inspect which tools the model selects before you ship.
 
 ## Install
 
-`aomi-run` installs from the `aomi-sdk` source, alongside its sibling `aomi-build`:
+`aomi-run` installs from the published `aomi-sdk` crate, alongside its sibling `aomi-build`:
 
 <CodeGroup>
 ```bash macOS / Linux
-cargo install --git https://github.com/aomi-labs/aomi-sdk --features cli,dev-runtime aomi-sdk
+cargo install aomi-sdk --locked --features cli,dev-runtime
 ```
 
 ```powershell Windows
-cargo install --git https://github.com/aomi-labs/aomi-sdk --features cli,dev-runtime aomi-sdk
+cargo install aomi-sdk --locked --features cli,dev-runtime
 ```
 </CodeGroup>
 
@@ -39,11 +39,11 @@ There are no subcommands. You pass the plugin path as the one positional argumen
 aomi-run apps/khalani/target/debug/libkhalani.dylib
 ```
 
-On start, `aomi-run` prints a summary of what it loaded, stubs any host namespaces the plugin asked for, and opens the REPL. The block below is illustrative, not literal output, and the version reflects the current SDK line (`3.0.x`):
+On start, `aomi-run` prints a summary of what it loaded, stubs any host namespaces the plugin asked for, and opens the REPL. The block below is illustrative, not literal output:
 
 ```text
 # illustrative boot banner
-▶ monad-oneshot v0.1.0  (aomi-sdk 3.0.1)
+▶ monad-oneshot v0.1.0  (aomi-sdk 5.1.1)
   tools      : 4 (get_balance, wrap_mon, unwrap_wmon, send_mon)
   namespaces : evm-core (stubbed)
   ⚙ stubbed 12 tools for namespace 'evm-core'
@@ -89,7 +89,7 @@ The default model per provider is `claude-sonnet-4-6` for Anthropic, `gpt-5` for
 - **Routed return envelopes** (`evm_commit_message`, `stage_tx`, `svm_sign_tx`, and the rest) do not fire. The model receives the envelope as opaque JSON; no wallet UX runs.
 - **Host namespace toolsets** (`evm-core`, `database`, `forge`, and others) are replaced with stub tools that return an "unavailable in dev runtime" value. The model still sees them by name, but a call resolves to a no op note.
 - **Skill activation** is not supported.
-- **`$SECRET:...` argument substitution** does not run, though the plugin's own env var secret fallback still works.
+- **Host secret injection** does not run. Operator-owned secrets can still use the plugin's environment fallback. User-owned credentials have no environment fallback, so test them with `TestCtxBuilder::secret` or against the hosted runtime.
 - **State attributes** always return `None`.
 
 For any of those, deploy the plugin and exercise it against the real backend.

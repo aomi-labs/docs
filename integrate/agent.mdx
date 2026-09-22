@@ -14,8 +14,8 @@ sequenceDiagram
     SDK->>API: POST /v1/agent/chat<br/>Idempotency-Key
     API-->>SDK: event page { cursor, events, has_more }
     loop until the turn state is terminal
-        SDK->>API: GET /v1/agent/chat/{sessionId}?cursor&wait
-        API-->>SDK: new events: messages, tool activity, actions
+        SDK->>API: GET /v1/agent/chat/{sessionId}/stream?cursor
+        API-->>SDK: durable event pages + provisional text
         SDK-->>App: run.on("action" | "completed" | "error")
     end
     opt the agent stages a transaction
@@ -27,7 +27,7 @@ sequenceDiagram
     SDK-->>App: result.messages
 ```
 
-The SDK runs this loop for you — `agent.run()` starts the turn and keeps polling the cursor until a terminal state, surfacing progress through events. A raw HTTP caller drives the same loop directly with the endpoints in the [Agent REST API reference](/api-reference/agent).
+The SDK runs this loop for you — `agent.run()` starts the turn, hydrates ordered event pages, and follows the event stream until a terminal state. Provisional streamed text does not advance the durable cursor. A raw HTTP caller drives the same loop directly with the endpoints in the [Agent REST API reference](/api-reference/agent).
 
 The TypeScript snippets assume an `aomi` instance created with the [Client SDK quickstart](/integrate/client-sdk#quickstart) or [OAuth device flow](/integrate/authentication#oauth-for-a-service-or-cli).
 
@@ -101,11 +101,23 @@ The contract is strict and schema-validated on the backend — a `userState` wit
 | `svm` | `address`, `cluster`, `wallet_name`, `transport`, `capabilities` |
 | `preferences`, `ext` | Free-form objects for application data |
 
-Inside the harness, the turn's UserState is live, not a one-shot parameter. Tools that stage work post updates into it: pending transactions and signature requests accumulate in per-chain buckets (`evm_txs`, `solana_txs`, `evm_sigs`, `solana_sigs`), and each staged transaction carries its simulation verdict. You never handle those buckets directly — they surface as the [actions](#handle-actions) on the run, and the raw transaction payloads never pass through the model. Sign or reject the action, and the result is absorbed back into the same state before the next read.
+Use UserState for wallet context only. Read wallet requests from typed Actions and, on environments supporting durable execution, Commit views. A current transaction review can arrive in `EventPage.commits` and the session snapshot rather than as an `action` event. See [durable transaction reviews](/integrate/actions-and-signing#durable-transaction-reviews) before integrating transaction execution.
 
 <Note>
   Account abstraction and sponsorship are deliberately not part of `UserState`. They are backend authority, resolved per execution — the client never sends or stores them.
 </Note>
+
+## Choose Auto or Direct routing
+
+Omit `target` to use Auto routing. Select one deployed App explicitly for Direct routing:
+
+```ts
+await aomi.agent.run("Explain the tools available in this App.", {
+  target: { mode: "direct", applicationId: selectedApplicationId },
+});
+```
+
+The SDK converts `target` to the wire `mode` and App selector fields. An App's canonical Application ID is distinct from a Pipeline catalog slug, session ID, or OAuth identity. Use an ID returned by your environment's App catalog.
 
 ## Interrupt work
 
@@ -139,7 +151,7 @@ Renaming, archiving, and deleting sessions require the scopes configured for the
 
 ## Handle actions
 
-Agent wallet execution is manual by default. Review the request, then resolve or reject it:
+For typed Agent Actions, review the request, then resolve or reject it. Durable transaction Commits use the separate controller described in [Wallet and signing](/integrate/actions-and-signing#durable-transaction-reviews):
 
 ```ts
 const run = aomi.agent.run("Supply 100 USDC to Aave.");

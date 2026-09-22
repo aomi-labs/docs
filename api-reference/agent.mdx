@@ -23,7 +23,7 @@ Messages, tool activity, actions, errors, and lifecycle changes are entries in `
 
 - Apply events in sequence order, and repeat while `has_more` is true or the latest turn state is `processing`.
 - Stop at `complete`, `failed`, `interrupted`, or `awaiting_action`.
-- `wait` long-polls and is bounded to 30 seconds (`wait=30000`, in milliseconds).
+- `wait` is an integer long-poll duration in milliseconds, bounded to `30000`. A typical client request uses `wait=25000`.
 - Keep the cursor opaque. An expired cursor returns `410`, and a malformed or cross-session cursor returns `400 invalid_cursor`; in either case, request the session without a cursor and reconcile the returned event page.
 
 ## Sessions
@@ -32,4 +32,16 @@ Session ownership comes from the authenticated caller. Do not use a wallet addre
 
 ## Action results
 
-Action resolution requires its own permission (`agent:actions:resolve`) and an idempotency key. Submit only the result produced by the reviewed request — never replace the action payload with caller-authored transaction fields. The action result body includes the action `revision` and the typed `result`.
+Action resolution requires its own permission (`agent:actions:resolve`) and an idempotency key. Submit only the result produced by the reviewed request — never replace the action payload with caller-authored transaction fields. The request body is `{ "revision": number, "result": ActionResult }`; the response contains the resulting action revision.
+
+## Live stream
+
+`GET /v1/agent/chat/{sessionId}/stream` is an SSE projection over the same event log. It emits three SSE event names:
+
+| Event | Meaning |
+| --- | --- |
+| `page` | A durable `EventPage`; persist its opaque cursor for reconnects. |
+| `message` | A transient in-progress message snapshot. |
+| `resync` | The stream could not project a safe delta; fetch an event page again. |
+
+Reconnect with the last cursor from a `page` event. A `message` event is useful for rendering live text, but it is not a durable cursor.

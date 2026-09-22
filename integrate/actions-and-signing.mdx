@@ -3,7 +3,7 @@ title: "Wallet and signing"
 description: "Connect EVM or Solana wallet adapters while keeping review, approval, and signing under application control."
 ---
 
-Wallet adapters let the Agent SDK ask your application to sign or submit a pending action. The wallet stays in your application, and your UI keeps the approval boundary.
+Wallet adapters let the Agent SDK ask your application to sign or submit a typed Action. Current transaction execution also exposes durable Commit views with their own review and recovery lifecycle. The wallet stays in your application, and your UI keeps the approval boundary.
 
 ## Adapt a Viem wallet
 
@@ -58,10 +58,10 @@ const aomi = new Aomi({
 });
 ```
 
-This adapter uses one transaction at a time because Viem's `sendCalls` returns a bundle identifier, while the SDK expects transaction hashes. Add only the methods your wallet actually supports.
+This adapter covers typed Actions, using one transaction at a time because Viem's `sendCalls` returns a bundle identifier while the Action capability expects transaction hashes. It does not implement durable prepared sends or sign-only Commit capabilities. Add only the methods your wallet actually supports.
 
 <Info>
-  This adapter was type-checked against the Viem and `@aomi-labs/client` versions on Aomi `origin/main`. Personal-message and EIP-712 signing were also exercised with a local Viem test account. Sending a real transaction still requires a connected wallet with the requested chain and funds.
+  The examples target the [current source contract](/integrate/client-sdk#check-compatibility). Wallet signing and submission require a compatible adapter, the requested chain, and explicit user approval.
 </Info>
 
 ## Review an Agent request
@@ -91,9 +91,54 @@ run.on("action", async (action) => {
 await run.result();
 ```
 
-The only `AgentRun` progress events are `action`, `completed`, and `error`. Simulation details and warnings, when present, are part of `action.request`; they are not a separate event.
+The `AgentRun` events are `action`, `completed`, and `error`. Simulation details and warnings, when present, are part of `action.request`. Durable Commits are available through `run.session.commits` and session snapshots; they do not emit an `AgentRun` action event.
 
 Your approval UI should show the request kind, chain, sender, targets, values, simulation evidence, and warnings available on the action. `execute()` calls the configured wallet capability and sends its result back to the Agent.
+
+## Durable transaction reviews
+
+This section requires the newer client and a deployment that exposes Commit views. Use a host-authenticated `aomi` client with a first-party session or origin-bound widget credential accepted by `/api/commits/*`. A `/v1/agent` OAuth grant alone does not authorize these host routes. A durable Commit has a stable `commit_id`, a version, a state, review evidence, and its next required wallet action. Refresh it after reconnecting or losing a response; never infer success from a closed wallet popup.
+
+For a custom UI, subscribe to the session and render the controller's current reviews:
+
+```ts
+import { commitCapabilities } from "@aomi-labs/client";
+
+// wallets implements the required sign/broadcast or prepared-send methods.
+// recoveryStore persists CommitRecoveryRecord values per thread and commit.
+const run = aomi.agent.run("Prepare the transaction I requested.", {
+  commits: commitCapabilities(wallets, recoveryStore),
+});
+
+const unsubscribe = run.session.subscribe(() => {
+  for (const commit of run.session.getSnapshot().commits) {
+    renderCommitReview(commit, run.session.commits.review(commit.commit_id));
+  }
+});
+
+// Invoke these from explicit UI controls after displaying the latest review.
+async function approveCommit(commitId: string) {
+  const current = await run.session.commits.refresh(commitId);
+  if (!run.session.commits.canExecute(current)) {
+    throw new Error("Connect a wallet supporting this Commit action");
+  }
+  await run.session.commits.execute(commitId);
+}
+
+async function rejectCommit(commitId: string) {
+  await run.session.commits.reject(commitId);
+}
+
+try {
+  await run.result();
+} finally {
+  unsubscribe();
+}
+```
+
+The controller follows the server's action and validates the expected signer. A sign-only adapter supplies `signTransaction` and, when requested, `broadcastTransaction`. An external EVM wallet using prepared sends needs both `preparePreparedTransaction` and `sendPreparedTransaction`, plus a durable `CommitRecoveryStore`. Forward the complete prepared payload, including fee and nonce fields; do not reconstruct a different transaction from a display summary.
+
+Persist recovery records before opening the wallet and after it returns a transaction hash. An unresolved wallet attempt needs reconciliation, not another send. `submitted` is a Commit lifecycle state, while `confirmed` is its successful terminal state. These states are separate from Pipeline's `status: "committed"` response.
 
 ## Review a Pipeline Build
 
@@ -119,10 +164,10 @@ if (await userApproved()) {
 }
 ```
 
-Pipeline commit does not automatically use the wallet configured on `Aomi`. A commit can return `committed`, `submitted`, or `awaiting_wallet`. In the last case, inspect `result.action` and complete it through the action flow required by your application.
+Pipeline commit does not automatically use the wallet configured on `Aomi`. It returns `status: "committed"`, `digest`, operation output (`result` for EVM or `results` for SVM), and `requests: ActionRequest[]`. These requests have no durable Agent Action IDs. Your application owns their wallet execution and receipt tracking; `committed` does not mean confirmed on chain.
 
 <Warning>
-  Guest access on staging can read the Pipeline catalog but cannot execute Pipeline mutations. Use the OAuth scopes provisioned for your integration before testing stage, simulate, build, or commit.
+  Catalog access does not grant execution permission. Use a credential authorized for `pipeline:execute` on your selected environment before testing stage, simulate, build, or commit.
 </Warning>
 
 ## Keep the boundary explicit
