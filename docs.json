@@ -192,12 +192,28 @@
               "api-reference/agent",
               "POST /v1/agent/chat",
               "GET /v1/agent/chat/{sessionId}",
+              "GET /v1/agent/chat/{sessionId}/stream",
               "POST /v1/agent/chat/{sessionId}/interrupt",
               "POST /v1/agent/chat/{sessionId}/actions/{actionId}/result",
               "GET /v1/agent/sessions",
               "GET /v1/agent/sessions/{sessionId}",
               "PATCH /v1/agent/sessions/{sessionId}",
               "DELETE /v1/agent/sessions/{sessionId}"
+            ]
+          },
+          {
+            "group": "Account",
+            "pages": [
+              "GET /v1/account/apps",
+              "POST /v1/account/apps/{applicationId}",
+              "DELETE /v1/account/apps/{applicationId}",
+              "GET /v1/account/apps/{applicationId}/secrets",
+              "POST /v1/account/apps/{applicationId}/secrets",
+              "DELETE /v1/account/apps/{applicationId}/secrets",
+              "DELETE /v1/account/apps/{applicationId}/secrets/{name}",
+              "GET /v1/account/credits",
+              "POST /v1/account/credits/top-up",
+              "GET /v1/account/statement"
             ]
           },
           {
@@ -444,19 +460,19 @@
     },
     {
       "source": "/reference",
-      "destination": "/integrate/overview"
+      "destination": "/integrate/client-sdk"
     },
     {
       "source": "/reference/index",
-      "destination": "/integrate/overview"
+      "destination": "/integrate/client-sdk"
     },
     {
       "source": "/reference/overview",
-      "destination": "/integrate/overview"
+      "destination": "/integrate/client-sdk"
     },
     {
       "source": "/reference/api-reference",
-      "destination": "/integrate/api/overview"
+      "destination": "/api-reference/overview"
     },
     {
       "source": "/reference/apps-and-authentication",
@@ -464,7 +480,7 @@
     },
     {
       "source": "/reference/sessions",
-      "destination": "/integrate/typescript/agent#manage-sessions"
+      "destination": "/integrate/agent#manage-sessions"
     },
     {
       "source": "/reference/simulation",
@@ -488,7 +504,7 @@
     },
     {
       "source": "/guides/widget/authentication",
-      "destination": "/guides/widget/installation#cross-origin-authentication"
+      "destination": "/guides/widget/quickstart#understand-the-boundary"
     },
     {
       "source": "/guides/frontend-setup",
@@ -520,7 +536,7 @@
     },
     {
       "source": "/getting-started/quickstart",
-      "destination": "/integrate/typescript/quickstart"
+      "destination": "/integrate/client-sdk"
     },
     {
       "source": "/build/deploy",

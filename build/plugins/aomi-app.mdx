@@ -3,7 +3,7 @@ title: "Aomi App"
 description: "Organize the plugin, behavior, tools, and package that become a deployed Aomi App."
 ---
 
-<Info>Verified against aomi-sdk@08b21f9 on 2026-06-29.</Info>
+<Info>Verified against published `aomi-sdk` 5.1.1 at commit `2ef3e04` on 2026-09-22.</Info>
 
 An Aomi App combines a role, a focused set of tools, and the workflow that tells
 the model how to use them. You author those pieces as a Rust **plugin**. Once
@@ -156,7 +156,7 @@ edition = "2024"
 crate-type = ["cdylib"]
 
 [dependencies]
-aomi-sdk = "=3.0.3"
+aomi-sdk = "=5.1.1"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 ```

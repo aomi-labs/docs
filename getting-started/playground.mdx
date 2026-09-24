@@ -1,6 +1,6 @@
 ---
 title: Playground
-description: "Configure AomiFrame in a live preview. Adjust layout, theme, sidebar, and controls, then copy the generated JSX into your App."
+description: "Explore an AomiFrame layout fragment, then connect it to the runtime and authentication in your host application."
 mode: custom
 ---
 
@@ -60,6 +60,12 @@ import { WidgetPlayground } from "../snippets/widget-playground.jsx";
       Adjust layout, theme, and options, then copy the JSX into your app
     </span>
   </div>
+
+  <p className="px-4 lg:px-8 py-3 text-sm">
+    This is a layout preview. Generated JSX is a fragment that needs your runtime,
+    authentication, and wallet provider composition. For a complete embed, follow
+    the <a href="/guides/widget/installation">packaged widget installation</a>.
+  </p>
 
   <WidgetPlayground />
 

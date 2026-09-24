@@ -104,7 +104,7 @@ const aomi = new Aomi({
   baseUrl: process.env.AOMI_BASE_URL!,
   auth: oauth({
     clientId: process.env.AOMI_OAUTH_CLIENT_ID!,
-    store: grantStore,
+    // Add store: grantStore for durable refresh grants.
     onVerification({ verificationUriComplete, verificationUri, userCode }) {
       console.log(
         `Open ${verificationUriComplete ?? verificationUri} and confirm ${userCode}`,
@@ -159,3 +159,37 @@ Standalone browser OAuth is available only to provisioned integrations. It uses 
 ## Tokens over raw HTTP
 
 Supplying your own OAuth tokens? The exact resource audiences, required scopes, and failure statuses are documented in the [Authentication reference](/api-reference/authentication).
+
+## Account-owned App credentials
+
+App credentials are user-supplied keys for one deployed App. They are separate from OAuth grants, model-provider BYOK keys, and temporary `aomi secret` values. This API is present in the merged client 0.9.4 source and requires a matching release and deployment.
+
+Use a signed-in OAuth client and the canonical Application ID returned by `aomi.raw.listAccountApps(sessionId)`. The session ID supplies request context; it is not an authentication credential.
+
+```ts
+const apps = await aomi.raw.listAccountApps(sessionId);
+console.log(apps);
+
+const status = await aomi.raw.getAppCredentialsStatus(sessionId, applicationId);
+console.log(status); // Slot names and configuration state, never saved values
+
+await aomi.raw.setAppCredential(sessionId, applicationId, slotName, secretValue);
+await aomi.raw.replaceAppCredential(sessionId, applicationId, slotName, rotatedValue);
+await aomi.raw.removeAppCredential(sessionId, applicationId, slotName);
+```
+
+Acquire values in a private input or secret store. Do not put them in Agent prompts, URLs, logs, screenshots, or committed example files. Only use slots declared by the App. Saving one slot leaves other slots untouched; removing a required slot makes that App require setup again.
+
+With OAuth, the SDK uses `/v1/account/apps/{applicationId}/secrets` and an exact Account resource grant. Agent and Pipeline grants do not authorize credential management. The SDK acquires the needed grant lazily when using `auth: oauth(...)`. Guests cannot manage persistent App credentials.
+
+## Account credits
+
+The same client exposes account credit balance and activity:
+
+```ts
+const position = await aomi.account.credits.get({ limit: 20 });
+console.log(position.included.remaining_microusd);
+console.log(position.bank.balance_microusd);
+```
+
+This read requires an account credential accepted by the selected environment. The [runnable account example](https://github.com/aomi-labs/aomi/blob/main/apps/examples/headless-client/src/account/credits.ts) also covers explicit, idempotent top-up and recovery; it does not make purchases unless you opt in.

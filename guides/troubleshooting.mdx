@@ -39,7 +39,7 @@ Clear `~/.aomi/` to reset all local session state.
 ## API Issues
 
 **401 Unauthorized**
-No App key provided. Add an `AOMI-APP-KEY` header or enter it in the control bar.
+The caller credential is missing, expired, or bound to another resource. Sign in again or obtain a grant for the exact Agent, Pipeline, or MCP resource. An App selector is not a credential. See [Authentication](/api-reference/authentication).
 
 **403 Forbidden**
 The API key does not authorize the requested App. Verify the key is scoped to the correct App.

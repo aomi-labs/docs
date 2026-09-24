@@ -6,7 +6,7 @@ description: "Publish your App's widget frontend on Vercel and give users a stab
 Your plugin is deployed and running as an App on Aomi. This page takes the widget frontend you built for it and ships it to Vercel: a public URL, your branding, your domain.
 
 <Info>
-**Verified 2026-07-14** against `@aomi-labs/react` 0.5.0 and a live App on `https://api.aomi.dev`. Package versions move: trust the registry and your install over any version written here.
+**Verified 2026-09-22** against published `@aomi-labs/react` 0.7.6 and the public API origin `https://chat.aomi.dev`. Package versions move: trust the registry and your install over any version written here.
 </Info>
 
 The frontend is a thin shell. It does not run your App, hold your keys, or talk to any chain. It renders a chat and points at the Aomi runtime, which loads your deployed App and does the work.
@@ -37,7 +37,7 @@ You do not need a frontend to use or demo your App. Once it is active it already
 Passing the prop explicitly is the most predictable choice, because it works even if an environment variable is missing on your host:
 
 ```tsx
-<AomiFrame backendUrl="https://api.aomi.dev" height="100dvh" />
+<AomiFrame backendUrl="https://chat.aomi.dev" height="100dvh" />
 ```
 
 `AomiFrame` takes `width`, `height`, `className`, `style`, `walletPosition`, and `backendUrl`.
@@ -45,7 +45,7 @@ Passing the prop explicitly is the most predictable choice, because it works eve
 If your App only reads data and simulates, and never asks anyone to sign a transaction, hide the wallet controls:
 
 ```tsx
-<AomiFrame backendUrl="https://api.aomi.dev" walletPosition={null} />
+<AomiFrame backendUrl="https://chat.aomi.dev" walletPosition={null} />
 ```
 
 ## Check the build before you deploy
@@ -92,7 +92,7 @@ import { AomiFrame } from "@/components/aomi-frame";
 export default function Page() {
   return (
     <AomiRuntimeProvider
-      backendUrl="https://api.aomi.dev"
+      backendUrl="https://chat.aomi.dev"
       appPlatforms={["community"]}
     >
       <AomiFrame height="100dvh" />
@@ -103,19 +103,13 @@ export default function Page() {
 
 `AomiRuntimeProvider` accepts `backendUrl`, `applicationId`, `appPlatforms`, and `clientOptions`. Use `applicationId` when you want one specific App, and `appPlatforms` to narrow the list to a platform.
 
-## Calling your App from your own backend
+## Calling your App without the widget
 
-The widget is the supported way to put a chat on a page, because it carries sign in with it. If instead you want to call your App from a service you control, create an app key:
-
-1. Go to `chat.aomi.dev/settings` and open **App Keys**.
-2. Give the key a label, select the Apps it may access, and create it.
-3. Copy the key. It is shown only once.
-
-Send it as the `AOMI-APP-KEY` header to `/api/thread/chat`.
-
-<Warning>
-An app key is a credential. Keep it on your server, in an environment variable, and never ship it to the browser. Anything in your frontend bundle is public.
-</Warning>
+Use the [headless library](/integrate/client-sdk) when you need your own UI or a
+service integration. It calls the versioned `/v1/agent` resource and acquires
+a bearer credential for that exact OAuth resource. The retired
+`AOMI-APP-KEY` and `/api/thread/chat` contract is not part of the public
+versioned API.
 
 ## Troubleshooting
 
@@ -125,7 +119,7 @@ An app key is a credential. Keep it on your server, in an environment variable, 
 | `Module not found: 'ox'` | A transitive dependency of the wallet stack is not hoisted. | `pnpm add ox` |
 | The build fails on type errors inside the widget files | Type mismatches in vendored component code, not in your app. | Set `typescript: { ignoreBuildErrors: true }` in `next.config.mjs`. Your own code is still type checked in the editor. |
 | Your App is missing from the picker | It is not loaded on the backend. | Run `aomi-build deploy status`. If `artifact_ready=false`, the platform SDK version moved. Run `aomi-build sdk fix`, then deploy again. |
-| The chat renders but answers never arrive | You are not signed in, or the backend URL is wrong. | Sign in from the control bar, and confirm `backendUrl` points at `https://api.aomi.dev`. |
+| The chat renders but answers never arrive | You are not signed in, or the backend URL is wrong. | Sign in from the control bar, and confirm `backendUrl` points at `https://chat.aomi.dev`. |
 
 ## Next
 

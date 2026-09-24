@@ -5,7 +5,7 @@ description: "Install @aomi-labs/client, run your first Agent turns, choose a cl
 
 Use **Integrate Aomi** when you want to call Aomi from an existing product or service with TypeScript or raw HTTP. Use [Try Aomi](/trade/portal) for the no-code surfaces (Portal, skills, MCP, CLI), and [Build on Aomi](/build) when you want to create and deploy a new App.
 
-`@aomi-labs/client` works in Node.js and browsers. The `Aomi` class gives you four surfaces:
+`@aomi-labs/client` works in Node.js and browsers. The `Aomi` class gives you five surfaces:
 
 ```ts
 import { Aomi } from "@aomi-labs/client";
@@ -17,12 +17,27 @@ const aomi = new Aomi({
 aomi.agent;    // stateful Agent turns
 aomi.pipeline; // stateless Build flows
 aomi.auth;     // guest or OAuth lifecycle
+aomi.account;  // account credit balance and activity
 aomi.raw;      // wire-close client for advanced control
 ```
 
-<Warning>
-  This section documents the unified `Aomi` facade as it exists on Aomi `origin/main`. The latest published `@aomi-labs/client` on npm (0.5.x) does not yet export the `Aomi` class — until the unified client ships, install the prerelease or build provisioned for your environment and verify its exported types before pinning. Agent and Pipeline availability can also differ between staging and production.
-</Warning>
+<Note>
+  On September 22, 2026, npm's `latest` was `@aomi-labs/client` 0.7.6; merged source was 0.9.4. The quickstart, device OAuth, routing, credits, and EVM/SVM Pipeline examples type-check against 0.7.6. The App credential helpers and durable Commit examples describe newer merged source and require a compatible build and deployment. A source version does not mean that version is published.
+</Note>
+
+## Check compatibility
+
+Keep the installed package and API environment aligned:
+
+```bash
+npm view @aomi-labs/client version
+npm ls @aomi-labs/client
+curl --fail "$AOMI_BASE_URL/openapi.json" -o openapi.json
+```
+
+The production origin is `https://chat.aomi.dev`. Its published OpenAPI lists the versioned Agent and Pipeline routes, but a listed route does not guarantee that the environment implements every contract on `main`. The newer account credential and durable Commit APIs require a matching package and deployment. Select an environment that explicitly supports the feature you use; do not combine portable Builds from incompatible versions.
+
+These guides describe merged contracts only. Open pull requests are not part of the supported examples.
 
 ## Quickstart
 
@@ -102,17 +117,18 @@ No API key is needed — the SDK starts in [guest mode](/integrate/authenticatio
 
 ## Integration layer
 
-The `Aomi` facade is the product-level layer: it manages guest or OAuth state, validates arguments against live schemas, wires your wallet capabilities into Agent runs, and shapes responses into typed product objects like `AgentRun` and `Build`. Beneath it sits `AomiClient`, the wire-close layer: one typed method per versioned API operation, with errors normalized and mutation headers applied, but no product behavior added. Both layers share one identity — `aomi.raw` is the same `AomiClient` with the same guest session or OAuth grants — so you can drop down for a single direct call without constructing a second client or authenticating twice.
+The `Aomi` facade is the product-level layer: it manages guest or OAuth state, validates arguments against live schemas, wires your wallet capabilities into Agent runs, and shapes responses into typed product objects like `AgentRun` and `Build`. Beneath it sits `AomiClient`, the wire-close layer: one typed method per versioned API operation, with errors normalized and mutation headers applied, but no product behavior added. Both layers share authentication state — `aomi.raw` is the same `AomiClient` with the same guest session or OAuth grants — so you can drop down for a single direct call without constructing a second client or authenticating twice.
 
 ```mermaid
 flowchart TD
-    A["<b>Aomi</b><br/>agent · pipeline · auth · wallet<br/><i>product flows, schema validation, wallet wiring</i>"]
+    A["<b>Aomi</b><br/>agent · pipeline · auth · account<br/><i>product flows, schema validation, wallet wiring</i>"]
     C["<b>AomiClient</b><br/><i>typed wire-close transports, shared auth state</i>"]
     S["<b>Session</b><br/><i>compatibility surface for older integrations</i>"]
     A -->|"aomi.raw"| C
     S --> C
     C --> R1["<code>/v1/agent</code>"]
     C --> R2["<code>/v1/pipeline</code>"]
+    C --> R3["<code>/v1/account</code>"]
 ```
 
 | Layer | Use it for |

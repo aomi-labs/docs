@@ -4,14 +4,25 @@ sidebarTitle: "Overview"
 description: "The versioned Aomi HTTP API: resources, authentication, request conventions, and the interactive endpoint reference."
 ---
 
-The Aomi API turns natural-language intent and deterministic operations into verified on-chain execution. Two versioned resources cover the whole surface:
+The Aomi API turns natural-language intent and deterministic operations into verified on-chain execution. The public API is served from `https://chat.aomi.dev`. Use `https://chat-staging.aomi.dev` when you deliberately target staging.
+
+Three versioned resources cover the public surface:
 
 | Resource | Owns | Use it for |
 | --- | --- | --- |
 | [`/v1/agent`](/api-reference/agent) | Conversation state | Stateful turns, progress events, actions, and sessions |
 | [`/v1/pipeline`](/api-reference/pipeline) | Nothing — stateless | Catalog discovery and the build → simulate → commit lifecycle |
+| `/v1/account` | Account configuration | Credits, statements, App installation, and write-only App credentials |
 
 Every endpoint on the pages in this tab has an interactive playground. The TypeScript [Client SDK](/integrate/client-sdk) wraps this same API with typed transports, automatic authentication, and schema validation — prefer it when your application is TypeScript.
+
+<Info>
+  This reference schema was generated from backend source revision `f217b970`
+  on 2026-09-22, then given the public production and staging server overlay.
+  Newly released routes, including Account App and credential management, can
+  appear here before every deployed environment serves the same OpenAPI
+  revision.
+</Info>
 
 ## Authentication
 

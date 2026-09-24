@@ -24,11 +24,11 @@ flowchart LR
     API --> LIFE
     LIFE --> FORK
     CAT -.->|"descriptors + live schemas"| client
-    LIFE -.->|"awaiting_wallet action"| client
-    LIFE -->|"committed"| CHAIN
+    LIFE -.->|"requests: ActionRequest[]"| client
+    client -->|"review, sign, submit"| CHAIN
 ```
 
-The catalog is the runtime's own registry of Apps, skills, and core operations, and the build engine is the same stage → simulate → commit machinery the Agent uses — minus the conversation. The resource is stateless: nothing is stored between calls, state lives in your application or on chain, and anything requiring a signature comes back to you as a pending action.
+The catalog is the runtime's own registry of Apps, skills, and core operations, and the build engine is the same stage → simulate → commit machinery the Agent uses — minus the conversation. The resource is stateless: nothing is stored between calls, state lives in your application or on chain, and wallet work comes back as `ActionRequest` values without durable Agent Action IDs. The `committed` response describes the Pipeline operation, not proof of on-chain confirmation.
 
 <Info>
   The **Pipeline API** is a callable product surface. The [transaction pipeline](/concepts/transaction-pipeline) is the broader build → simulate → sign → broadcast safety model.
@@ -38,7 +38,7 @@ The catalog is the runtime's own registry of Apps, skills, and core operations, 
 
 The direct lane takes chain actions you already have and walks them through the full lifecycle: stage them into a Build, simulate that Build on a fork, review the evidence, then cross the explicit commit boundary.
 
-Unlike the Agent lane, no [UserState](/integrate/agent#communicate-wallet-context-with-userstate) travels with these calls — the resource is stateless, so every input is explicit (chain, calls, instructions) and everything the harness cannot execute on its own comes back to you as a pending action. When the Agent drives this same build engine inside a conversation, that lifecycle state rides UserState instead.
+Unlike the Agent lane, no [UserState](/integrate/agent#communicate-wallet-context-with-userstate) travels with these calls — the resource is stateless, so every input is explicit (chain, calls, instructions) and wallet intents come back in the commit response's `requests` array. When the Agent drives this same build engine inside a conversation, that lifecycle state rides UserState instead.
 
 <Tabs>
   <Tab title="EVM">
@@ -51,7 +51,7 @@ Unlike the Agent lane, no [UserState](/integrate/agent#communicate-wallet-contex
     });
     ```
 
-    A staged Build carries your actions and a portable `digest`, nothing more. It has not touched a chain and has no simulation evidence yet.
+    A version 2 staged Build carries its actions, origin, expiry, digest, and server attestation. Preserve the whole object unchanged between requests. It has not touched a chain and has no simulation evidence yet.
 
     **2 · Simulate.** Simulation runs the staged Build against a fork of the live chain and returns what would actually happen:
 
@@ -76,24 +76,20 @@ Unlike the Agent lane, no [UserState](/integrate/agent#communicate-wallet-contex
     });
     ```
 
-    **4 · Commit.** Commit revalidates the simulated Build and executes it:
+    **4 · Commit.** After explicit user approval, commit revalidates the simulated Build and invokes its commit operation:
 
     ```ts
     const result = await simulated.commit();
 
-    switch (result.status) {
-      case "committed":
-      case "submitted":
-        console.log(result.receipts);
-        break;
-      case "awaiting_wallet":
-        showPendingAction(result.action);
-        break;
+    console.log(result.status); // "committed"
+    console.log(result.digest);
+    console.log(result.result); // EVM operation output
+    for (const request of result.requests) {
+      renderWalletRequest(request);
     }
     ```
 
-    - `committed` and `submitted` return `receipts` for the executed transactions.
-    - `awaiting_wallet` means the harness cannot execute on its own: `result.action` is the pending action your application must review and complete through its wallet flow. Pipeline commit does not automatically execute the wallet configured on `Aomi`.
+    `requests` contains wallet intents, not persisted Agent Actions. It has no Action IDs to resolve through `respondToAction`. The caller owns review, signing, submission, and receipt tracking for this stateless lane. Pipeline commit does not automatically call the wallet configured on `Aomi`, and `committed` alone does not prove a transaction was broadcast.
 
     Commit uses the portable Build digest as its default idempotency key. Supply your own key when it needs to match an application-level request:
 
@@ -112,19 +108,20 @@ Unlike the Agent lane, no [UserState](/integrate/agent#communicate-wallet-contex
       kind: "instructions",
       instructions: [
         {
-          programId: program,
-          accounts: accountMetas,
-          data: instructionData, // base64 by default
+          description: "Invoke the selected program",
+          instructions: [{
+            program_id: program,
+            accounts: accountMetas,
+            data_base64: instructionData,
+          }],
         },
       ],
-      cluster: "mainnet-beta",
-      feePayer: payer,
     });
 
     // Or from a prebuilt transaction — venue bytes preserved verbatim
     const stagedTx = await aomi.pipeline.svm.stage({
       kind: "transaction",
-      transaction: { transaction: base64Transaction },
+      transaction: { tx: base64Transaction },
     });
     ```
 
@@ -144,18 +141,18 @@ Unlike the Agent lane, no [UserState](/integrate/agent#communicate-wallet-contex
     });
     ```
 
-    **4 · Commit.** Commit returns the same `committed` / `submitted` / `awaiting_wallet` statuses with the same idempotency rules:
+    **4 · Commit.** SVM returns `status: "committed"`, the Build digest, an operation `results` array, and wallet `requests`, with the same idempotency rules:
 
     ```ts
     const result = await simulated.commit();
     ```
 
-    Because the bundle is atomic, the instructions execute in order inside a single transaction or not at all — there is no partially applied state to reason about.
+    Instructions assembled into one Solana transaction execute atomically when that transaction is submitted successfully. A Build containing multiple transactions does not provide cross-transaction atomicity.
   </Tab>
 </Tabs>
 
 <Warning>
-  Do not turn a successful simulation into implicit approval. Simulation evidence is informative, not signing authority. And on staging, guest sessions can read the catalog but cannot execute Pipeline mutations — use a grant with `pipeline:execute` to test stage, simulate, build, or commit.
+  Do not turn a successful simulation into implicit approval. Simulation evidence is informative, not signing authority. Use an environment and credential authorized for `pipeline:execute` before calling stage, simulate, build, or commit. Guest catalog access does not imply execution permission.
 </Warning>
 
 ## Read chain state
@@ -166,12 +163,13 @@ Each chain namespace also exposes read operations alongside the Build lifecycle,
 | --- | --- | --- |
 | `account` | `get_account_info` | `svm_get_account_info` |
 | `contract` / `program` | `get_contract` | `svm_get_program` |
-| `balance` / `token-holdings` | `get_erc20_balance` | `svm_get_token_holdings` |
+| `token-holdings` | `get_erc20_balance` | `svm_get_token_holdings` |
 | `context` | `get_time_and_onchain_context` | `svm_get_context` |
+| `encode-call` | `encode_and_call` | — |
 
 List them with `GET /v1/pipeline/evm` or `GET /v1/pipeline/svm` and invoke with `POST`, like an App operation. For the live input schema, read the underlying tool's descriptor — `GET /v1/pipeline/apps/default/operations/{tool}` — which is the guaranteed-schema path; the chain-level `GET` returns only a pointer descriptor.
 
-The aliases are a curated subset. The rest of the core namespaces — including `encode_and_call`, `simulate_batch`, and `sync_chain` on EVM — is discoverable and invocable through the default App's operations catalog at `/v1/pipeline/apps/default/operations`. The SDK does not yet expose typed methods for any of these; call them through the raw transport or HTTP.
+The aliases are a curated subset. The rest of the core namespaces — including `simulate_batch` and `sync_chain` on EVM — is discoverable and invocable through the default App's operations catalog at `/v1/pipeline/apps/default/operations`. The SDK does not yet expose typed methods for any of these; call them through the raw transport or HTTP.
 
 ## Catalog with Apps and Skills
 
@@ -246,7 +244,7 @@ console.log(echo.description);
 console.log(echo.inputSchema);
 ```
 
-This descriptor is available on staging and accepts a `message` string. Catalog contents vary by environment, so discover the App and operation before relying on them. The SDK validates Build arguments against the descriptor schema.
+The `dummy_echo` example accepts a `message` string when that operation is exposed by your environment. Catalog contents vary by environment, so discover the App and operation before relying on them. The SDK validates Build arguments against the descriptor schema. A read-only operation such as `dummy_echo` is a discovery example; use an operation that produces chain actions for `build()`.
 
 ## Build from an App operation
 
