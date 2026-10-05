@@ -18,7 +18,10 @@ Install only the provider you use and import its lazy entry explicitly.
 ## Privy
 
 ```bash
-npm install @privy-io/react-auth@^2 @privy-io/wagmi@^1
+npm install @privy-io/react-auth@2.25.0 @privy-io/wagmi@1.0.6 \
+  @solana/kit@^2.3.0 @solana/spl-token@^0.4.9 \
+  @solana-program/token@^0.5.1 @solana-program/system@^0.7.0 \
+  permissionless@^0.2.47 @abstract-foundation/agw-client@^1.0.0
 ```
 
 ```tsx
@@ -30,6 +33,9 @@ export default function Assistant() {
   return <AomiWidget applicationId="123" auth={privyAuth({ appId: "YOUR_PUBLIC_PRIVY_APP_ID" })} />;
 }
 ```
+
+Privy imports its Solana and smart-wallet feature peers during bundling, so include
+them even when your host uses only basic wallets.
 
 ## Para
 
