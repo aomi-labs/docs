@@ -37,7 +37,7 @@ Most integrations need no key at all. Start from the top row and move down only 
 | --- | --- | --- | --- |
 | **Guest session** (default) | You evaluate Aomi, run scripts, or call the default Agent and public Apps | Nothing to obtain. `new Aomi({ baseUrl })` creates an anonymous session on the first protected call | `Authorization: Bearer`, managed by the SDK |
 | **OAuth client ID** | A CLI, bot, or service needs a signed-in account: Pipeline execution, account credits, or App credentials | Self-register a public client with one request ([below](#get-an-oauth-client-id)), or let `aomi account login` register one for you | Not a secret. The SDK exchanges it for resource-bound tokens |
-| **App key** | You call a **private** App. Default and public Apps never need one | The App's owner creates it from a signed-in account ([below](#app-keys-for-private-apps)) | `Aomi-App-Key` header: the `apiKey` client option, CLI `--api-key`, or `AOMI_API_KEY` |
+| **App key** | You call a **private** App. Default and public Apps never need one | The Aomi team issues the first key for a private App to its owner's account; that account can then rotate it ([below](#app-keys-for-private-apps)) | `Aomi-App-Key` header: the `apiKey` client option, CLI `--api-key`, or `AOMI_API_KEY` |
 | **Account bearer** | Your host already holds a signed-in Aomi account session, such as the widget or a same-origin app | Minted by the host session. The widget does this for you | `Authorization: Bearer`, supplied through `getAccountBearer` |
 
 <Tip>
@@ -270,7 +270,7 @@ aomi chat "run the selected App" \
 
 ### Create an App key
 
-App keys look like `aomi-` followed by 64 hex characters. The App's owner creates them from a signed-in Aomi account. There is no portal screen for App keys today. Call the account endpoint from a signed-in `chat.aomi.dev` session, or ask the Aomi team to issue one:
+App keys look like `aomi-` followed by 64 hex characters, and Aomi always generates them. The first key for a private App is issued by the Aomi team to the owner's account. After that, an account that holds an active key for the App can mint additional or replacement keys and revoke old ones. There is no portal screen for App keys today; call the account endpoint from a signed-in `chat.aomi.dev` session:
 
 | Method | Path | Body | Returns |
 | --- | --- | --- | --- |
@@ -278,7 +278,7 @@ App keys look like `aomi-` followed by 64 hex characters. The App's owner create
 | `POST` | `/api/account/app-keys` | `{ "apps": ["my-app"], "label": "server" }` | `app_key` (the full key, shown once) and its metadata |
 | `DELETE` | `/api/account/app-keys/{key_hash}` | None | The revoked key's metadata |
 
-`apps` lists App names that are loaded on the runtime. An unknown name returns `400`. Store the returned `app_key` in a secret manager immediately; later reads return only its prefix.
+`apps` lists App names that are loaded on the runtime. An unknown name returns `400`; a private App your account holds no key for returns `403`. Store the returned `app_key` in a secret manager immediately; later reads return only its prefix.
 
 An App key does not replace an OAuth account grant, own an Agent session, or authorize a wallet signature. Keep it on a server. Never put it in browser code, prompts, URLs, or logs. The [widget](/integrate/ui/widget) has no App-key input, so private Apps are not available through the widget.
 
