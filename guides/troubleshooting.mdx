@@ -42,7 +42,12 @@ Clear `~/.aomi/` to reset all local session state.
 The caller credential is missing, expired, or bound to another resource. Sign in again or obtain a grant for the exact Agent, Pipeline, or MCP resource. An App selector is not a credential. See [Authentication](/api-reference/authentication).
 
 **403 Forbidden**
-The API key does not authorize the requested App. Verify the key is scoped to the correct App.
+Check the error code first:
+
+- `insufficient_scope`: the credential lacks a scope or targets another resource. A guest cannot perform this operation in this environment; sign in with [OAuth](/integrate/authentication#oauth-for-a-service-or-cli) and request the exact resource.
+- A `403` when you call a **private** App: the `Aomi-App-Key` header carries a key that is not scoped to that App. Newer backends return `app_key_not_scoped`. Use a key created for that App. A missing key returns `401` (`app_key_required` on newer backends).
+
+Default and public Apps never need an App key. See [Which credential do I need?](/integrate/authentication#which-credential-do-i-need).
 
 ## Next Steps
 

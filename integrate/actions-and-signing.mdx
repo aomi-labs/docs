@@ -142,9 +142,20 @@ Persist recovery records before opening the wallet and after it returns a transa
 
 ## Review a Pipeline Build
 
-Pipeline keeps review and commit separate:
+Pipeline keeps review and commit separate. This example registers a Merkle root on your own contract:
 
 ```ts
+import { encodeFunctionData, parseAbi, type Address, type Hex } from "viem";
+
+const registryAbi = parseAbi(["function registerRoot(bytes32 root)"]);
+const contract: Address = "0xYourRegistryAddress";
+
+const calldata = encodeFunctionData({
+  abi: registryAbi,
+  functionName: "registerRoot",
+  args: [root],
+});
+
 const build = await aomi.pipeline.evm.stage({
   chainId: 8453,
   calls: [{ to: contract, data: calldata, value: 0n }],
@@ -169,6 +180,93 @@ Pipeline commit does not automatically use the wallet configured on `Aomi`. It r
 <Warning>
   Catalog access does not grant execution permission. Use a credential authorized for `pipeline:execute` on your selected environment before testing stage, simulate, build, or commit.
 </Warning>
+
+## Verify before you sign
+
+A simulation that passed shows what the transaction would do. It does not show that the transaction is the one your application intended. When you know the exact contract call, check it in code before you open the wallet:
+
+1. Every transaction targets the contract you expect.
+2. Its calldata decodes against your ABI to the expected function and arguments.
+3. It sends no unexpected native value.
+4. The simulation status is `passed`.
+
+```ts
+import {
+  decodeFunctionData,
+  getAddress,
+  parseAbi,
+  type Address,
+  type Hex,
+} from "viem";
+import type { PipelineSimulation } from "@aomi-labs/client";
+
+const registryAbi = parseAbi(["function registerRoot(bytes32 root)"]);
+
+type EvmTx = { to: string; data: string; value?: string };
+
+function verifyRootRegistration(
+  transactions: readonly EvmTx[],
+  simulation: PipelineSimulation,
+  expected: { registry: Address; root: Hex },
+): void {
+  if (simulation.status !== "passed") {
+    throw new Error(`Simulation ${simulation.status}; refusing to sign`);
+  }
+  if (transactions.length !== 1) {
+    throw new Error(`Expected 1 transaction, got ${transactions.length}`);
+  }
+  for (const tx of transactions) {
+    if (getAddress(tx.to) !== getAddress(expected.registry)) {
+      throw new Error(`Unexpected target ${tx.to}`);
+    }
+    if (BigInt(tx.value ?? "0") !== 0n) {
+      throw new Error(`Unexpected native value ${tx.value}`);
+    }
+    const call = decodeFunctionData({ abi: registryAbi, data: tx.data as Hex });
+    if (
+      call.functionName !== "registerRoot" ||
+      call.args[0].toLowerCase() !== expected.root.toLowerCase()
+    ) {
+      throw new Error("Calldata does not match registerRoot(expected root)");
+    }
+  }
+}
+```
+
+Run the check on an Agent action before you execute it. The wallet still signs locally, after the check and the user's approval:
+
+```ts
+run.on("action", async (action) => {
+  if (action.state !== "pending") return;
+  const request = action.request;
+  if (request.type !== "execute_evm") {
+    await run.reject(action.id, `Unexpected request ${request.type}`);
+    return;
+  }
+
+  try {
+    verifyRootRegistration(request.transactions, request.simulation, {
+      registry,
+      root,
+    });
+  } catch (error) {
+    await run.reject(action.id, String(error));
+    return;
+  }
+
+  if (!(await showApprovalUI(action))) {
+    await run.reject(action.id, "User rejected");
+    return;
+  }
+  await run.session.actions.execute(action.id);
+});
+```
+
+The same function checks a Pipeline Build before commit: call `verifyRootRegistration(simulated.actions, simulated.simulation, { registry, root })`.
+
+<Note>
+  Newer SDK versions add a built-in helper for this check. The Viem version above works with every current release.
+</Note>
 
 ## Keep the boundary explicit
 

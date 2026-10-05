@@ -15,6 +15,7 @@
         "icon": "house",
         "pages": [
           "index",
+          "guides/hackathon",
           {
             "group": "Try Aomi",
             "icon": "rocket",
@@ -51,6 +52,7 @@
             "icon": "code",
             "pages": [
               "integrate/client-sdk",
+              "integrate/choose-surface",
               "integrate/agent",
               "integrate/pipeline",
               "integrate/authentication",
@@ -63,6 +65,7 @@
             "icon": "lightbulb",
             "pages": [
               "concepts/architecture",
+              "concepts/patterns",
               "concepts/transaction-pipeline",
               "concepts/skills-and-guards",
               "concepts/accounts-and-wallets",
@@ -108,7 +111,8 @@
               "examples/somm-finance",
               "examples/world-markets",
               "examples/kuroko",
-              "examples/aomi-trader"
+              "examples/aomi-trader",
+              "examples/guardrail"
             ]
           },
           {
