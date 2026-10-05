@@ -183,9 +183,9 @@ Pipeline commit does not automatically use the wallet configured on `Aomi`. It r
 
 ## Verify before you sign
 
-A simulation that passed shows what the transaction would do. It does not show that the transaction is the one your application intended. When you know the exact contract call, check it in code before you open the wallet:
+A passed simulation shows what the transaction did against the simulated state. It does not guarantee execution against later chain state, or show that the transaction is the one your application intended. When you know the exact contract call, check it in code before you open the wallet:
 
-1. Every transaction targets the contract you expect.
+1. Every transaction targets the chain and contract you expect.
 2. Its calldata decodes against your ABI to the expected function and arguments.
 3. It sends no unexpected native value.
 4. The simulation status is `passed`.
@@ -201,13 +201,14 @@ import {
 import type { PipelineSimulation } from "@aomi-labs/client";
 
 const registryAbi = parseAbi(["function registerRoot(bytes32 root)"]);
+const registryChainId = 8453;
 
-type EvmTx = { to: string; data: string; value?: string };
+type EvmTx = { chain_id: number; to: string; data: string; value?: string };
 
 function verifyRootRegistration(
   transactions: readonly EvmTx[],
   simulation: PipelineSimulation,
-  expected: { registry: Address; root: Hex },
+  expected: { chainId: number; registry: Address; root: Hex },
 ): void {
   if (simulation.status !== "passed") {
     throw new Error(`Simulation ${simulation.status}; refusing to sign`);
@@ -216,6 +217,9 @@ function verifyRootRegistration(
     throw new Error(`Expected 1 transaction, got ${transactions.length}`);
   }
   for (const tx of transactions) {
+    if (tx.chain_id !== expected.chainId) {
+      throw new Error(`Unexpected chain ${tx.chain_id}`);
+    }
     if (getAddress(tx.to) !== getAddress(expected.registry)) {
       throw new Error(`Unexpected target ${tx.to}`);
     }
@@ -246,6 +250,7 @@ run.on("action", async (action) => {
 
   try {
     verifyRootRegistration(request.transactions, request.simulation, {
+      chainId: registryChainId,
       registry,
       root,
     });
@@ -262,7 +267,7 @@ run.on("action", async (action) => {
 });
 ```
 
-The same function checks a Pipeline Build before commit: call `verifyRootRegistration(simulated.actions, simulated.simulation, { registry, root })`.
+The same function checks a Pipeline Build before commit: call `verifyRootRegistration(simulated.actions, simulated.simulation, { chainId: registryChainId, registry, root })`.
 
 <Note>
   Newer SDK versions add a built-in helper for this check. The Viem version above works with every current release.

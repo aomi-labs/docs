@@ -1,9 +1,9 @@
 ---
 title: "Provenance anchoring"
-description: "See how a hackathon team used Aomi as the execution layer to anchor off-chain records on chain: batch into a Merkle root, build and simulate the registration, verify it, and sign locally."
+description: "A reference pattern for using Aomi to anchor off-chain records on chain: batch into a Merkle root, build and simulate the registration, verify it, and sign locally."
 ---
 
-A team at an Aomi hackathon built a provenance service for off-chain records. Their product had nothing to do with trading. It needed to prove, later and to anyone, that a batch of records existed at a point in time and has not changed since. They used Aomi as the **execution layer**: their app owned the data and the rules, and Aomi built and simulated the on-chain registration.
+This reference pattern shows a provenance service for off-chain records. The product needs to prove, later and to anyone, that a batch of records existed at a point in time and has not changed since. It uses Aomi as the **execution layer**: the app owns the data and the rules, and Aomi builds and simulates the on-chain registration.
 
 ## What it does
 
@@ -34,7 +34,7 @@ sequenceDiagram
 3. **Verify.** Before showing a wallet prompt, the app checks that the transaction targets the registry address, that the calldata decodes to `registerRoot` with the expected root, that it sends no native value, and that the simulation `passed`. Any mismatch stops the flow.
 4. **Sign locally.** Only then does the user's wallet sign. Aomi never holds the key.
 
-The verification step is what makes the pattern trustworthy. A passed simulation proves the transaction runs. The ABI check proves it is the transaction the app meant to send. The code for this check is in [Verify before you sign](/integrate/actions-and-signing#verify-before-you-sign).
+The verification step binds the wallet prompt to the app's stated intent. A passed simulation is evidence from the simulated state, not a guarantee about later chain state. The ABI check confirms that the prepared calldata matches the contract call the app meant to make. The code for this check is in [Verify before you sign](/integrate/actions-and-signing#verify-before-you-sign).
 
 ## Why it is a useful example
 
