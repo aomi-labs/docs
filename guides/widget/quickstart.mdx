@@ -46,7 +46,9 @@ flowchart LR
 
 You need:
 
-- An activated Aomi App and its numeric Application ID.
+- A numeric Application ID. To route turns to your own App, it must be an
+  activated, public App. See
+  [Find your Application ID](/integrate/choose-surface#find-your-application-id-and-activate-your-app).
 - React 18 or 19 running in the browser.
 - A browser-wallet, Para, or Privy integration choice.
 
@@ -205,16 +207,47 @@ You can keep thread selection and wallet presentation in your application:
 
 | Prop | Use it for |
 | --- | --- |
-| `applicationId` | Select the activated Aomi App. Aomi resolves its tools and execution settings. |
+| `applicationId` | Scope widget sign-in, the App catalog, App credentials, and thread persistence to one Application ID. It does not route turns on its own; see [Route turns to your App](#route-turns-to-your-app). |
+| `routing` | Choose Auto routing, Direct routing to specific Apps, or both. Defaults to Auto only. |
 | `apiUrl` | Select the Aomi service used for widget sessions, chat, and account requests. |
 | `auth` | Select browser-wallet, Para, or Privy authentication. |
 | `initialThreadId` | Open a thread chosen by your host application. |
 | `clientOptions` | Pass supported client behavior overrides without replacing Aomi authentication. |
 | `wallets` | Limit the wallet families, networks, or wallet choices shown to users. |
 
-The Application ID selects the App. It is not a user credential and does not
-grant wallet signing. The active user and wallet must still complete the
-configured authentication and approval flow.
+The Application ID is not a user credential and does not grant wallet
+signing. The active user and wallet must still complete the configured
+authentication and approval flow.
+
+### Route turns to your App
+
+By default the widget uses Auto routing, so Aomi's default Agent answers even
+when you pass your own `applicationId`. To send every turn to your App, add
+Direct routing with the same numeric ID:
+
+```tsx
+const applicationId = Number(process.env.NEXT_PUBLIC_AOMI_APPLICATION_ID);
+
+<AomiWidget
+  applicationId={String(applicationId)}
+  apiUrl={apiUrl}
+  auth={auth}
+  routing={{
+    targets: [{ mode: "direct", apps: [{ applicationId }] }],
+  }}
+/>
+```
+
+With one Direct App and no Auto target, the widget pins every turn to that App
+and shows no mode control. Add `{ mode: "auto" }` to `targets` to let users
+switch, and set `defaultMode` to choose the starting mode.
+
+<Warning>
+  Private Apps are not supported through the widget. The widget has no App-key
+  input, and an App key must never ship in browser code. Make the App public,
+  or call a private App from your server with the
+  [client SDK](/integrate/authentication#app-keys-for-private-apps).
+</Warning>
 
 ## 5. Verify the integration
 
@@ -224,7 +257,8 @@ configured authentication and approval flow.
    (Safe, Coinbase Smart Wallet, Base Account) cannot sign in through the
    widget.
 3. Confirm the thread list and composer load without an App-key prompt.
-4. Send a message and confirm your selected App responds.
+4. Send a message and confirm your App responds. If the default Agent answers
+   instead, add [Direct routing](#route-turns-to-your-app).
 5. If the App creates transactions, confirm the widget shows the request before
    the wallet asks for a signature.
 6. Repeat the check from the production HTTPS origin before launch.

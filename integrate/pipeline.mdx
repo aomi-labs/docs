@@ -42,14 +42,28 @@ Unlike the Agent lane, no [UserState](/integrate/agent#communicate-wallet-contex
 
 <Tabs>
   <Tab title="EVM">
-    **1 · Stage.** Staging turns raw calls — a target, calldata, and value — into a chain-specific Build without executing anything:
+    **1 · Stage.** Staging turns raw calls — a target, calldata, and value — into a chain-specific Build without executing anything. For your own contract, encode the calldata with Viem from its ABI:
 
     ```ts
+    import { encodeFunctionData, parseAbi, type Address, type Hex } from "viem";
+
+    const registryAbi = parseAbi(["function registerRoot(bytes32 root)"]);
+    const contract: Address = "0xYourRegistryAddress";
+    const root: Hex = "0x…"; // 32-byte Merkle root computed by your app
+
+    const calldata = encodeFunctionData({
+      abi: registryAbi,
+      functionName: "registerRoot",
+      args: [root],
+    });
+
     const staged = await aomi.pipeline.evm.stage({
       chainId: 8453,
       calls: [{ to: contract, data: calldata, value: 0n }],
     });
     ```
+
+    Staging takes raw calls, so you can target your own contract directly. Before signing, [verify the transaction against your ABI](/integrate/actions-and-signing#verify-before-you-sign).
 
     A version 2 staged Build carries its actions, origin, expiry, digest, and server attestation. Preserve the whole object unchanged between requests. It has not touched a chain and has no simulation evidence yet.
 
