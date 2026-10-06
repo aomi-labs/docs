@@ -12,12 +12,12 @@ Quickstart for end users:
 
 | Page | What it covers |
 |------|---------------|
-| `getting-started/quickstart.mdx` | Install AomiFrame in a Next.js app, set env vars, run |
+| `guides/widget/quickstart.mdx` | Install the compiled widget and render it with an Application ID |
 | `getting-started/web-app.mdx` | Use Aomi at chat.aomi.dev — composer, control bar, threads |
 | `getting-started/telegram.mdx` | @aomi_sendit_bot — slash commands, panels, wallet |
 | `getting-started/discord.mdx` | Discord bot (coming soon) |
 | `getting-started/ios.mdx` | iOS app (coming soon) |
-| `getting-started/playground.mdx` | Live AomiFrame configurator |
+| `getting-started/playground.mdx` | Widget layout and scoped theme configurator |
 
 ### 2. Platform Guides
 
@@ -25,12 +25,9 @@ Integration walkthroughs for builders:
 
 | Page | What it covers |
 |------|---------------|
-| `guides/frontend-setup.mdx` | Widget install walkthrough — shadcn, env vars, AomiFrame, layout |
-| `guides/widget-installation.mdx` | shadcn registry install, compound components, control bar |
-| `guides/widget/aomi-frame.mdx` | AomiFrame props, compound API, layout diagram |
-| `guides/widget/components.mdx` | Catalog of all registry components |
-| `guides/widget/configuration.mdx` | Env vars, props, control state, backend endpoints |
-| `guides/widget/theming.mdx` | CSS variables, dark mode, customizations |
+| `guides/widget/installation.mdx` | npm installation and optional Para or Privy wallets |
+| `guides/widget/customization.mdx` | Layout, routing, threads and compiled frame composition |
+| `guides/widget/deploy/ship-on-vercel.mdx` | Frontend deployment and registered origins |
 | `guides/headless-library.mdx` | @aomi-labs/react full reference — providers, hooks, API client, BackendApi |
 | `guides/headless/hooks.mdx` | Full API reference — useAomiRuntime, useUser, useControl, etc. |
 | `guides/headless/build-custom-ui.mdx` | Tutorial: message list, input, thread switcher |
@@ -101,10 +98,11 @@ docs.aomi.dev/
 │   ├── frontend-setup.mdx
 │   ├── widget-installation.mdx
 │   ├── widget/
-│   │   ├── aomi-frame.mdx
-│   │   ├── components.mdx
-│   │   ├── configuration.mdx
-│   │   └── theming.mdx
+│   │   ├── quickstart.mdx
+│   │   ├── installation.mdx
+│   │   ├── customization.mdx
+│   │   ├── troubleshooting.mdx
+│   │   └── deploy/ship-on-vercel.mdx
 │   ├── headless-library.mdx
 │   ├── headless/
 │   │   ├── hooks.mdx

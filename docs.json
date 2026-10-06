@@ -336,7 +336,7 @@
     },
     {
       "source": "/guides/widget/authentication",
-      "destination": "/guides/widget/installation#cross-origin-authentication"
+      "destination": "/integrate/ui/widget#cross-origin-authentication"
     },
     {
       "source": "/guides/frontend-setup",

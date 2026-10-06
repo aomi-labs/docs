@@ -1,10 +1,15 @@
 ---
 title: Playground
-description: "Configure AomiFrame in a live preview. Adjust layout, theme, sidebar, and controls, then copy the generated JSX into your App."
+description: "Configure the widget's layout, scoped theme, sidebar and controls, then copy a complete client component."
 mode: custom
 ---
 
 import { WidgetPlayground } from "../snippets/widget-playground.jsx";
+
+Install the package using the [widget quickstart](/guides/widget/quickstart).
+Replace Application ID `123` with your activated App's ID. Save the generated
+theme as `assistant-theme.css`; the client component imports it after the widget
+stylesheet so it customizes only this instance.
 
 <div className="max-w-8xl mx-auto" style={{
   minHeight: "calc(100vh - 64px)",
@@ -57,7 +62,7 @@ import { WidgetPlayground } from "../snippets/widget-playground.jsx";
       overflow: "hidden",
       textOverflow: "ellipsis"
     }}>
-      Adjust layout, theme, and options, then copy the JSX into your app
+      Replace Application ID 123, then copy the JSX and assistant-theme.css into your App
     </span>
   </div>
 
