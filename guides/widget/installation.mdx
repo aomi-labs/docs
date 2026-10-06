@@ -14,7 +14,8 @@ npm install @aomi-labs/widget
 
 The [quickstart](/guides/widget/quickstart) uses browser wallets by default.
 Choose an embedded wallet only when your product needs that sign-in experience.
-Install only the provider you use and import its lazy entry explicitly.
+Install only the provider you use. The `auth` prop loads that provider's SDK on
+demand; there is no provider module to import.
 
 These examples target `@aomi-labs/widget` 3.1.0. Use them after that release is
 published; check your installed package version before adopting them. The
@@ -23,7 +24,7 @@ be removed in 5.0.
 
 The package does not read framework environment variables. Your host can read
 public values with `process.env.NEXT_PUBLIC_*` in Next.js or
-`import.meta.env.VITE_*` in Vite and pass them to `apiUrl`, `applicationId`, or
+`import.meta.env.VITE_*` in Vite and pass them to `baseUrl`, `applicationId`, or
 the selected auth factory. Provider secrets stay on your server.
 
 ## Privy
@@ -37,8 +38,7 @@ npm install @privy-io/react-auth@2.25.0 @privy-io/wagmi@1.0.6 \
 
 ```tsx
 "use client";
-import { AomiWidget } from "@aomi-labs/widget";
-import { privyAuth } from "@aomi-labs/widget/providers/privy/lazy";
+import { AomiWidget, privyAuth } from "@aomi-labs/widget";
 import "@aomi-labs/widget/styles.css";
 export default function Assistant() {
   return <AomiWidget applicationId="123" auth={privyAuth({ appId: "YOUR_PUBLIC_PRIVY_APP_ID" })} />;
@@ -56,13 +56,16 @@ npm install @getpara/react-sdk@2.19.0 @getpara/wagmi-v2-connector@2.19.0
 
 ```tsx
 "use client";
-import { AomiWidget } from "@aomi-labs/widget";
-import { paraAuth } from "@aomi-labs/widget/providers/para/lazy";
+import { AomiWidget, paraAuth } from "@aomi-labs/widget";
 import "@aomi-labs/widget/styles.css";
 export default function Assistant() {
-  return <AomiWidget applicationId="123" auth={paraAuth({ apiKey: "YOUR_PUBLIC_PARA_PROJECT_KEY", environment: "PROD" })} />;
+  return <AomiWidget applicationId="123" auth={paraAuth({ apiKey: "YOUR_PUBLIC_PARA_PROJECT_KEY" })} />;
 }
 ```
+
+`environment` defaults to `"PROD"`; pass `"BETA"` for a Para beta key. If the
+selected provider's package is missing, the widget shows which package to
+install instead of failing the page.
 
 Pass public provider identifiers explicitly. Your host may load them from its
 own configuration, but the widget does not read environment variables. Allow
@@ -77,8 +80,10 @@ the installed SDK on hover or focus without changing the selected account.
 
 `@aomi-labs/widget-lib` remains a compatibility package. It retains the
 previously bundled Para and Privy dependencies and eager provider registration.
-Legacy `auth.kind` objects, provider entrypoints and existing component subpaths
-remain supported through the 4.x release line and are removed in 5.0. Use
-`@aomi-labs/widget`, the lazy factories and `auth.type` for new integrations. Registry copy-in installs are
+Legacy `auth.kind` objects, the `apiUrl` prop and existing component subpaths
+remain supported until 4.0. Use `@aomi-labs/widget`, `privyAuth`, `paraAuth`
+and `baseUrl` for new integrations. Hosts that compose `AomiFrame` themselves
+import it from `@aomi-labs/widget/frame` and the wallet kit and account UI from
+`@aomi-labs/widget/host-composition`. Registry copy-in installs are
 retired; existing registry JSON remains frozen during its announced retention
 window.

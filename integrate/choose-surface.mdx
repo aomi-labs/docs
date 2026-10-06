@@ -85,9 +85,8 @@ Put together:
 const applicationId = Number(process.env.NEXT_PUBLIC_AOMI_APPLICATION_ID); // from `aomi app list`
 
 <AomiWidget
-  applicationId={String(applicationId)}
-  apiUrl="https://chat.aomi.dev"
-  auth={{ kind: "browser_wallet" }}
+  applicationId={applicationId}
+  baseUrl="https://chat.aomi.dev"
   routing={{ targets: [{ mode: "direct", apps: [{ applicationId }] }] }}
 />
 ```

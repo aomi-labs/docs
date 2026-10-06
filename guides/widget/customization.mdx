@@ -11,11 +11,12 @@ and optional controls through props:
 import { AomiWidget } from "@aomi-labs/widget";
 import "@aomi-labs/widget/styles.css";
 export default function Assistant() {
-  return <AomiWidget applicationId="123" height="100dvh" className="dark" showSidebar={false} features={{ library: false }} />;
+  return <AomiWidget applicationId="123" height="100dvh" theme="dark" showSidebar={false} features={{ library: false }} />;
 }
 ```
 
-`className="dark"` or `"light"` selects a theme per instance. Compiled styles,
+`theme` is `"light"`, `"dark"` or `"system"` (the default, which follows the
+visitor's operating system) and applies per instance. Compiled styles,
 dialogs, popovers, tooltips and notifications stay inside that widget's scope.
 Two instances can use different themes on the same page. Embeds omit the product
 switcher by default; composed first-party hosts can pass `products` to the frame.

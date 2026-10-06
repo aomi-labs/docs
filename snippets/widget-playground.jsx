@@ -28,7 +28,7 @@ export default function Assistant() {
       <AomiWidget
         applicationId="123"
         height="640px"
-        className="${mode}"
+        theme="${mode}"
         showSidebar={${showSidebar}}
         showHeader={${showHeader}}
         walletPosition=${wallet}

@@ -28,7 +28,7 @@ Clear `~/.aomi/` to reset all local session state.
 **Widget not rendering**
 - Confirm React 18 or 19; mount the widget from a client component in Next.js.
 - Import `@aomi-labs/widget/styles.css` and pass your activated App's `applicationId`.
-- The default API is `https://chat.aomi.dev`; use an explicit absolute `apiUrl` for another deployment.
+- The default API is `https://chat.aomi.dev`; use an explicit absolute `baseUrl` for another deployment.
 - Browser wallets work by default. If you selected Para or Privy, install that provider and pass its public configuration explicitly.
 
 See [widget troubleshooting](/guides/widget/troubleshooting) for origin and wallet checks. The package does not require shadcn initialization or read Next.js environment variables.
