@@ -1,0 +1,54 @@
+---
+title: "Pipeline REST API"
+sidebarTitle: "How Builds work"
+description: "The /v1/pipeline capability filesystem: catalog discovery, operation invocation, and the stage → simulate → commit lifecycle."
+---
+
+The Pipeline resource lives at `/v1/pipeline` — a stateless capability filesystem. For TypeScript, the [Pipeline API](/integrate/pipeline) SDK surface drives this same resource for you. See the [Overview](/api-reference/overview) for authentication and request conventions.
+
+## Discover, don't hard-code
+
+Begin at a live catalog collection such as `/v1/pipeline/apps` or `/v1/pipeline/skills` and follow returned links instead of constructing an independent catalog. Operation descriptors include the current JSON Schema — validate arguments against the live schema before invoking or building any operation. Catalog contents vary by environment.
+
+## Read operations
+
+Beyond the Build lifecycle, each chain namespace exposes curated read aliases: `account`, `contract`, `encode-call`, `token-holdings`, and `context` on EVM; `account`, `program`, `token-holdings`, and `context` on SVM. `GET /v1/pipeline/{chain}` lists them and `POST /v1/pipeline/{chain}/{operation}` invokes them. Read each operation's `GET` descriptor for its current input schema before invoking it.
+
+## Invoke or Build
+
+Use invocation for operations whose returned value is the desired result. Use a Build when the operation produces chain actions that require simulation and commit.
+
+## Build lifecycle
+
+EVM and SVM expose separate `stage`, `simulate`, `build`, and `commit` operations.
+
+```text
+operation + arguments
+        ↓
+      build
+        ↓
+simulated portable Build
+        ↓
+  application review
+        ↓
+      commit
+```
+
+- `stage` creates a chain-specific Build without simulation.
+- `simulate` consumes a staged Build and returns a simulated Build.
+- `build` resolves operations, stages actions, and simulates in one call.
+- `commit` accepts only a simulated Build and revalidates it before execution.
+
+A Build is versioned and carries `status`, `actions`, `origin`, `expiresAt`, `digest`, and a server attestation. A simulated Build also carries typed simulation evidence: balance and approval changes, fees, warnings, guard results, gas, and logs. Treat the Build as opaque between lifecycle calls; do not edit its actions, digest, or attestation.
+
+Successful EVM and SVM commit responses use `status: "committed"`. EVM returns `digest`, `result`, and `requests`; SVM returns `digest`, `results`, and `requests`. Each item in `requests` is an `ActionRequest` for the application to resolve through its signing or execution boundary. Commit does not return `submitted` or `awaiting_wallet` as Pipeline status values.
+
+Commit requires an idempotency key. Reuse the same key only when retrying the same Build.
+
+<Note>
+  Staging guest sessions can read the catalog, including operation descriptors and skill instructions, but Pipeline execution requires a grant with `pipeline:execute`.
+</Note>
+
+<Warning>
+  Simulation evidence is informative, not signing authority. Your application must still render the action and cross an explicit approval boundary.
+</Warning>

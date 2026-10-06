@@ -1,5 +1,7 @@
 "use client";
 
+// Mintlify pre-injects React hooks: https://www.mintlify.com/docs/customize/react-components
+
 export function generateWidgetPlaygroundCode({
   showSidebar,
   showHeader,

@@ -1,0 +1,83 @@
+---
+title: "Hackathon fast start"
+description: "Pick a surface, get the right credential, and make your first Aomi call in five minutes, plus idea prompts for analysis, exploit, provenance, and payments tracks."
+---
+
+This page gets a hackathon team from zero to a working Aomi call fast, then suggests where Aomi plugs into common track ideas.
+
+## The five-minute path
+
+<Steps>
+  <Step title="Pick a surface (1 minute)">
+    No UI needed, or a backend, bot, or agent: use the **SDK**. A React app that
+    needs chat and wallet approval: use the **widget**. Just exploring: open
+    [chat.aomi.dev](https://chat.aomi.dev). You do not need to build your own
+    App to call your own contract. See [Choose a surface](/integrate/choose-surface).
+  </Step>
+  <Step title="Get the right credential (1 minute)">
+    For most projects, you need **nothing**: the SDK and CLI start in guest mode.
+    Sign in with OAuth only when a call returns `403` with `insufficient_scope`,
+    and use an App key only for a private App. See
+    [Which credential do I need?](/integrate/authentication#which-credential-do-i-need).
+  </Step>
+  <Step title="Make the first call (3 minutes)">
+    ```bash
+    npm install @aomi-labs/client
+    npm install --save-dev tsx @types/node
+    export AOMI_BASE_URL="https://chat.aomi.dev"
+    ```
+
+    ```ts first-call.ts
+    import { Aomi } from "@aomi-labs/client";
+
+    const aomi = new Aomi({ baseUrl: process.env.AOMI_BASE_URL! });
+    const result = await aomi.agent.run("What can you do on Base?");
+    const reply = [...result.messages].reverse().find((m) => m.sender === "agent");
+    console.log(reply?.content);
+    ```
+
+    ```bash
+    npx tsx first-call.ts
+    ```
+
+    Prefer the terminal? Run `npx @aomi-labs/client@latest chat "what can you do on Base?"`.
+    See [CLI](/reference/client-cli).
+  </Step>
+</Steps>
+
+## Idea prompts by track
+
+Aomi is the execution layer: it builds transactions, simulates them on a fork of live chain state, and hands them to the user's wallet. That is useful far beyond trading.
+
+| Track | Idea | Where Aomi plugs in |
+| --- | --- | --- |
+| Static analysis and auditing | Turn an analyzer finding into evidence: does this path actually move funds? | Build the candidate calls and [simulate](/integrate/pipeline) them on a fork. Report balance changes, reverts, and logs |
+| Exploit proving | Reproduce a reported bug against real state without touching mainnet | Iterate on calls and simulate until the repro holds. Nothing is signed. See the [exploit harness pattern](/concepts/patterns#exploit-and-repro-harness-on-a-fork) |
+| Off-chain provenance | Anchor logs, model outputs, or documents on chain so anyone can verify them later | Hash into a Merkle root, encode `registerRoot(bytes32)`, simulate, [verify before signing](/integrate/actions-and-signing#verify-before-you-sign). See [Provenance anchoring](/examples/guardrail) |
+| Payments and trading | Natural-language swaps, transfers, bridges, or a trading bot | Use the [Agent](/integrate/agent) with a [wallet adapter](/integrate/actions-and-signing), or the hosted portal for a demo |
+| Agents and tooling | Give an AI agent safe on-chain hands | Connect through [MCP](/guides/mcp) or the SDK; simulation and user approval stay in the loop |
+| Your own API | Make your service callable by the Agent | [Build an App](/build) that loads your tools into the runtime |
+
+## Common hackathon snags
+
+| You see | Do this |
+| --- | --- |
+| An example reads `AOMI_API_KEY` and you have none | Leave it unset. Keys are only for private Apps |
+| `403` `insufficient_scope` | The operation needs a signed-in account. Run `aomi account login`, or [register an OAuth client](/integrate/authentication#get-an-oauth-client-id) |
+| Your App does not answer in the widget | Add [Direct routing](/guides/widget/quickstart#route-turns-to-your-app) with your Application ID |
+| "Conversation unavailable" or "the session is busy" with your App | Check the [App conditions](/integrate/choose-surface#worked-example-route-a-widget-to-your-app). The App may be unknown in this environment or not active yet |
+| Your App was deployed but never goes live | New Apps start inactive. Activation needs a token from the Aomi team; ask in Discord |
+
+## Learn more
+
+<CardGroup cols={3}>
+  <Card title="Choose a surface" icon="signs-post" href="/integrate/choose-surface">
+    Portal, widget, SDK, or your own App.
+  </Card>
+  <Card title="Where Aomi fits" icon="diagram-project" href="/concepts/patterns">
+    Patterns beyond trading.
+  </Card>
+  <Card title="Client SDK" icon="code" href="/integrate/client-sdk">
+    Install, first calls, and error handling.
+  </Card>
+</CardGroup>

@@ -3,7 +3,7 @@ title: "Rust SDK"
 description: "Reference the Rust traits and helpers used to implement typed Aomi plugin tools."
 ---
 
-<Info>Verified against aomi-sdk@08b21f9 on 2026-06-29.</Info>
+<Info>Verified against published `aomi-sdk` 5.1.1 at commit `2ef3e04` on 2026-09-22.</Info>
 
 The [`aomi-sdk` crate](https://crates.io/crates/aomi-sdk) is the public Rust API
 for implementing an Aomi plugin. It defines typed tools, call context, secrets,
@@ -32,6 +32,11 @@ The crate re-exports compatible `schemars` and `serde_json` modules. Using
 `aomi_sdk::schemars` and `aomi_sdk::serde_json` avoids dependency-version drift
 in schema and JSON types.
 
+The public crate and its authoring examples live in the
+[aomi-sdk repository](https://github.com/aomi-labs/aomi-sdk). The hosted
+backend consumes the crate and loads its ABI; private backend crates are not
+part of the plugin API.
+
 ## The `DynAomiTool` trait
 
 Implement one `DynAomiTool` per operation exposed to the model.
@@ -51,6 +56,12 @@ pub trait DynAomiTool: Send + Sync + 'static {
         _ctx: DynToolCallCtx,
     ) -> Result<Value, String>;
 
+    fn run_with_routes(
+        app: &Self::App,
+        args: Self::Args,
+        ctx: DynToolCallCtx,
+    ) -> Result<ToolReturn, String>;
+
     fn run_async(
         _app: &Self::App,
         _args: Self::Args,
@@ -68,6 +79,7 @@ pub trait DynAomiTool: Send + Sync + 'static {
 | `DESCRIPTION` | Model-facing summary used during tool selection |
 | `IS_ASYNC` | Set to `true` when the tool uses `run_async` |
 | `run` | Synchronous implementation for normal tools |
+| `run_with_routes` | Synchronous implementation that returns a payload plus host-managed follow-up routes |
 | `run_async` | Async or streaming implementation that writes to a sink |
 
 Argument types derive `Deserialize` and `JsonSchema`. Field doc comments become
@@ -207,8 +219,11 @@ ToolReturn::with_route(
 ```
 
 The route is a continuation hint, not permission to execute. Aomi presents the
-step to the model, preserves any required callback data, and still applies the
-App policy, guards, and signing policy before the next tool runs.
+step to the model and still applies the App policy, guards, and signing policy
+before the next tool runs. Use `bind_as` on a producer and `after(...).awaits`
+for a callback-driven continuation. The host injects the bound callback
+artifact into the awaiting arguments; do not rebuild or manually copy wallet
+payloads, transaction hashes, signatures, quote IDs, or route IDs.
 
 ## The `dyn_aomi_app!` macro
 
@@ -244,7 +259,8 @@ low-level plugin boundary by hand.
 
 Declare each external credential as a `Secret` slot. The name is canonical,
 the description appears in configuration surfaces, and `required` determines
-whether the App can load without a value.
+whether the App can load without a value. A declaration is operator-owned by
+default.
 
 ```rust
 use aomi_sdk::Secret;
@@ -276,6 +292,36 @@ The helper resolves, in order:
 
 Do not log, persist, or include the resolved value in tool output.
 
+### User-owned credentials
+
+Call `.user_owned()` when every authenticated user must supply a separate
+credential:
+
+```rust
+const API_KEY: Secret = Secret::new(
+    "EXCHANGE_API_KEY",
+    "API key from the exchange dashboard.",
+    true,
+)
+.user_owned();
+```
+
+Read a user-owned value only from the injected call context:
+
+```rust
+let key = aomi_sdk::resolve_user_secret_value(
+    &ctx,
+    "EXCHANGE_API_KEY",
+    "Add EXCHANGE_API_KEY in App settings before using this tool.",
+)?;
+```
+
+`resolve_user_secret_value` intentionally has no tool-argument or process
+environment fallback. This prevents a missing user credential from silently
+using a builder or backend operator key. The host redacts common result and
+error paths, but plugin code is trusted native code: never log, persist, or
+return a credential.
+
 ## Host namespaces
 
 `namespaces` requests host capability sets that accompany your plugin tools.
@@ -283,7 +329,10 @@ Do not log, persist, or include the resolved value in tool output.
 | App requirement | Registration value |
 | --- | --- |
 | Default EVM wallet and transaction flow | Omit the field or use `["evm-core"]` |
-| A non-EVM host capability only | Name that public namespace, such as `["database"]` |
+| EVM reads and staging without commit tools | `["evm-reads", "evm-sim"]` |
+| All SVM reads and write lanes | `["svm-core"]` |
+| SVM reads plus instruction-based writes | `["svm-reads", "svm-write-ix"]` |
+| SVM reads plus venue-built transactions | `["svm-reads", "svm-write-tx"]` |
 | External API calls with no host tools | Use `[]` |
 
 Declare only capabilities the App uses. If the App stages transactions,
@@ -304,7 +353,7 @@ fn greet_returns_message() {
     let result = run_tool::<Greet>(&MyApp, json!({ "name": "Ada" }), ctx)
         .expect("greet should succeed");
 
-    assert_eq!(result["message"], "Hello, Ada!");
+    assert_eq!(result.value["message"], "Hello, Ada!");
 }
 ```
 

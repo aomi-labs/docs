@@ -1,11 +1,48 @@
 ---
-title: "Frontend setup"
-description: "This widget guide moved to the compiled package quickstart."
+title: Frontend setup
+description: Choose the packaged widget or the React headless library for your product.
 ---
 
-Use the [widget quickstart](/guides/widget/quickstart) to install the compiled
-`@aomi-labs/widget` package. It includes the styles and browser-wallet integration;
-Tailwind, shadcn initialization and copied component source are not required.
+Use `@aomi-labs/widget` when you want a complete interface with conversations, wallet authentication, and transaction review. Use `@aomi-labs/react`, the headless library, when you want to compose your own UI and wallet provider tree.
 
-For optional Para or Privy wallets, follow the [installation guide](/guides/widget/installation).
-For your own interface, use the [React headless library](/integrate/ui/headless-library).
+| Surface | Your application supplies |
+| --- | --- |
+| Packaged widget | API origin, deployed Application ID, explicit authentication mode, and public provider identifiers |
+| Headless library | Runtime provider, UI components, caller authentication, and wallet capabilities |
+| TypeScript client | Agent or Pipeline flows, host UI, and explicit wallet review |
+
+## Embed the widget
+
+```bash
+npm install @aomi-labs/widget
+```
+
+```tsx
+"use client";
+
+import { AomiWidget } from "@aomi-labs/widget";
+import "@aomi-labs/widget/styles.css";
+
+export default function AssistantPage() {
+  return (
+    <AomiWidget
+      apiUrl="https://chat.aomi.dev"
+      applicationId="123"
+      height="100dvh"
+    />
+  );
+}
+```
+
+Browser wallets are the default. Your host can read its public configuration
+from environment variables and pass the values as props; the package does not
+read framework environment variables.
+
+Use the production API origin `https://chat.aomi.dev` or the compatible origin supplied for your environment. The Application ID selects an activated App; it is not an API key. The widget creates an origin-bound session and keeps transaction review in the user interface.
+
+## Continue
+
+- [Widget installation](/guides/widget/installation) for browser, Para, and Privy examples.
+- [Headless library](/integrate/ui/headless-library) for a custom React interface.
+- [Client SDK](/integrate/client-sdk) for package compatibility and headless TypeScript.
+- [Authentication](/integrate/authentication) for caller credentials and App credentials.

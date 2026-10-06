@@ -1,218 +1,43 @@
 ---
 title: Sessions
-description: "Understand how Aomi creates, restores, and persists chat sessions, including thread history and conversation lifecycle behavior."
+description: Create, resume, and manage conversations through the versioned Agent API.
 ---
 
-A session is a conversation thread with message history. This page covers how sessions are created, loaded, persisted, and managed.
+An Agent session is a persisted conversation. Its ID is not an account credential or permission to sign a transaction.
 
-## Overview
-
-```mermaid
-flowchart TB
-    subgraph "Session"
-        ID[Session ID<br/>UUID]
-        MSGS[Messages<br/>Conversation history]
-        USER[User State<br/>Wallet, chain, connection]
-        STATUS[Processing Status<br/>Idle / Processing / Interrupted]
-    end
-
-    subgraph "Threads"
-        T1[Thread 1: ETH Trading]
-        T2[Thread 2: Portfolio Review]
-        T3[Thread 3: Market Analysis]
-    end
-
-    ID --> T1
-    ID --> T2
-    ID --> T3
-```
-
-## Session Creation
-
-Sessions are created by the client. The client generates a UUID and sends it as the `X-Session-Id` header. The message rides in the query string as `message`.
+## Create and continue a conversation
 
 ```ts
+import { Aomi } from "@aomi-labs/client";
+
+const aomi = new Aomi({ baseUrl: process.env.AOMI_BASE_URL! });
 const sessionId = crypto.randomUUID();
 
-const response = await fetch(
-  `/api/chat?message=${encodeURIComponent("Hello")}&app=mycoindex`,
-  {
-    method: "POST",
-    headers: {
-      "X-Session-Id": sessionId,
-      "AOMI-APP-KEY": "sk-mcd-...",
-    },
-  },
-);
+await aomi.agent.run("Remember that I prefer Base.", { sessionId });
+const result = await aomi.agent.run("Which chain do I prefer?", { sessionId });
+console.log(result.messages);
 ```
 
-If no session exists for that ID, the backend creates one automatically on the first request.
+For raw HTTP, send `sessionId` and `message` in the JSON body of `POST /v1/agent/chat`, with a caller credential and `Idempotency-Key`. Do not put messages or secrets in URL query parameters. See the [Agent reference](/api-reference/agent).
 
-## Session Loading: Three-Tier Strategy
+## Restore history and progress
 
-When a request arrives, the backend loads the session using a three-tier approach:
+Read `GET /v1/agent/chat/{sessionId}` to hydrate the ordered event ledger. Continue with the returned opaque cursor; never construct or decode one yourself. The stream at `/v1/agent/chat/{sessionId}/stream` delivers progress. Keep provisional text separate from durable events and recover an invalid cursor by hydrating without it.
 
-```mermaid
-flowchart TD
-    REQ[Incoming Request<br/>X-Session-Id: uuid] --> MEM{In memory cache?}
+Current source can also return durable Commit views in `EventPage.commits`. Render their latest review and status separately from typed Actions. See [wallet and signing](/integrate/actions-and-signing).
 
-    MEM -->|Yes| USE[Use cached session]
-    MEM -->|No| DB{In database?}
-
-    DB -->|Yes| LOAD[Load from PostgreSQL]
-    DB -->|No| CREATE[Create new session]
-
-    LOAD --> CACHE[Cache in memory]
-    CREATE --> CACHE
-    CACHE --> USE
-```
-
-1. **Memory cache**: the session is already active in the server's memory. This is the fastest path and handles the common case where a user is mid-conversation.
-2. **Database**: the session was previously persisted to PostgreSQL. It is loaded and cached in memory.
-3. **Create new**: no prior session exists. A fresh session is created and cached.
-
-## Message Persistence
-
-Messages are persisted to PostgreSQL as they are exchanged. This ensures conversation history survives server restarts and enables users to resume conversations.
-
-Each message record includes:
-
-| Field | Type | Description |
-| --- | --- | --- |
-| `id` | UUID | Unique message identifier |
-| `session_id` | UUID | Parent session |
-| `thread_id` | UUID | Parent thread |
-| `role` | string | `user`, `assistant`, or `system` |
-| `content` | text | Message text content |
-| `tool_calls` | JSON | Tool calls made by the assistant (if any) |
-| `tool_results` | JSON | Results from tool execution (if any) |
-| `created_at` | timestamp | When the message was created |
-
-## Wallet Binding
-
-Sessions can optionally be associated with a wallet address (public key). This enables wallet-aware behavior:
-
-```mermaid
-flowchart LR
-    subgraph "User"
-        WALLET[Wallet<br/>0x742d35Cc...]
-    end
-
-    subgraph "Session"
-        BIND[Wallet Binding]
-        TOOLS[Tool Context]
-        HISTORY[Persistent History]
-    end
-
-    WALLET --> BIND
-    BIND --> TOOLS
-    BIND --> HISTORY
-```
-
-- **Tool context**: tools like `GetPortfolio` can automatically scope queries to the connected wallet.
-- **Persistent history**: conversations tied to a public key persist across sessions and devices.
-- **Cross-session continuity**: the assistant remembers previous interactions when the same wallet reconnects.
-
-Wallet binding is optional. Sessions work without a wallet for non-Web3 use cases.
-
-## Thread Management
-
-Within a session, users can create multiple **threads**, separate conversation topics with independent message histories.
-
-### Operations
-
-| Operation | API Call | Description |
-| --- | --- | --- |
-| **Create** | `POST /api/sessions` | Start a new thread |
-| **List** | `GET /api/sessions?public_key={key}` | List all threads for a wallet |
-| **Get** | `GET /api/sessions/{id}` | Fetch one thread by ID |
-| **Switch** | Client-side | Change the active thread (update `X-Session-Id`) |
-| **Rename** | `PATCH /api/sessions/{id}` | Update a thread's title |
-| **Delete** | `DELETE /api/sessions/{id}` | Remove a thread and its messages |
-
-### Using the Widget
-
-The widget's sidebar provides a thread management UI out of the box:
-
-- Click **New Thread** to start a new conversation.
-- Click a thread in the sidebar to switch to it.
-- Right-click or use the menu to rename or delete threads.
-
-### Using the Headless Lib
-
-With `@aomi-labs/react`, manage threads programmatically:
-
-```tsx
-import { useAomiRuntime, useThreadContext } from "@aomi-labs/react";
-
-function ThreadManager() {
-  const { currentThreadId } = useThreadContext();
-  const { createThread, deleteThread, selectThread, renameThread } =
-    useAomiRuntime();
-
-  return (
-    <div>
-      <p>Current thread: {currentThreadId}</p>
-      <button onClick={() => createThread()}>New Thread</button>
-      <button onClick={() => renameThread(currentThreadId, "My Topic")}>
-        Rename
-      </button>
-    </div>
-  );
-}
-```
-
-## Session State
-
-`GET /api/state` returns a snapshot of the session:
+## Manage session metadata
 
 ```ts
-type StateResponse = {
-  messages: Message[] | null;
-  system_events: SystemEvent[] | null;
-  title: string | null;
-  is_processing: boolean; // true while the assistant is working
-  user_state: {
-    connection?: { is_connected?: boolean | null };
-    evm?: { address?: string | null; chain_id?: number | string | null };
-  } | null;
-};
+const sessions = aomi.raw.agent.sessions;
+const page = await sessions.list({ limit: 20 });
+console.log(page);
+await sessions.update(sessionId, { title: "Base research" });
+await sessions.update(sessionId, { archived: true });
 ```
 
-Wallet fields are nested: the address is `user_state.evm.address`, the chain is `user_state.evm.chain_id`, and connection status is `user_state.connection.is_connected`.
+Session list records contain metadata, not a second transcript. Use pagination for long lists. Account-owned history and mutations require the scopes accepted by your environment. Guest identity is limited by the client lifetime and host policy.
 
-### Polling State
+To stop active work, use `run.interrupt()`. Archiving hides a conversation from normal lists; it does not grant or revoke wallet authority.
 
-Pass the session ID in the `X-Session-Id` header and poll for the current snapshot:
-
-```ts
-const state = await fetch("/api/state", {
-  headers: { "X-Session-Id": sessionId },
-}).then((r) => r.json());
-
-console.log(state.is_processing); // true | false
-console.log(state.user_state?.evm?.address); // "0x742d..." or undefined
-```
-
-### Real Time Updates
-
-For real time updates without polling, subscribe to the SSE updates channel. The session ID travels in a header, so open it with `fetch` and read the body instead of using `EventSource`:
-
-```ts
-const response = await fetch("/api/updates", {
-  headers: {
-    "X-Session-Id": sessionId,
-    Accept: "text/event-stream",
-  },
-});
-// Read response.body and parse each `data:` line as JSON.
-// Event types: title_changed, tool_update, tool_complete, system_notice.
-```
-
-See the [API Reference](/reference/api-reference#subscribe-to-updates) for a full consumer example.
-
-## Next Steps
-
-- [API Reference](/reference/api-reference): full endpoint documentation for session operations.
-- [Headless Library](/guides/widget/customization#build-a-headless-ui): build custom session UIs with @aomi-labs/react.
-- [Installation](/guides/widget/installation): install and configure the widget.
+See [Client SDK compatibility](/integrate/client-sdk#check-compatibility) before using current-source features with a published package or hosted environment.

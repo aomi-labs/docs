@@ -9,171 +9,343 @@
   },
   "favicon": "/favicon.svg",
   "navigation": {
-    "pages": [
-      "index",
+    "tabs": [
       {
-        "group": "Try Aomi",
-        "icon": "rocket",
+        "tab": "Home",
+        "icon": "house",
         "pages": [
-          "trade/portal",
-          "guides/skills",
+          "index",
+          "guides/hackathon",
           {
-            "group": "Client CLI",
-            "icon": "terminal",
+            "group": "Try Aomi",
+            "icon": "rocket",
             "pages": [
-              "reference/client-cli",
-              "reference/client-cli/commands",
-              "reference/client-cli/transactions-and-signing"
+              {
+                "group": "Human",
+                "icon": "user",
+                "pages": [
+                  "trade/portal",
+                  "build/developer-platform"
+                ]
+              },
+              {
+                "group": "Agents",
+                "icon": "robot",
+                "pages": [
+                  "guides/skills",
+                  "guides/mcp",
+                  {
+                    "group": "CLI",
+                    "icon": "terminal",
+                    "pages": [
+                      "reference/client-cli",
+                      "reference/client-cli/commands",
+                      "reference/client-cli/transactions-and-signing"
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "group": "Integrate Aomi",
+            "icon": "code",
+            "pages": [
+              "integrate/client-sdk",
+              "integrate/choose-surface",
+              "integrate/agent",
+              "integrate/pipeline",
+              "integrate/authentication",
+              "integrate/actions-and-signing",
+              "integrate/recipes"
+            ]
+          },
+          {
+            "group": "Concepts",
+            "icon": "lightbulb",
+            "pages": [
+              "concepts/architecture",
+              "concepts/patterns",
+              "concepts/transaction-pipeline",
+              "concepts/skills-and-guards",
+              "concepts/accounts-and-wallets",
+              "concepts/account-abstraction",
+              "concepts/solana-bundle",
+              "concepts/multi-threading",
+              "concepts/asynchronous-tasks",
+              "concepts/glossary"
+            ]
+          },
+          {
+            "group": "Security",
+            "icon": "shield-halved",
+            "pages": [
+              "security/permission-model",
+              "security/signing",
+              "security/configure-approvals",
+              "security/transaction-safety"
+            ]
+          },
+          {
+            "group": "Payments",
+            "icon": "coins",
+            "pages": [
+              "concepts/payments",
+              "payments/x402",
+              "reference/app-pricing"
+            ]
+          },
+          {
+            "group": "Multi-chain Support",
+            "icon": "link",
+            "pages": [
+              "concepts/chains/evm",
+              "concepts/chains/svm"
+            ]
+          },
+          {
+            "group": "Case Studies",
+            "icon": "rectangle-code",
+            "pages": [
+              "examples/overview",
+              "examples/somm-finance",
+              "examples/world-markets",
+              "examples/kuroko",
+              "examples/aomi-trader",
+              "examples/guardrail"
+            ]
+          },
+          {
+            "group": "Resources",
+            "icon": "circle-info",
+            "pages": [
+              "resources/changelog",
+              "resources/faq"
             ]
           }
         ]
       },
       {
-        "group": "Integrate",
-        "icon": "code",
-        "pages": [
-          "integrate/overview",
-          {
-            "group": "TypeScript SDK",
-            "icon": "typescript",
-            "iconType": "brands",
-            "pages": [
-              "integrate/typescript/quickstart",
-              "integrate/typescript/agent",
-              "integrate/typescript/pipeline",
-              "integrate/typescript/core-client",
-              "integrate/typescript/errors"
-            ]
-          },
-          "integrate/authentication",
-          "integrate/actions-and-signing",
-          {
-            "group": "UI Integrations",
-            "icon": "window",
-            "pages": [
-              "integrate/ui/headless-library",
-              "integrate/ui/widget",
-              "guides/widget/quickstart",
-              "guides/widget/installation",
-              "guides/widget/customization",
-              "guides/widget/deploy/ship-on-vercel",
-              "guides/widget/troubleshooting"
-            ]
-          },
-          {
-            "group": "HTTP API",
-            "icon": "brackets-curly",
-            "pages": [
-              "integrate/api/overview",
-              "integrate/api/agent",
-              "integrate/api/pipeline"
-            ]
-          },
-          "guides/mcp",
-          "integrate/recipes"
-        ]
-      },
-      {
-        "group": "Build on Aomi",
+        "tab": "Build with SDK",
         "icon": "hammer",
         "pages": [
-          "build",
-          "build/first-app",
-          "build/developer-platform",
-          "getting-started/playground",
           {
-            "group": "Plugins",
-            "icon": "puzzle",
+            "group": "Build with SDK",
             "pages": [
-              "build/plugins/aomi-app",
-              "build/plugins/rust-sdk"
+              "build",
+              "build/first-app",
+              {
+                "group": "UI Integrations",
+                "icon": "window",
+                "pages": [
+                  "integrate/ui/headless-library",
+                  "integrate/ui/widget",
+                  "guides/widget/quickstart",
+                  "guides/widget/installation",
+                  "guides/widget/customization",
+                  "guides/widget/deploy/ship-on-vercel",
+                  "guides/widget/troubleshooting"
+                ]
+              },
+              {
+                "group": "Plugins",
+                "icon": "puzzle",
+                "pages": [
+                  "build/plugins/aomi-app",
+                  "build/plugins/rust-sdk"
+                ]
+              },
+              {
+                "group": "Builder Toolchain",
+                "icon": "wrench",
+                "pages": [
+                  "build/toolchain/aomi-build",
+                  "build/toolchain/aomi-run"
+                ]
+              },
+              {
+                "group": "Channels",
+                "icon": "paper-plane",
+                "pages": [
+                  "build/telegram",
+                  "getting-started/discord",
+                  "getting-started/slack",
+                  "getting-started/ios"
+                ]
+              },
+              "build/common-errors"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "icon": "brackets-curly",
+        "openapi": "api-reference/openapi.json",
+        "pages": [
+          {
+            "group": "API Reference",
+            "pages": [
+              "api-reference/overview",
+              "api-reference/authentication"
             ]
           },
           {
-            "group": "Builder Toolchain",
-            "icon": "wrench",
+            "group": "Agent",
             "pages": [
-              "build/toolchain/aomi-build",
-              "build/toolchain/aomi-run"
+              "api-reference/agent",
+              "POST /v1/agent/chat",
+              "GET /v1/agent/chat/{sessionId}",
+              "GET /v1/agent/chat/{sessionId}/stream",
+              "POST /v1/agent/chat/{sessionId}/interrupt",
+              "POST /v1/agent/chat/{sessionId}/actions/{actionId}/result",
+              "GET /v1/agent/sessions",
+              "GET /v1/agent/sessions/{sessionId}",
+              "PATCH /v1/agent/sessions/{sessionId}",
+              "DELETE /v1/agent/sessions/{sessionId}"
             ]
           },
           {
-            "group": "Channels",
-            "icon": "paper-plane",
+            "group": "Account",
             "pages": [
-              "build/telegram",
-              "getting-started/discord",
-              "getting-started/slack",
-              "getting-started/ios"
+              "GET /v1/account/apps",
+              "POST /v1/account/apps/{applicationId}",
+              "DELETE /v1/account/apps/{applicationId}",
+              "GET /v1/account/apps/{applicationId}/secrets",
+              "POST /v1/account/apps/{applicationId}/secrets",
+              "DELETE /v1/account/apps/{applicationId}/secrets",
+              "DELETE /v1/account/apps/{applicationId}/secrets/{name}",
+              "GET /v1/account/credits",
+              "POST /v1/account/credits/top-up",
+              "GET /v1/account/statement"
             ]
           },
-          "build/common-errors"
+          {
+            "group": "Pipeline",
+            "pages": [
+              "api-reference/pipeline",
+              "GET /v1/pipeline",
+              "GET /v1/pipeline/core",
+              "GET /v1/pipeline/apps",
+              "GET /v1/pipeline/apps/{app}",
+              "GET /v1/pipeline/apps/{app}/operations",
+              "GET /v1/pipeline/apps/{app}/operations/{operation}",
+              "POST /v1/pipeline/apps/{app}/operations/{operation}",
+              "GET /v1/pipeline/skills",
+              "GET /v1/pipeline/skills/{skill}",
+              "GET /v1/pipeline/skills/{skill}/SKILL.md",
+              "GET /v1/pipeline/skills/{skill}/operations",
+              "GET /v1/pipeline/skills/{skill}/operations/{operation}",
+              "POST /v1/pipeline/skills/{skill}/operations/{operation}",
+              {
+                "group": "EVM lifecycle",
+                "pages": [
+                  "GET /v1/pipeline/evm",
+                  "POST /v1/pipeline/evm/build",
+                  "POST /v1/pipeline/evm/stage",
+                  "POST /v1/pipeline/evm/simulate",
+                  "POST /v1/pipeline/evm/commit"
+                ]
+              },
+              {
+                "group": "SVM lifecycle",
+                "pages": [
+                  "GET /v1/pipeline/svm",
+                  "POST /v1/pipeline/svm/build",
+                  "POST /v1/pipeline/svm/stage",
+                  "POST /v1/pipeline/svm/simulate",
+                  "POST /v1/pipeline/svm/commit"
+                ]
+              }
+            ]
+          }
         ]
       },
       {
-        "group": "Concepts",
-        "icon": "lightbulb",
+        "tab": "Portal",
+        "icon": "comments",
+        "href": "https://chat.aomi.dev"
+      },
+      {
+        "tab": "Playground",
+        "icon": "circle-play",
         "pages": [
-          "concepts/architecture",
-          "concepts/transaction-pipeline",
-          "concepts/skills-and-guards",
-          "concepts/accounts-and-wallets",
-          "concepts/account-abstraction",
-          "concepts/solana-bundle",
-          "concepts/multi-threading",
-          "concepts/asynchronous-tasks",
-          "concepts/glossary"
+          "getting-started/playground"
         ]
       },
       {
-        "group": "Security",
-        "icon": "shield-halved",
-        "pages": [
-          "security/permission-model",
-          "security/signing",
-          "security/configure-approvals",
-          "security/transaction-safety"
-        ]
+        "tab": "client cli",
+        "icon": "terminal",
+        "href": "https://github.com/aomi-labs/aomi",
+        "align": "end"
       },
       {
-        "group": "Payments",
-        "icon": "coins",
-        "pages": [
-          "concepts/payments",
-          "payments/x402",
-          "reference/app-pricing"
-        ]
+        "tab": "rust sdk",
+        "icon": "rust",
+        "href": "https://github.com/aomi-labs/aomi-sdk",
+        "align": "end"
       },
       {
-        "group": "Multi-chain Support",
-        "icon": "link",
-        "pages": [
-          "concepts/chains/evm",
-          "concepts/chains/svm"
-        ]
-      },
-      {
-        "group": "Case Studies",
-        "icon": "rectangle-code",
-        "pages": [
-          "examples/overview",
-          "examples/somm-finance",
-          "examples/world-markets",
-          "examples/kuroko",
-          "examples/aomi-trader"
-        ]
-      },
-      {
-        "group": "Resources",
-        "icon": "circle-info",
-        "pages": [
-          "resources/changelog",
-          "resources/faq"
-        ]
+        "tab": "skills",
+        "icon": "book",
+        "href": "https://github.com/aomi-labs/skills",
+        "align": "end"
       }
     ]
   },
   "redirects": [
+    {
+      "source": "/integrate/typescript/agent",
+      "destination": "/integrate/agent"
+    },
+    {
+      "source": "/integrate/typescript/pipeline",
+      "destination": "/integrate/pipeline"
+    },
+    {
+      "source": "/integrate/typescript/quickstart",
+      "destination": "/integrate/client-sdk"
+    },
+    {
+      "source": "/integrate/typescript/core-client",
+      "destination": "/integrate/client-sdk"
+    },
+    {
+      "source": "/integrate/typescript/errors",
+      "destination": "/integrate/client-sdk"
+    },
+    {
+      "source": "/integrate/typescript",
+      "destination": "/integrate/client-sdk"
+    },
+    {
+      "source": "/integrate/api/agent",
+      "destination": "/integrate/agent"
+    },
+    {
+      "source": "/integrate/api/pipeline",
+      "destination": "/integrate/pipeline"
+    },
+    {
+      "source": "/integrate/api/overview",
+      "destination": "/integrate/client-sdk"
+    },
+    {
+      "source": "/integrate/api",
+      "destination": "/integrate/client-sdk"
+    },
+    {
+      "source": "/integrate/overview",
+      "destination": "/integrate/client-sdk"
+    },
+    {
+      "source": "/integrate",
+      "destination": "/integrate/client-sdk"
+    },
+    {
+      "source": "/trade",
+      "destination": "/trade/portal"
+    },
     {
       "source": "/payments",
       "destination": "/concepts/payments"
@@ -292,19 +464,19 @@
     },
     {
       "source": "/reference",
-      "destination": "/integrate/overview"
+      "destination": "/integrate/client-sdk"
     },
     {
       "source": "/reference/index",
-      "destination": "/integrate/overview"
+      "destination": "/integrate/client-sdk"
     },
     {
       "source": "/reference/overview",
-      "destination": "/integrate/overview"
+      "destination": "/integrate/client-sdk"
     },
     {
       "source": "/reference/api-reference",
-      "destination": "/integrate/api/overview"
+      "destination": "/api-reference/overview"
     },
     {
       "source": "/reference/apps-and-authentication",
@@ -312,7 +484,7 @@
     },
     {
       "source": "/reference/sessions",
-      "destination": "/integrate/typescript/agent#manage-sessions"
+      "destination": "/integrate/agent#manage-sessions"
     },
     {
       "source": "/reference/simulation",
@@ -336,7 +508,7 @@
     },
     {
       "source": "/guides/widget/authentication",
-      "destination": "/integrate/ui/widget#cross-origin-authentication"
+      "destination": "/guides/widget/quickstart#understand-the-boundary"
     },
     {
       "source": "/guides/frontend-setup",
@@ -368,7 +540,7 @@
     },
     {
       "source": "/getting-started/quickstart",
-      "destination": "/integrate/typescript/quickstart"
+      "destination": "/integrate/client-sdk"
     },
     {
       "source": "/build/deploy",
@@ -460,28 +632,10 @@
     "dark": "/logo/dark.svg"
   },
   "navbar": {
-    "links": [
-      {
-        "label": "Dashboard",
-        "href": "https://chat.aomi.dev"
-      },
-      {
-        "label": "client cli",
-        "href": "https://github.com/aomi-labs/aomi"
-      },
-      {
-        "label": "rust sdk",
-        "href": "https://github.com/aomi-labs/aomi-sdk"
-      },
-      {
-        "label": "skills",
-        "href": "https://github.com/aomi-labs/skills"
-      }
-    ],
     "primary": {
       "type": "button",
-      "label": "Get Started",
-      "href": "/reference/client-cli"
+      "label": "Developer Console",
+      "href": "https://build.aomi.dev"
     }
   },
   "contextual": {

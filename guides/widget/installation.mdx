@@ -3,8 +3,9 @@ title: "Installation"
 description: "Install the widget and optionally add a Para or Privy wallet."
 ---
 
-You need React 18 or 19, an activated App and its Application ID, and a registered
-host origin. In Next.js, mount the widget from a client component. The widget
+You need React 18 or 19 and an activated public App with its Application ID.
+Production hosts require HTTPS; HTTP is accepted only on loopback hosts. In Next.js, mount the widget from a
+client component. The widget
 includes its compiled styles; Tailwind and the shadcn CLI are not required.
 
 ```bash
@@ -14,6 +15,16 @@ npm install @aomi-labs/widget
 The [quickstart](/guides/widget/quickstart) uses browser wallets by default.
 Choose an embedded wallet only when your product needs that sign-in experience.
 Install only the provider you use and import its lazy entry explicitly.
+
+These examples target `@aomi-labs/widget` 3.1.0. Use them after that release is
+published; check your installed package version before adopting them. The
+deprecated `@aomi-labs/widget-lib` name remains compatible through 4.x and will
+be removed in 5.0.
+
+The package does not read framework environment variables. Your host can read
+public values with `process.env.NEXT_PUBLIC_*` in Next.js or
+`import.meta.env.VITE_*` in Vite and pass them to `apiUrl`, `applicationId`, or
+the selected auth factory. Provider secrets stay on your server.
 
 ## Privy
 

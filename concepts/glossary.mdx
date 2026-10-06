@@ -55,7 +55,7 @@ A revocable authorization that lets an embedded wallet provider such as Privy or
 
 ### drain vector
 
-A calldata field that can redirect funds. Examples include `recipient` on Uniswap, `onBehalfOf` on Aave, `mintRecipient` on CCTP, and `_to` on OP Stack bridges. Protocol guards block a staged transaction when the field does not match the signer. See the [drain-vector table](/guides/skills#drain-vector-guards).
+A calldata field that can redirect funds. Examples include `recipient` on Uniswap, `onBehalfOf` on Aave, `mintRecipient` on CCTP, and `_to` on OP Stack bridges. Protocol guards block a staged transaction when the field does not match the signer. See the [transaction safety guide](/security/transaction-safety).
 
 ### EIP-4337
 
@@ -99,7 +99,7 @@ Model Context Protocol is a standard for connecting an AI client to external too
 
 ### namespace
 
-A named group of related tools inside an App. MCP discovery lists these groups with `aomi_list_namespaces` to keep large catalogs navigable. `aomi-core` is Aomi's namespace. See [MCP](/guides/mcp).
+A named group of related tools inside an App. Pipeline discovery lists the current catalog through the `/v1/pipeline` directory tree. `aomi-core` is Aomi's namespace. See [MCP](/guides/mcp).
 
 ### non-custodial
 
@@ -179,7 +179,7 @@ The runtime component that dispatches calls to plugin tools, chain gateways, and
 
 ### widget
 
-The drop-in chat interface: the `AomiFrame` shadcn/ui component installed as source into your project, with the wallet UI already wired. The fastest integration path when you don't need a custom UI. See [Widget installation](/guides/widget/installation).
+The drop-in `AomiWidget` React component, with chat, authentication, and wallet review composed for your host application. Install `@aomi-labs/widget-lib` and select a deployed App and wallet provider. See [Widget installation](/guides/widget/installation).
 
 ### x402
 

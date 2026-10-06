@@ -1,0 +1,45 @@
+---
+title: "API Reference"
+sidebarTitle: "Overview"
+description: "The versioned Aomi HTTP API: resources, authentication, request conventions, and the interactive endpoint reference."
+---
+
+The Aomi API turns natural-language intent and deterministic operations into verified on-chain execution. The public API is served from `https://chat.aomi.dev`. Use `https://chat-staging.aomi.dev` when you deliberately target staging.
+
+Three versioned resources cover the public surface:
+
+| Resource | Owns | Use it for |
+| --- | --- | --- |
+| [`/v1/agent`](/api-reference/agent) | Conversation state | Stateful turns, progress events, actions, and sessions |
+| [`/v1/pipeline`](/api-reference/pipeline) | Nothing — stateless | Catalog discovery and the build → simulate → commit lifecycle |
+| `/v1/account` | Account configuration | Credits, statements, App installation, and write-only App credentials |
+
+Every endpoint on the pages in this tab has an interactive playground. The TypeScript [Client SDK](/integrate/client-sdk) wraps this same API with typed transports, automatic authentication, and schema validation — prefer it when your application is TypeScript.
+
+<Info>
+  This reference schema was generated from backend source revision `f217b970`
+  on 2026-09-22, then given the public production and staging server overlay.
+  Newly released routes, including Account App and credential management, can
+  appear here before every deployed environment serves the same OpenAPI
+  revision.
+</Info>
+
+## Authentication
+
+All protected requests carry a bearer credential:
+
+```bash
+-H "Authorization: Bearer $AOMI_ACCESS_TOKEN"
+```
+
+Tokens are bound to an exact resource — an Agent token cannot call Pipeline, and REST tokens cannot call MCP. Guest sessions cover only the guest-safe scopes enabled by the environment. See the [Authentication reference](/api-reference/authentication) for resource audiences, scopes, and failure statuses, and [Authentication](/integrate/authentication) in Integrate for acquiring tokens (guest, device OAuth, widget).
+
+## Conventions
+
+These apply to every call:
+
+- Keep the origin in environment configuration — production and staging can expose different API versions during a rollout.
+- Send and receive JSON unless an endpoint returns a document.
+- Send `Idempotency-Key` with every mutation — requests without one are rejected — and reuse one key only for retries of the same logical request.
+- Capture `X-Request-Id` from every failed response, and respect `Retry-After` on throttled or deferred requests.
+- The API stack serves its contract at `/openapi.json`, but the published version can differ per environment; pin types from the released TypeScript client instead of fetching that document at startup.

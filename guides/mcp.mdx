@@ -1,142 +1,145 @@
 ---
 title: "MCP"
-description: "Connect an MCP client to Aomi Agent or Pipeline with OAuth and exact-resource access."
+description: "Connect an MCP client to Aomi's exact-resource Agent or Pipeline server with OAuth."
 ---
 
-Aomi exposes separate Model Context Protocol resources for stateful Agent work and direct Pipeline operations. Connect Codex, Claude Code, Cursor, or another Streamable HTTP MCP client.
+Aomi exposes two Streamable HTTP MCP resources. Choose the resource that matches the work:
 
-## Choose a resource
+| Resource     | Production URL                          | Use it for                                                                                        |
+| ------------ | --------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| Agent MCP    | `https://chat.aomi.dev/v1/agent/mcp`    | Start or continue Agent turns, read progress, interrupt work, and find account-owned sessions.    |
+| Pipeline MCP | `https://chat.aomi.dev/v1/pipeline/mcp` | Discover Apps and operation schemas, then execute one operation or a multi-step program directly. |
 
-| Resource | Use it for | Path |
-| --- | --- | --- |
-| Agent MCP | Start and resume conversations, watch progress, and hand actions to a human. | `/v1/agent/mcp` |
-| Pipeline MCP | Discover Apps and tools, inspect schemas, and call admitted operations directly. | `/v1/pipeline/mcp` |
-
-Use Agent MCP for conversational work. Use Pipeline MCP when your MCP client needs explicit catalog and operation control.
+Use the same paths on another Aomi environment by replacing the origin. Accounts, OAuth grants, sessions, and App inventory are environment-specific.
 
 <Warning>
-  `/api/mcp` and `/api/mcp/direct` are removed and return `404` on staging. Use the exact Agent or Pipeline resource.
+  `/api/mcp` and `/api/mcp/direct` are removed. They are not aliases for the
+  versioned resources.
 </Warning>
-
-## Endpoints
-
-| Environment | Agent MCP | Pipeline MCP |
-| --- | --- | --- |
-| Staging | `https://chat-staging.aomi.dev/v1/agent/mcp` | `https://chat-staging.aomi.dev/v1/pipeline/mcp` |
-| Production | `https://chat.aomi.dev/v1/agent/mcp` | `https://chat.aomi.dev/v1/pipeline/mcp` |
-
-<Note>
-  Confirm that the `/v1` resources are enabled in your target environment before production rollout. Staging and production have separate accounts, grants, and conversations.
-</Note>
 
 ## Connect Agent MCP
 
 <Tabs>
   <Tab title="Codex">
     ```bash
-    codex mcp add aomi-agent --url https://chat-staging.aomi.dev/v1/agent/mcp
+    codex mcp add aomi-agent --url https://chat.aomi.dev/v1/agent/mcp
     codex mcp login aomi-agent
     ```
   </Tab>
+
   <Tab title="Claude Code">
     ```bash
     claude mcp add --transport http aomi-agent \
-      https://chat-staging.aomi.dev/v1/agent/mcp
+      https://chat.aomi.dev/v1/agent/mcp
     ```
 
-    Run `/mcp`, select **aomi-agent**, and authenticate if the browser flow does not start automatically.
+    Run `/mcp` and authenticate **aomi-agent** if the browser flow does not start automatically.
+
   </Tab>
+
   <Tab title="Cursor">
     ```json
     {
       "mcpServers": {
         "aomi-agent": {
-          "url": "https://chat-staging.aomi.dev/v1/agent/mcp"
+          "url": "https://chat.aomi.dev/v1/agent/mcp"
         }
       }
     }
     ```
   </Tab>
-  <Tab title="Another client">
-    Configure a Streamable HTTP server at your environment's `/v1/agent/mcp` URL. The origin publishes OAuth discovery and the protected resource metadata.
+
+  <Tab title="Other clients">
+    Configure a Streamable HTTP server at `https://chat.aomi.dev/v1/agent/mcp`. The origin publishes OAuth authorization-server and protected-resource metadata.
   </Tab>
 </Tabs>
 
-After authorization, ask your client:
+Then ask your MCP client to use Aomi, for example:
 
 ```text
-Ask Aomi for my USDC balance on Base, then explain the result.
+Use Aomi to read my USDC balance on Base, then explain the result.
 ```
 
-## Agent tools
+## Agent MCP tools
 
-| Tool | What it does |
-| --- | --- |
-| `aomi_chat` | Start or continue an Agent turn. |
-| `aomi_check` | Read new messages and activity using an opaque progress cursor. |
-| `aomi_interrupt` | Stop the active turn in a session. |
-| `aomi_list_sessions` | Find recent conversations owned by the authenticated account. |
+| Tool                 | Purpose                                                                                                                          |
+| -------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `aomi_chat`          | Start a new Agent turn or continue a named session. Auto routing is the default; an Application selector chooses Direct routing. |
+| `aomi_check`         | Long-poll for new events using the prior opaque cursor.                                                                          |
+| `aomi_interrupt`     | Interrupt a specific active turn.                                                                                                |
+| `aomi_list_sessions` | List recent sessions owned by the authenticated account.                                                                         |
 
-### Supervise a turn
+### Follow a turn
 
-<Steps>
-  <Step title="Start the turn">
-    Call `aomi_chat`. Omit the session ID for a new conversation or use one returned by `aomi_list_sessions`.
-  </Step>
-  <Step title="Keep the cursor">
-    Pass the returned cursor to `aomi_check` without editing it.
-  </Step>
-  <Step title="Poll for progress">
-    Continue while the status reports processing. Stop at a terminal status or when Aomi needs user input.
-  </Step>
-  <Step title="Hand actions to the user">
-    When a response includes a pending action, send the user to the Aomi portal or an authenticated CLI. Call `aomi_check` again after approval or rejection.
-  </Step>
-</Steps>
+1. Call `aomi_chat`. Omit `session` to start a conversation, or use an ID returned by `aomi_list_sessions`.
+2. Keep the returned `session` and cursor exactly as returned.
+3. Call `aomi_check` with the same session and prior cursor while the turn is active or more events remain.
+4. Apply events in order. Treat message, tool, task, error, Action, and turn-state events as one event stream.
+5. Stop when the turn reaches a terminal state or needs a human Action.
 
-Do not report transaction success until a later check returns the confirmed result.
+When the response includes a pending Action, send the user to the Aomi portal or an authenticated wallet client. Call `aomi_check` again after approval or rejection. A local signature, submitted transaction, or nonterminal event is not a confirmed result.
 
 ## Connect Pipeline MCP
 
 ```bash
 codex mcp add aomi-pipeline \
-  --url https://chat-staging.aomi.dev/v1/pipeline/mcp
+  --url https://chat.aomi.dev/v1/pipeline/mcp
 codex mcp login aomi-pipeline
 ```
 
-Pipeline MCP supports a broad-to-narrow workflow:
+Pipeline MCP currently exposes:
 
-1. Read Agent context when an operation needs it.
-2. List Apps and namespaces.
-3. List the tools in the selected namespace and inspect their schemas.
-4. Call one tool with validated arguments.
+| Tool                     | Purpose                                                                          |
+| ------------------------ | -------------------------------------------------------------------------------- |
+| `aomi_get_agent_context` | Resolve the account's deterministic Pipeline thread and initial catalog context. |
+| `aomi_list_apps`         | List Apps.                                                                       |
+| `aomi_search_apps`       | Search Apps by intent or name.                                                   |
+| `aomi_select_app`        | Read one App and its namespace catalog.                                          |
+| `aomi_list_namespaces`   | List namespaces for an App.                                                      |
+| `aomi_search_tools`      | Search tools, optionally within an App.                                          |
+| `aomi_list_tools`        | List tools for an App or namespace.                                              |
+| `aomi_describe_tool`     | Read the exact input schema for one tool.                                        |
+| `aomi_call_tool`         | Validate and execute one tool call.                                              |
+| `aomi_run`               | Execute a multi-step program whose intermediate values feed later calls.         |
 
-The current Pipeline MCP routes expose `aomi_get_agent_context`, `aomi_list_apps`, `aomi_list_namespaces`, `aomi_list_tools`, and `aomi_call_tool`. The live inventory can evolve with the deployed resource, so use the client's tool-list response as the final authority.
+Use a broad-to-narrow workflow:
 
-## Authentication and signing
+1. Search or list Apps.
+2. Select the App.
+3. Search or list its tools.
+4. Describe the exact tool to obtain its live schema.
+5. Use `aomi_call_tool` for one operation or `aomi_run` for a dependent multi-step flow.
 
-The first unauthenticated request receives an OAuth challenge. Your MCP client uses PKCE and requests a token for the exact MCP resource.
+Hosted Apps require their numeric `application_id` and can also require a platform selector. The authenticated resource's live `tools/list` response is the final authority if the inventory changes.
 
-Agent and Pipeline grants are separate. Signing authority is separate again:
+## OAuth and wallet authority
 
-- OAuth identifies the Aomi account and authorizes the MCP operation.
-- A linked wallet makes an address available to account-owned work.
-- Each action still follows the wallet's review and signing policy.
-- Private keys, seed phrases, and reusable signatures do not pass through MCP.
+Each MCP URL is an exact OAuth resource:
+
+- Agent MCP requires `mcp:agent` plus the Agent read or write scope needed by the selected tool.
+- Pipeline discovery requires `mcp:pipeline` and `pipeline:catalog`.
+- Pipeline execution requires `mcp:pipeline` and `pipeline:execute`.
+
+Your MCP client completes OAuth with PKCE and receives credentials for that exact URL. Agent MCP and Pipeline MCP grants are not interchangeable. REST, guest, and MCP credentials are also distinct audiences.
+
+OAuth authorizes the caller. It does not give an MCP client a private key or reusable wallet signature. A pending wallet Action still follows the account's wallet and approval policy.
 
 <Warning>
-  Authorize only MCP clients you trust. An authorized client can act within its granted Agent or Pipeline scopes, even though wallet policy still controls signing.
+  Authorize only MCP clients you trust. A client with an Agent or Pipeline grant
+  can use the operations covered by that grant until it expires or you revoke
+  it.
 </Warning>
 
 ## Troubleshooting
 
-| Symptom | Check |
-| --- | --- |
-| `401 Unauthorized` | Complete OAuth for this exact MCP resource. |
-| `403 Forbidden` | Do not reuse an Agent token for Pipeline or the reverse. |
-| Guest REST token rejected | MCP requires OAuth for its exact `/mcp` resource; a guest REST bearer is not an MCP grant. |
-| Browser does not open | Use the MCP client's manual login command and inspect its OAuth status. |
-| Session not found | Confirm you authenticated to the environment and account that owns it. |
-| Action remains pending | Complete review in the portal or authenticated CLI, then call `aomi_check` again. |
+| Symptom                 | Check                                                                                                       |
+| ----------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `401 Unauthorized`      | Complete the browser login for this exact MCP server.                                                       |
+| `403 Forbidden`         | Re-authenticate this resource; do not reuse an Agent, Pipeline, REST, or guest token from another audience. |
+| `404` on `/api/mcp*`    | Replace the retired path with `/v1/agent/mcp` or `/v1/pipeline/mcp`.                                        |
+| Browser does not open   | Use the client's explicit login command or its MCP status UI.                                               |
+| Session not found       | Confirm the environment and account own that session.                                                       |
+| Action remains pending  | Complete review through the portal or authenticated wallet client, then call `aomi_check` again.            |
+| Pipeline input rejected | Call `aomi_describe_tool` again and validate against the current schema.                                    |
 
-See [Authentication](/integrate/authentication) for the full caller identity model.
+See [Authentication](/integrate/authentication) and the [authentication reference](/api-reference/authentication) for exact resource and scope behavior.

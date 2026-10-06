@@ -4,6 +4,9 @@ sidebarTitle: "Quickstart"
 description: "Install the widget and send your first message with one required prop."
 ---
 
+These examples target `@aomi-labs/widget` 3.1.0. Use them after that release is
+published and check your installed package version.
+
 Install the widget in a React 18 or 19 application:
 
 ```bash
@@ -21,8 +24,10 @@ export default function Assistant() { return <AomiWidget applicationId="123" />;
 
 The widget uses `https://chat.aomi.dev` by default. Guest chat starts without
 loading Para or Privy. Users can connect a browser wallet when they need to sign.
-Register the exact host origin for your App before testing authentication;
-production embeds require HTTPS.
+A widget session is bound to the exact scheme, host and port that created it.
+Aomi requires no origin registration or allowlist. Production embeds require
+HTTPS; HTTP is accepted only on loopback hosts. Allow the host in Para or Privy
+project settings when the selected provider requires it.
 
 `applicationId` identifies the hosted App and scopes its state. It does not
 select a Direct routing target. Set `routing` separately when your integration
@@ -31,6 +36,40 @@ needs Direct execution.
 For another deployment, pass an explicit absolute `apiUrl`. A local HTTP origin
 requires a service configured for local development. The package does not read
 Next.js environment variables or require a custom Vite configuration.
+
+## Route turns to your App
+
+Auto routing is the default, even when you pass an `applicationId`. To send every
+turn to your own App, configure a Direct target with its numeric ID:
+
+```tsx
+"use client";
+import { AomiWidget } from "@aomi-labs/widget";
+import "@aomi-labs/widget/styles.css";
+export default function Assistant() {
+  return <AomiWidget applicationId="123" routing={{ targets: [{ mode: "direct", apps: [{ applicationId: 123 }] }] }} />;
+}
+```
+
+With one Direct App and no Auto target, every turn goes to that App. Add
+`{ mode: "auto" }` to `targets` to let users switch, and set `defaultMode` to
+choose the starting mode. Find and activate your App using
+[Choose a surface](/integrate/choose-surface#find-your-application-id-and-activate-your-app).
+
+<Warning>
+Private Apps require an App key and cannot run through the widget. Keep App keys
+on your server and use the [client SDK](/integrate/authentication#app-keys-for-private-apps)
+for private Apps. An Application ID is not a caller credential or wallet approval.
+</Warning>
+
+## Verify the integration
+
+Open the widget from your host origin, send a guest message and confirm that the
+expected App responds. Connect a compatible EVM or Solana browser wallet when an
+action needs approval, and confirm the request is visible before signing. Repeat
+from your production HTTPS origin. Browser-wallet sign-in requires SIWE or SIWS
+from an externally owned account; smart-contract wallets cannot sign in through
+this flow.
 
 Continue with [optional wallets](/guides/widget/installation) or
 [layout and routing](/guides/widget/customization).

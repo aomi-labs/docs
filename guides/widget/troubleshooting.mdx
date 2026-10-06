@@ -6,12 +6,19 @@ description: "Resolve widget authentication, wallet, and action issues with focu
 | You see | Check |
 | --- | --- |
 | Widget does not render | Package styles, `apiUrl`, and Application ID |
-| Origin rejected | The exact scheme, host, and port registered for the App |
+| Origin rejected | The origin is HTTPS (or loopback over HTTP) and matches the scheme, host, and port that created the session |
 | Sign-in does not complete | Provider environment and the active browser session |
 | Wallet cannot sign | The active wallet supports the requested message, typed-data, EVM, or Solana method |
 | Owner or network mismatch | Switch back to the owner and network shown in the request |
-| Action cannot execute | The configured wallet exposes the capability required by `action.request.kind` |
+| Action cannot execute | The configured wallet exposes the capability required by `action.request.type` |
 | Pipeline returns `403` | Guest access can browse the staging catalog but cannot execute Pipeline mutations |
 | Operation expired | Start the action again and sign the new request |
+| Your App never answers; the default Agent does | `applicationId` alone does not route turns. Add [Direct routing](/guides/widget/quickstart#route-turns-to-your-app) with the same numeric ID |
+| "Conversation unavailable" right after you set or change the Application ID | The ID does not match a known App in this environment. Check it with `aomi app list`. Newer backends return `app_not_found` (`404`) |
+| "The session is busy" on the first message to your App | The App exists but is not active yet. [Activate it](/integrate/choose-surface#find-your-application-id-and-activate-your-app) and confirm `active=true artifact_ready=true loaded=true`. Newer backends return `app_inactive` (`409`) |
+| `401` when routing to your App | The App is private or not active, so it requires an App key. Newer backends return `app_key_required`. The widget cannot send App keys; make the App public and active |
+| `403` when routing to your App | An App key was sent but is not scoped to this App. Newer backends return `app_key_not_scoped` |
+
+The `app_*` error codes ship with a backend update. Until your environment has it, match on the symptom in the first column.
 
 Do not include session tokens, provider credentials, full signatures, or secret configuration in support messages.

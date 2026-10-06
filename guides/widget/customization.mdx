@@ -75,3 +75,140 @@ Old preference keys migrate once to the first scope that reads them. API keys
 stay in memory by default. First-party frame hosts can explicitly opt into scoped
 session storage; plaintext local-storage API keys are removed and never written
 back.
+
+## Build a headless UI
+
+Choose the headless library when props, themes, and composition are not enough. Aomi continues to provide thread, chat, user, event, notification, and wallet-request state. You provide every visible interaction.
+
+### Install the library
+
+```bash
+npm install @aomi-labs/react @assistant-ui/react
+```
+
+### Add the runtime provider
+
+```tsx
+import { AomiRuntimeProvider } from "@aomi-labs/react";
+
+export function Providers({ children }: { children: React.ReactNode }) {
+  return (
+    <AomiRuntimeProvider
+      backendUrl="https://chat.aomi.dev"
+      applicationId="123"
+    >
+      {children}
+    </AomiRuntimeProvider>
+  );
+}
+```
+
+### Your responsibilities
+
+A headless interface must provide:
+
+- Thread navigation and message rendering.
+- Composer, streaming, cancellation, and error states.
+- Wallet connection and network selection.
+- Transaction-call and fee disclosure.
+- Explicit approval and rejection controls.
+- Owner and network validation before signing.
+- Submitted, confirmed, expired, and failed operation states.
+
+<Warning>
+  Returning a generic transaction result is not enough. Your interface must narrow each action by `action.request.kind`, show the exact request, and return the result that kind expects. Prefer `AomiWidget` unless you need to own the full approval experience.
+</Warning>
+
+## Hooks
+
+All hooks must run beneath `AomiRuntimeProvider`.
+
+### Chat and threads
+
+| Hook | Purpose |
+| --- | --- |
+| `useAomiRuntime` | Unified chat, thread, user, notification, event, and wallet API |
+| `useThreadContext` | Low-level thread state and operations |
+| `useCurrentThreadMetadata` | Metadata for the active thread |
+
+Read active-thread messages with `useAomiRuntime().getMessages()`.
+
+### User and wallet controls
+
+| Hook | Purpose |
+| --- | --- |
+| `useUser` | Canonical user and wallet state |
+| `useControl` | Combined App, model, API-key, and secret controls |
+| `useApiKey` | API-key state and actions |
+| `useAuthEndpoints` | Available Apps and models |
+| `usePerThreadControl` | Per-thread App and model selection |
+
+### Events and notifications
+
+| Hook | Purpose |
+| --- | --- |
+| `useNotification` | Notice, success, wallet, and error messages |
+
+Read ordered backend events from `useAomiRuntime().events` and the active lifecycle from `turnState`. `pendingActions` contains canonical Actions; narrow on `action.request.kind` before reading its payload. Use the exported TypeScript types as the source of truth for complete signatures and payloads.
+
+## Complete custom UI example
+
+This starter owns message rendering, the composer, cancellation, and the visible wallet-request count:
+
+```tsx
+"use client";
+
+import { useState, type FormEvent } from "react";
+import { useAomiRuntime } from "@aomi-labs/react";
+
+export function CustomChat() {
+  const [input, setInput] = useState("");
+  const {
+    currentThreadId,
+    getMessages,
+    sendMessage,
+    isRunning,
+    cancelGeneration,
+    pendingActions,
+  } = useAomiRuntime();
+
+  const messages = getMessages(currentThreadId);
+
+  async function submit(event: FormEvent) {
+    event.preventDefault();
+    const text = input.trim();
+    if (!text || isRunning) return;
+    setInput("");
+    await sendMessage(text);
+  }
+
+  return (
+    <main>
+      <section aria-live="polite">
+        {messages.map((message, index) => (
+          <article key={index} data-role={message.role}>
+            <strong>{message.role}</strong>
+          </article>
+        ))}
+      </section>
+
+      <form onSubmit={submit}>
+        <input
+          value={input}
+          onChange={(event) => setInput(event.target.value)}
+          disabled={isRunning}
+        />
+        {isRunning ? (
+          <button type="button" onClick={cancelGeneration}>Stop</button>
+        ) : (
+          <button type="submit">Send</button>
+        )}
+      </form>
+
+      <p>{pendingActions.length} actions need review</p>
+    </main>
+  );
+}
+```
+
+Add an approval component for every action kind your App can produce. Show the calls, signatures, owner, network, simulation evidence, and terminal status available on the request.

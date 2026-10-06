@@ -12,7 +12,9 @@ Use the widget when you want threads, messages, actions, and wallet integration 
 - You want browser wallet, Para, or Privy authentication.
 - You prefer configuration over building every React component.
 
-Use the [headless library](/integrate/ui/headless-library) when you need a fully custom interface.
+Use the [headless library](/integrate/ui/headless-library) when you need a fully custom interface. To compare the widget with the hosted portal, the client SDK, and building your own App, see [Choose a surface](/integrate/choose-surface).
+
+The widget works with the default Agent and with public, activated Apps. Pass your App's numeric `applicationId` and add [Direct routing](/guides/widget/quickstart#route-turns-to-your-app) to send turns to it. Private Apps, which need an App key, are not supported in the widget.
 
 ## Cross-origin authentication
 
@@ -31,7 +33,7 @@ That session authenticates the widget's account, thread, and Agent requests with
     Add the widget to a frontend and render the first conversation.
   </Card>
   <Card title="Installation" icon="download" href="/guides/widget/installation">
-    Configure the package and optional wallet provider.
+    Configure the compiled package and optional wallet provider.
   </Card>
   <Card title="Customization" icon="palette" href="/guides/widget/customization">
     Change layout, components, and behavior.
