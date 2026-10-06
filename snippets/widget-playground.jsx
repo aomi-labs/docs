@@ -1,7 +1,5 @@
 "use client";
 
-import { useMemo, useState } from "react";
-
 export function WidgetPlayground() {
 const PRESETS = {
   Default: { background: "#ffffff", foreground: "#09090b", muted: "#71717a", panel: "#f4f4f5", sidebar: "#fafafa", primary: "#5288c2", border: "#e4e4e7", radius: 16 },
