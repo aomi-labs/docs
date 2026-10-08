@@ -1,0 +1,111 @@
+---
+title: "Sign in and manage wallets"
+description: "Sign in, link another wallet, choose the active signer, and merge accounts when a sign-in method is already linked elsewhere."
+---
+
+Use one Aomi account for your chats, linked wallets, settings, and credits.
+Connecting a wallet makes it available on this device. Linking it proves that
+it belongs to your account. Choosing an **Active** wallet selects the address
+that signs for its chain family on this device.
+
+## Sign in
+
+<Steps>
+  <Step title="Open Sign in">
+    In the [portal](https://chat.aomi.dev), click **Sign in**. Choose **Privy**
+    or **Para** for a provider login, or select a browser wallet under
+    **Wallets**. If a wallet supports both Ethereum and Solana, choose the
+    chain family you want to use.
+  </Step>
+  <Step title="Complete the selected login">
+    Privy or Para opens its own sign-in dialog. For a browser wallet, approve
+    the connection and sign the ownership message. Aomi connects and signs you
+    in through the same flow.
+
+    Signing the ownership message does not send a transaction or transfer funds.
+    If you dismiss the signature request, finish verification before using that
+    address as a linked signer.
+  </Step>
+  <Step title="Check your account and signer">
+    Open **Settings → Account**. Under **Wallets & access**, the **signs with**
+    strip shows one EVM slot and one Solana slot. Check the address you intend
+    to use. Connection dots show whether a wallet is connected; **Active**
+    identifies the signer selected on this device.
+  </Step>
+</Steps>
+
+The portal can recover cookie-owned guest chats and bring them into your
+account when you sign in. A separate-origin widget does not merge guest chats
+into an account. Its host can remember a selected thread identifier, but that
+identifier does not grant access to a previous guest's conversations.
+
+## Link another wallet or login
+
+While signed in, open **Settings → Account → Wallets & access** and click
+**Add a wallet**. Choose a browser wallet or a Privy/Para login and complete its
+proof. A provider login is linked only after you explicitly choose it.
+
+**Wallets** lists addresses that can sign you in with a message. **Social
+sign-in** lists your linked Privy and Para logins with their wallets. Linking
+does not enable automatic signing; configure that separately in
+[**Settings → Safety**](/security/configure-approvals).
+
+## Choose the active wallet
+
+Open the EVM or Solana **signs with** slot and choose an address. You can also
+switch wallets from the account menu. Each chain family has its own selected
+signer, so choosing an EVM wallet does not replace the Solana selection.
+
+An already linked, available address can become **Active** without another
+ownership signature. If the address is not currently available, follow the
+prompt to connect its wallet or switch to that address in the wallet app.
+
+When your wallet app switches to an unlinked address, Aomi offers to verify it.
+You can choose **Not now** and link it later. A connected address does not
+become linked just because you selected it in the wallet app.
+
+Finish or cancel a pending transaction review before switching its signer.
+
+## Merge two accounts
+
+If a wallet or provider login already belongs to another Aomi account, linking
+it opens **Merge accounts**. The sheet shows the other account's chats, wallets,
+and credits, along with any saved keys that will not carry over.
+
+Choose **Merge into this account** to move those chats, wallets, and credits
+into the account you are currently signed in to. The other account closes,
+and its linked wallets and logins then sign you in to the remaining account.
+The ownership or provider proof you just completed authorizes the offer; the
+merge does not ask for a second ownership signature.
+
+<Warning>
+  The other account's saved model-provider keys and App secrets do not carry
+  over. Review the sheet's list and configure the credentials you still need
+  on the remaining account. Merging accounts does not move wallet funds or
+  transfer private keys.
+</Warning>
+
+In the portal, **Switch to that account instead** lets you keep the accounts
+separate and sign in to the other one. This option is not available in a hosted
+widget; sign out and sign in to that account directly instead.
+
+If the merge offer expires, repeat the proof to receive a new offer. If a reply
+is still being billed, wait for it to finish and try the merge again.
+
+## Rename, disconnect, or remove
+
+Use each wallet's menu in **Wallets & access**:
+
+| Action | Result |
+| --- | --- |
+| **Rename** | Changes the address's display name in Aomi. It does not change the address or wallet app. |
+| **Disconnect** | Ends the wallet connection on this device. The address remains linked to the account. |
+| **Remove** | Removes the address from the account, so it no longer signs you in to that account. The wallet and its funds are unaffected. |
+
+Removing a social login also removes its linked addresses, as described in the
+confirmation. **Sign out** ends your Aomi session on this device; it is separate
+from removing a wallet or deleting the account.
+
+For signing modes, provider authorization, and revocation, see
+[Configure approvals](/security/configure-approvals). For the identity and
+permission model, see [Accounts and wallets](/concepts/accounts-and-wallets).

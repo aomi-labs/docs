@@ -146,13 +146,13 @@ and a returned signature must recover to the expected owner.
 
 | Wallet state | Result |
 | --- | --- |
-| **Auto** with a valid delegated grant | A supported provider may sign the prepared AA operation. |
-| **Manual** | Your wallet handles a standard transaction request and submits it. |
-| **Accept transactions** | Your key-holding client signs and submits through the client path. |
+| **Automatic signing** with a valid delegated grant | A supported provider may sign the prepared AA operation. |
+| **Ask me** | Your wallet handles a standard transaction request and submits it after your approval. |
+| **Auto** | A compatible wallet client signs and submits through the client path. This is separate from provider delegation. |
 | **Locked**, read-only, missing, or mismatched | Aomi produces no signature and stops the commit. |
 
 Revoking a delegated grant removes the signing capability for the next
-operation. Changing the wallet policy to **Manual** or **Locked** also blocks
+operation. Changing the wallet policy to **Ask me** or **Locked** also blocks
 delegated execution. See the [permission model](/security/permission-model) for
 the checks that apply before any signing request is released.
 

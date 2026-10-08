@@ -22,9 +22,31 @@ A separate-origin host cannot rely on the Portal's first-party cookie. The widge
 
 That session authenticates the widget's account, thread, and Agent requests without opening another OAuth window on the first message.
 
+The default widget starts guest chat without Para or Privy. Install and configure
+an optional provider only when you need its login experience. Provider startup
+preserves your chat and draft. Choosing a different provider changes the active
+wallet runtime; it does not sign out of your Aomi account.
+
 <Warning>
   Serve production embeds over HTTPS, and add every production and development origin to the selected wallet provider's allowlist. Never put a provider secret in browser configuration.
 </Warning>
+
+## Accounts and wallets
+
+Connecting a wallet makes it available for signing. Sign the SIWE or SIWS
+message to sign in to Aomi. Once signed in, choose **Add a wallet** to link
+another browser wallet or complete a Para or Privy login for the same account.
+
+If the verified wallet or provider opens another account, Aomi offers
+**Merge accounts**. Review the chats, wallets, credits and saved keys shown in
+the offer. Confirming moves the other account's chats, wallets and credits into
+your current account, closes the other account and ends its sessions. Saved
+model keys and App secrets from the other account do not carry over. You can
+cancel the offer. The portal also offers **Switch to that account instead**;
+a hosted widget does not.
+
+See [Accounts and wallets](/guides/accounts-and-wallets) for sign-in, linking,
+switching accounts and signing permissions.
 
 ## Continue with the widget guides
 

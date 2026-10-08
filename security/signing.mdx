@@ -14,8 +14,13 @@ a wallet's behavior, use [Configure approvals](/security/configure-approvals).
 <Note>
   The **Auto** selector in the message composer chooses a model. It does not
   enable automatic wallet signing. Wallet signing is configured under
-  **Settings → Account**.
+  **Settings → Safety**.
 </Note>
+
+An **Active** wallet is the selected, usable signer for its chain family on
+this device. The label does not grant automatic signing permission. See
+[Accounts and wallets](/concepts/accounts-and-wallets#connected-linked-and-active)
+for the difference between connected, linked, and active wallets.
 
 ## When Aomi reaches signing
 
@@ -31,9 +36,9 @@ happens:
 Aomi reports which path it is waiting on. It does not switch wallets or fall
 back to a more permissive path.
 
-## Manual: approve each transaction
+## Ask me: approve each transaction
 
-With **Manual**, the sequence is visible and deliberate:
+With **Ask me**, the sequence is visible and deliberate:
 
 <Steps>
   <Step title="Aomi shows the proposed action">
@@ -71,8 +76,9 @@ If the connected client is unavailable or a provider authorization has expired
 or been revoked, signing stops. Aomi never receives the private key and does not
 replace the unavailable signer.
 
-The two automatic settings serve different situations. **Auto-approve** uses
-the active wallet session. **Bypass permissions** uses an eligible Privy or Para setup for
+The two automatic paths serve different situations. **Auto** in the Signing
+row uses an available compatible Privy or Para wallet client. The separate
+**Automatic signing** section configures provider-delegated signing for
 unattended work. The provider-specific setup and revocation steps live in
 [Configure approvals](/security/configure-approvals).
 

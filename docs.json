@@ -25,6 +25,7 @@
                 "icon": "user",
                 "pages": [
                   "trade/portal",
+                  "guides/accounts-and-wallets",
                   "build/developer-platform"
                 ]
               },

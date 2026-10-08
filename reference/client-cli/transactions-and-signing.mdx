@@ -6,6 +6,11 @@ description: "Review, simulate, export, and execute EVM and SVM Agent Actions wi
 
 An Agent turn can produce a durable Action that needs your wallet. The CLI fetches those Actions from the active Agent session and exposes them through the historically named `tx` command group.
 
+These commands target `@aomi-labs/cli` 0.1.0 in merged frontend source
+`d888c04fe`. Install the [CLI package](/reference/client-cli#install) after the
+matching npm release is published, and use a backend that supports the Action
+lifecycle. The TypeScript client package is not the canonical CLI installation.
+
 An Action can request:
 
 - one or more EVM transactions;

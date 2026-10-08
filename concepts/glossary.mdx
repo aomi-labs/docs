@@ -9,6 +9,14 @@ Terms as Aomi uses them, A to Z. Each entry gives the plain meaning first, then 
 
 Smart-account execution lets a programmable account handle a batch of approvals and calls with one signature. Aomi supports EIP-7702 and EIP-4337 through its backend AA path, with fallback to direct EOA execution. See [How execution works](/trade/execution).
 
+### account merge
+
+Combining another verified account into the account you are signed in to. Chats, wallets, and credits move; the source account closes. Its saved model keys and App secrets do not carry over, and its signed-in sessions end. Wallet keys and onchain funds do not move. See [Accounts and wallets](/concepts/accounts-and-wallets#when-two-sign-in-methods-open-different-accounts).
+
+### Active wallet
+
+The selected, usable signer for one chain family on this device. A connected or linked wallet is not necessarily Active, and the label does not enable automatic signing. See [Accounts and wallets](/concepts/accounts-and-wallets#connected-linked-and-active).
+
 ### Aomi App
 
 The deployed unit a builder ships. It combines your plugin tools and system prompt on the hosted runtime. Users select an App in the portal, CLI, and Developer Platform. See the [Build overview](/build).
@@ -27,7 +35,11 @@ The wallet address that receives fees from a priced tool. Declare it in the `[[b
 
 ### canonical account
 
-The account identity that owns threads, installed packages, settings, and wallet signing policies. Aomi links a person's addresses across chains to this account instead of treating an address as the user. See [Accounts and wallets](/concepts/accounts-and-wallets).
+The account identity that owns threads, Apps, settings, and wallet signing policies. Aomi links a person's addresses across chains to this account instead of treating an address as the user. See [Accounts and wallets](/concepts/accounts-and-wallets).
+
+### connected wallet
+
+A wallet available to the current browser through a wallet app or provider. Connecting alone does not prove its ownership to Aomi or choose its signing policy. See [Accounts and wallets](/concepts/accounts-and-wallets#connected-linked-and-active).
 
 ### condition trigger
 
@@ -89,6 +101,10 @@ The `@aomi-labs/react` npm package: runtime logic, state management, hooks, and 
 
 The React hooks exported by the headless library, including `useAomiRuntime`, `useWalletHandler`, and `useNotificationHandler`. Each hook exposes part of the runtime state and must run beneath `AomiRuntimeProvider`. See the [Hooks reference](/guides/widget/customization#hooks).
 
+### linked wallet
+
+A public wallet address whose account relationship Aomi has verified using a wallet signature or provider proof. It can remain linked while disconnected from this device. See [Accounts and wallets](/concepts/accounts-and-wallets).
+
 ### LLM interface
 
 The runtime component that connects agent threads to models. Your plugin declares which model an App uses, and the runtime handles model selection and scheduling. See the architecture overview on the [Introduction](/).
@@ -139,7 +155,7 @@ The hosted environment your App runs in: it loads plugins dynamically, manages p
 
 ### signing mode
 
-The per-wallet policy checked on every commit. Its value is `denied`, `manual`, `client_auto`, or `auto`. The mode determines whether signing is allowed and changes only through a wallet-signed permit. See [Permission model](/security/permission-model).
+The per-wallet policy checked on every commit. **Ask me**, **Auto**, and **Locked** under Safety → Signing correspond to `manual`, `client_auto`, and `denied`. The separate provider-delegated **Automatic signing** path uses `auto`. Policy changes require a wallet-signed permit. See [Permission model](/security/permission-model).
 
 ### simulation
 
@@ -179,7 +195,7 @@ The runtime component that dispatches calls to plugin tools, chain gateways, and
 
 ### widget
 
-The drop-in `AomiWidget` React component, with chat, authentication, and wallet review composed for your host application. Install `@aomi-labs/widget-lib` and select a deployed App and wallet provider. See [Widget installation](/guides/widget/installation).
+The drop-in `AomiWidget` React component, with chat, authentication, and wallet review composed for your host application. Install `@aomi-labs/widget` and select a deployed App. Add a compatible wallet provider when your integration needs signing. See [Widget installation](/guides/widget/installation).
 
 ### x402
 

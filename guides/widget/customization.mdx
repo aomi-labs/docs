@@ -53,7 +53,13 @@ export default function Assistant() {
 
 The callback reports user thread selection without echoing controlled prop
 changes. Switching chats preserves the shell, each chat's draft and its display
-state.
+state within the same account. By default, selection persists for a signed-in
+account or when you supply a persistence key or scope. Anonymous embeds
+otherwise keep it in memory. Set `persistThread={false}` to keep selection in
+memory explicitly. Use `threadPersistenceScope` to add
+your host's tenant or user scope, or `threadPersistenceKey` for an explicit
+storage key. Persisted selection does not authorize access to another account's
+chat.
 
 ## Composed hosts
 
@@ -71,6 +77,11 @@ provides its own chrome. Pass `backendUrl` explicitly, or use `""` for a
 same-origin API. Account management transport and wallet-provider configuration
 remain explicit host inputs. Prefer the standalone widget for ordinary embeds.
 
+Add `aui-suggestions-marquee` to the composed frame's `className` to enable the
+two moving recommendation rows with faded edges. The rows use the original
+30-second and 72-second animations. They wrap without animation when the visitor
+requests reduced motion.
+
 Browser preferences are scoped by backend, App and account where available.
 Old preference keys migrate once to the first scope that reads them. API keys
 stay in memory by default. First-party frame hosts can explicitly opt into scoped
@@ -84,25 +95,34 @@ Choose the headless library when props, themes, and composition are not enough. 
 ### Install the library
 
 ```bash
-npm install @aomi-labs/react @assistant-ui/react
+npm install @aomi-labs/react @assistant-ui/react@0.14.26
 ```
 
 ### Add the runtime provider
 
 ```tsx
-import { AomiRuntimeProvider } from "@aomi-labs/react";
+import { AomiRuntimeProvider, type RuntimeAccount } from "@aomi-labs/react";
 
-export function Providers({ children }: { children: React.ReactNode }) {
+export function Providers({ children, account }: {
+  children: React.ReactNode;
+  account?: RuntimeAccount | null;
+}) {
   return (
     <AomiRuntimeProvider
       backendUrl="https://chat.aomi.dev"
       applicationId="123"
+      account={account}
     >
       {children}
     </AomiRuntimeProvider>
   );
 }
 ```
+
+Pass the confirmed account as `{ kind: "user", id }` or `{ kind: "guest", id }`.
+Use `undefined` while resolving the session and `null` when no account is signed
+in. This scopes displayed account data; it does not supply authentication.
+Configure credentials through `clientOptions` for your chosen transport.
 
 ### Your responsibilities
 
@@ -117,7 +137,7 @@ A headless interface must provide:
 - Submitted, confirmed, expired, and failed operation states.
 
 <Warning>
-  Returning a generic transaction result is not enough. Your interface must narrow each action by `action.request.kind`, show the exact request, and return the result that kind expects. Prefer `AomiWidget` unless you need to own the full approval experience.
+  Returning a generic transaction result is not enough. Your interface must narrow each action by `action.request.type`, show the exact request, and return the result that type expects. Prefer `AomiWidget` unless you need to own the full approval experience.
 </Warning>
 
 ## Hooks
@@ -150,7 +170,7 @@ Read active-thread messages with `useAomiRuntime().getMessages()`.
 | --- | --- |
 | `useNotification` | Notice, success, wallet, and error messages |
 
-Read ordered backend events from `useAomiRuntime().events` and the active lifecycle from `turnState`. `pendingActions` contains canonical Actions; narrow on `action.request.kind` before reading its payload. Use the exported TypeScript types as the source of truth for complete signatures and payloads.
+Read ordered backend events from `useAomiRuntime().events` and the active lifecycle from `turnState`. `pendingActions` contains canonical Actions; narrow on `action.request.type` before reading its payload. Use the exported TypeScript types as the source of truth for complete signatures and payloads.
 
 ## Complete custom UI example
 

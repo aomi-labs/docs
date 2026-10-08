@@ -42,14 +42,21 @@ Skills are markdown instructions and supporting references. Your coding agent re
 
 The skills and client CLI update independently. Installing or refreshing a skill does not upgrade a globally installed `aomi` binary.
 
-For transaction work, install or update the npm client separately:
+For transaction work, install or update the CLI separately after the matching
+release described in the [CLI reference](/reference/client-cli) is published:
 
 ```bash
-npm install -g @aomi-labs/client@latest
+npm install -g @aomi-labs/cli@latest
 aomi --version
 ```
 
-`aomi-transact` requires client `0.6.0` or newer. Its first step checks the detected version and can use `npx @aomi-labs/client@latest` when no global binary is available.
+The older `aomi-transact` procedure targets the client-packaged CLI: it requires
+client `0.6.0` or newer and can use `npx @aomi-labs/client@latest` when no global
+binary is available. Those version numbers do not describe the new
+`@aomi-labs/cli` package, whose merged source version is 0.1.0. Check your
+installed skill's `SKILL.md` before using its fallback command or interpreting
+its version check. Client 0.10.0 contains only a deprecated CLI shim and needs
+the separate CLI package installed.
 
 ## Transaction workflow
 
@@ -71,7 +78,9 @@ Local CLI execution uses the configured wallet key. Account abstraction is prepa
 
 ## Security boundary
 
-The canonical `aomi-transact` manifest declares `risk_tier: L2` because it can sign and broadcast onchain transactions. Its default permissions are narrow:
+The older client-packaged `aomi-transact` manifest declares `risk_tier: L2`
+because it can sign and broadcast onchain transactions. Its documented default
+permissions are narrow:
 
 - shell commands are limited to `aomi` and `npx @aomi-labs/client@latest`;
 - file reads and writes are limited to `~/.aomi/`, with identity files denied;
@@ -79,6 +88,10 @@ The canonical `aomi-transact` manifest declares `risk_tier: L2` because it can s
 - no MCP tools are granted by the skill;
 - credential setup and transaction signing require an explicit user request;
 - the procedure lists a pending Action and simulates dependent EVM steps before signing.
+
+The CLI package move does not change an installed skill's allowlist. Use its
+current manifest as the authority; do not assume its old `npx` permission also
+permits `npx @aomi-labs/cli@latest`.
 
 The CLI can also contact a user-supplied `--rpc-url` during wallet execution. Review that endpoint and the prepared Action before authorizing a signing run.
 
@@ -107,7 +120,7 @@ npx skills add aomi-labs/skills
 Then update the CLI independently if you use `aomi-transact`:
 
 ```bash
-npm install -g @aomi-labs/client@latest
+npm install -g @aomi-labs/cli@latest
 aomi --help
 ```
 

@@ -15,7 +15,7 @@ The Aomi portal is the hosted chat at [chat.aomi.dev](https://chat.aomi.dev). Yo
 
 * Ask for prices, balances, positions, and routes in plain English.
 * Run a trade end to end: the agent builds the transaction, simulates it on a fork, and your own wallet signs it. Aomi never holds your keys.
-* Switch the chain, the model, and the app per thread.
+* Switch the chain, the model, and the App per thread.
 * Install App packages for protocols such as Uniswap, Jupiter, Aave, and Hyperliquid.
 * Keep thread history across visits once you have an account session, with or without a wallet connected.
 
@@ -30,9 +30,12 @@ The Aomi portal is the hosted chat at [chat.aomi.dev](https://chat.aomi.dev). Yo
     Two paths, same account model:
 
     * **Bring your own wallet.** Use MetaMask, Rabby, Coinbase Wallet, or WalletConnect on EVM chains. On Solana, use a standard wallet-adapter wallet. You prove ownership with a signed message through SIWE on EVM or SIWS on Solana. Keys stay in your wallet.
-    * **Sign in with email or Google.** The portal provisions an embedded wallet so you can trade without installing a wallet extension.
+    * **Use Privy or Para.** Choose a provider and complete its sign-in dialog to use its embedded wallets without installing a wallet extension.
 
     Either path creates an Aomi account. Your threads, installed packages, and settings attach to it.
+    You can then link another wallet or login without creating a separate account.
+    See [Sign in and manage wallets](/guides/accounts-and-wallets) for active
+    signers, wallet switching, and account merges.
   </Step>
 
   <Step title="Ask in plain English">
@@ -50,24 +53,30 @@ The Aomi portal is the hosted chat at [chat.aomi.dev](https://chat.aomi.dev). Yo
 * **Model selector (composer).** Choose the model or leave it on **Auto**.
 * **App selector (composer).** Scope the thread to one App or let the agent route across your installed packages.
 * **Packages catalog.** Browse and install Apps for DeFi execution, market data, chain explorers, and productivity tools. Core wallet and chain tools are always installed.
-* **Thread history.** Threads persist on your account and load with an account session, even when no wallet is connected. Without an account, threads remain only in the current tab.
+* **Thread history.** Threads persist on your account and load with an account session, even when no wallet is connected. The portal can recover cookie-owned guest chats and bring them into your account when you sign in. Cross-origin widgets do not merge guest chats into an account; remembering a thread identifier does not grant access to previous guest conversations.
 
 ## Signing policy
 
-Settings → Account is the signing ACL for every wallet on your account. Each wallet carries one of four committed settings:
+**Settings → Account → Wallets & access** manages linked wallets and the signer
+selected for each chain family. **Settings → Safety** controls guard policy and
+signing permissions. User-controlled wallets show these choices:
 
-* **Manual.** Every transaction opens your wallet for approval. The default for a newly linked wallet.
-* **Accept transactions.** Your connected wallet session signs each transaction without a separate popup. Aomi never receives the private key.
-* **Bypass permissions.** Unattended signing for scheduled or background work, through a Privy delegation or a provisioned Para agent wallet. Requires a separate provider authorization; revocable at any time.
+* **Ask me.** Every transaction asks for your approval. The default for a newly linked user-controlled wallet.
+* **Auto.** A compatible Privy or Para wallet client signs without a separate prompt for each transaction. This choice is disabled for external browser wallets.
 * **Locked.** The wallet stays linked but cannot sign through Aomi.
 
-Mode changes are never optimistic: each one asks a wallet to sign a short-lived authorization, and the committed setting is what you see reflected in the UI. See [Configure approvals](/security/configure-approvals) for the full setup and revocation guide, and [Signing](/security/signing) for what each setting feels like at transaction time. Settings → Usage shows your spend statement broken down by app.
+The separate **Automatic signing** section configures provider-delegated
+signing for eligible wallets. It requires both an authorized wallet policy and
+a live Privy delegation or a provisioned Para agent wallet. Choosing **Auto**
+does not create that delegation.
+
+Mode changes are never optimistic: each one asks a wallet to sign a short-lived authorization, and the committed setting is what you see reflected in the UI. See [Configure approvals](/security/configure-approvals) for the full setup and revocation guide, and [Signing](/security/signing) for what each setting feels like at transaction time. **Settings → Usage** shows your spend statement broken down by App.
 
 ## Limits
 
 * Simulation covers EVM chains. Solana requests are signed and sent without a fork simulation. Review the transaction details in your wallet.
 * If simulation cannot complete (unsupported chain, zero balance), the portal tells you it is proceeding without a fee preview and still lets your wallet make the final call.
-* Unattended signing (**Bypass permissions**) requires a live provider authorization — a Privy delegation or a Para agent wallet. Without one, wallets prompt or auto-approve only within your own connected session.
+* Unattended signing requires a live provider authorization — a Privy delegation or a Para agent wallet. A saved automatic policy cannot bypass a missing or expired delegation.
 
 ## Next
 

@@ -8,6 +8,11 @@ description: "Resolve widget authentication, wallet, and action issues with focu
 | Widget does not render | Package styles, `baseUrl`, and Application ID; an invalid prop shows its reason inside the widget |
 | Origin rejected | The origin is HTTPS (or loopback over HTTP) and matches the scheme, host, and port that created the session |
 | Sign-in does not complete | Provider environment and the active browser session |
+| Privy or Para login does not open | Install both packages for the selected provider, pass its public identifier and allow the host origin in its project settings. The wallet kit waits for SDK readiness and reports a startup failure inside the widget; choose the provider again to retry |
+| A connected wallet does not sign you in | Complete the separate SIWE or SIWS sign-in message; wallet connection alone is not an Aomi account session |
+| Another account already owns the wallet or provider | Review **Merge accounts**, or choose **Switch to that account instead** when offered. Cancel to keep the accounts separate |
+| A merge offer expired | Sign the message or complete provider sign-in again to obtain a new offer |
+| Headless account data is missing | Pass the confirmed `account` identity to `AomiRuntimeProvider` and configure account credentials; `account` alone does not authenticate requests |
 | Wallet cannot sign | The active wallet supports the requested message, typed-data, EVM, or Solana method |
 | Owner or network mismatch | Switch back to the owner and network shown in the request |
 | Action cannot execute | The configured wallet exposes the capability required by `action.request.type` |

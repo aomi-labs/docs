@@ -19,7 +19,7 @@ This repository owns the canonical [Aomi documentation](https://aomi.dev/docs), 
 
 ## Source ownership
 
-- [`aomi-labs/aomi`](https://github.com/aomi-labs/aomi): `packages/client` owns the TypeScript client and CLI; the React and widget packages own browser integration.
+- [`aomi-labs/aomi`](https://github.com/aomi-labs/aomi): `packages/client` owns the TypeScript client; `packages/cli` owns the `aomi` command; the React and widget packages own browser integration.
 - [`aomi-labs/aomi-sdk`](https://github.com/aomi-labs/aomi-sdk): Rust plugin-authoring SDK, macros, test helpers, and example Apps.
 - [`aomi-labs/product-mono`](https://github.com/aomi-labs/product-mono): backend routes and generated OpenAPI contracts.
 

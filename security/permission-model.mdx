@@ -38,6 +38,13 @@ Your Aomi account owns threads, settings, Apps, and wallet-policy records. A
 linked wallet remains a distinct signing identity. Linking another wallet does
 not merge its funds, keys, or permissions with an existing wallet.
 
+A signed-in session or API token permits account requests within its authority;
+it is not a wallet signature. Connecting a wallet does not link it without
+proof, and linking it does not authorize automatic signing. Account merges
+require proof of access to both accounts and leave per-wallet signing gates in
+place. Read [Accounts and wallets](/concepts/accounts-and-wallets) for these
+identity boundaries.
+
 ## Three independent controls
 
 Authorization depends on three separate questions. Passing one never implies
@@ -53,6 +60,10 @@ does not copy it.
 This page defines the policy's role in the security model. Read
 [Configure approvals](/security/configure-approvals) for the available settings
 and how to change them.
+
+Selecting an **Active** wallet changes which available wallet this device uses.
+It does not relax that wallet's policy. The **Signing** controls and
+**Automatic signing** setup live in **Settings → Safety**.
 
 ### Signing capability
 

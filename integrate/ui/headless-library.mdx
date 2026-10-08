@@ -6,25 +6,51 @@ description: "Build a custom React interface with AomiRuntimeProvider and useAom
 
 Use the `@aomi-labs/react` **headless library** when you want Aomi to manage Agent state while your components control every pixel.
 
+These examples target `@aomi-labs/react` 0.8.0. Use them after that release is
+published and check your installed package version.
+
 ## Install
 
+Use React 18 or 19 and the headless library's supported assistant-ui peer:
+
 ```bash
-npm install @aomi-labs/react @assistant-ui/react react react-dom
+npm install @aomi-labs/react @assistant-ui/react@0.14.26 react react-dom
 ```
 
 ## Add the provider
 
 ```tsx
-import { AomiRuntimeProvider } from "@aomi-labs/react";
+import { AomiRuntimeProvider, type RuntimeAccount } from "@aomi-labs/react";
 
-export function Providers({ children }: { children: React.ReactNode }) {
+export function Providers({ children, account }: {
+  children: React.ReactNode;
+  account?: RuntimeAccount | null;
+}) {
   return (
-    <AomiRuntimeProvider backendUrl={import.meta.env.VITE_AOMI_BASE_URL}>
+    <AomiRuntimeProvider
+      backendUrl={import.meta.env.VITE_AOMI_BASE_URL}
+      account={account}
+    >
       {children}
     </AomiRuntimeProvider>
   );
 }
 ```
+
+Pass `backendUrl` explicitly; `""` selects a same-origin API. The library does
+not read framework environment variables.
+
+`account` identifies the confirmed session for account data and display state:
+pass `{ kind: "user", id }` for a signed-in user, `{ kind: "guest", id }` for a
+confirmed guest, `null` for no account, or leave it `undefined` while resolving
+the session. Until the identity is known, account data is not shown or restored.
+The ID is not a credential. Supply credentials separately through
+`clientOptions`, using the authentication method for your host.
+
+`displayPersistence` defaults to `"public"`, which saves public catalogs. Use
+`"none"` to disable display persistence or `"account"` to retain supported
+account display fields. API keys stay in memory unless you explicitly set
+`apiKeyPersistence="session"` for tab-scoped storage.
 
 ## Send a message
 
@@ -51,6 +77,7 @@ function Composer() {
 | Actions | `pendingActions`, `actionAttempts`, `executeAction`, `respondToAction`, `rejectAction` |
 | Events | Ordered `events` and backend-owned `turnState` |
 | User state | Current EVM, Solana, connection, and extension state |
+| Account | `account` transport methods and `refreshAccountData` |
 
 `executeAction(id)` uses the capabilities configured beneath the provider. Use `respondToAction(id, result)` only when your application executed the request itself and has the correctly typed result.
 

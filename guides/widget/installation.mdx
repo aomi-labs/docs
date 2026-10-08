@@ -15,7 +15,8 @@ npm install @aomi-labs/widget
 The [quickstart](/guides/widget/quickstart) uses browser wallets by default.
 Choose an embedded wallet only when your product needs that sign-in experience.
 Install only the provider you use. The `auth` prop loads that provider's SDK on
-demand; there is no provider module to import.
+demand; there is no provider module to import. Browser-wallet and guest chat do
+not require either SDK.
 
 These examples target `@aomi-labs/widget` 3.1.0. Use them after that release is
 published; check your installed package version before adopting them. The
@@ -46,7 +47,9 @@ export default function Assistant() {
 ```
 
 Privy imports its Solana and smart-wallet feature peers during bundling, so include
-them even when your host uses only basic wallets.
+them even when your host uses only basic wallets. The widget accepts Privy React
+2.x and its wagmi adapter 1.x; the versions above are the installation recipe
+for these examples.
 
 ## Para
 
@@ -63,9 +66,9 @@ export default function Assistant() {
 }
 ```
 
-`environment` defaults to `"PROD"`; pass `"BETA"` for a Para beta key. If the
-selected provider's package is missing, the widget shows which package to
-install instead of failing the page.
+The widget requires both Para packages at 2.19.0. `environment` defaults to
+`"PROD"`; pass `"BETA"` for a Para beta key. If the selected provider's package
+is missing, the widget shows which package to install instead of failing the page.
 
 Pass public provider identifiers explicitly. Your host may load them from its
 own configuration, but the widget does not read environment variables. Allow
@@ -75,13 +78,20 @@ an App secret, provider secret or private key to browser code.
 SDK loading and provider changes preserve the chat and composer draft. If your
 host presents provider choices, `preloadWalletProvider("privy" | "para")` warms
 the installed SDK on hover or focus without changing the selected account.
+Composed hosts can offer providers through `WalletSignInOptionsContext` from
+`@aomi-labs/widget/host-composition`. The wallet kit warms those SDKs and opens
+the chosen login once its runtime is ready. A loaded provider stays mounted
+when you choose another provider; only the active provider supplies the wallet
+runtime. Changing providers does not sign out of your Aomi account.
 
 ## Existing integrations
 
 `@aomi-labs/widget-lib` remains a compatibility package. It retains the
 previously bundled Para and Privy dependencies and eager provider registration.
-Legacy `auth.kind` objects, the `apiUrl` prop and existing component subpaths
-remain supported until 4.0. Use `@aomi-labs/widget`, `privyAuth`, `paraAuth`
+The canonical package's legacy `auth.kind` objects, `apiUrl` prop, main-entry
+composition exports and compatibility component subpaths are deprecated and
+removed in 4.0. The old package name has the separate 5.0 removal window above.
+Use `@aomi-labs/widget`, `privyAuth`, `paraAuth`
 and `baseUrl` for new integrations. Hosts that compose `AomiFrame` themselves
 import it from `@aomi-labs/widget/frame` and the wallet kit and account UI from
 `@aomi-labs/widget/host-composition`. Registry copy-in installs are
