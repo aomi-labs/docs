@@ -215,11 +215,18 @@ const grantStore: AomiOAuthGrantStore = {
   Treat the stored value like a password. It can contain rotating refresh grants. Use an encrypted database, secret manager, OS keychain, or an owner-only local file. Never print or commit it.
 </Warning>
 
-Use the store interface exported by your installed client version. See the runnable device example in the [`aomi` repository](https://github.com/aomi-labs/aomi/tree/main/apps/examples/headless-client/src/oauth).
+Use the store interface exported by your installed client version. See the runnable device example in the [`aomi` repository](https://github.com/aomi-labs/aomi/tree/main/examples/headless/src/oauth).
 
 ## Browser and widget access
 
 For a separate-origin web application, use [widget authentication](/integrate/ui/widget). Its wallet or provider proof creates an origin-bound session for that host application.
+
+The widget handles sign-in, explicit wallet/provider linking, and account merge
+offers. Linking another sign-in method does not grant automatic signing. Guest
+chat recovery on the first-party portal does not apply to a separate-origin
+widget, and hosted widgets do not offer the portal's **Switch to that account
+instead** action. See [Sign in and manage wallets](/guides/accounts-and-wallets)
+for the user flow.
 
 Standalone browser OAuth is available only to provisioned integrations. It uses a redirect URI, PKCE, and memory-only browser credentials. Do not copy the device-flow grant store into browser code.
 
@@ -336,4 +343,4 @@ console.log(position.included.remaining_microusd);
 console.log(position.bank.balance_microusd);
 ```
 
-This read requires an account credential accepted by the selected environment. The [runnable account example](https://github.com/aomi-labs/aomi/blob/main/apps/examples/headless-client/src/account/credits.ts) also covers explicit, idempotent top-up and recovery; it does not make purchases unless you opt in.
+This read requires an account credential accepted by the selected environment. The [runnable account example](https://github.com/aomi-labs/aomi/blob/main/examples/headless/src/account/credits.ts) also covers explicit, idempotent top-up and recovery; it does not make purchases unless you opt in.

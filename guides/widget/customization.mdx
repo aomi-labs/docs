@@ -1,118 +1,128 @@
 ---
 title: "Customization"
-description: "Adapt AomiWidget with props, themes, source components, or the headless React library while preserving its runtime behavior."
+description: "Configure widget layout, routing and thread selection."
 ---
 
-Start with `AomiWidget`, then take ownership of more of the interface only when your product needs it.
-
-## Choose your customization level
-
-| Level | You own | Aomi provides |
-| --- | --- | --- |
-| Widget props | Placement and visible controls | Complete UI, runtime, and wallets |
-| Themes | Brand colors and visual tokens | Component structure and behavior |
-| `AomiFrame` | Component composition | Chat, threads, and wallet components |
-| shadcn source | The copied component source | A production starting point |
-| Headless library | The complete interface | State, runtime, and React hooks |
-
-## Configure AomiWidget
-
-Use presentation props to fit the widget into a page, panel, or modal.
+The widget uses the same reviewed interface as the Portal. Change its dimensions
+and optional controls through props:
 
 ```tsx
-<AomiWidget
-  applicationId="123"
-  apiUrl="https://chat.aomi.dev"
-  auth={{ kind: "browser_wallet" }}
-  width="100%"
-  height="min(780px, calc(100dvh - 160px))"
-  showSidebar
-  showHeader
-  walletPosition="footer"
-/>
+"use client";
+import { AomiWidget } from "@aomi-labs/widget";
+import "@aomi-labs/widget/styles.css";
+export default function Assistant() {
+  return <AomiWidget applicationId="123" height="100dvh" theme="dark" showSidebar={false} features={{ library: false }} />;
+}
 ```
 
-| Prop | Purpose |
-| --- | --- |
-| `width`, `height` | Size the widget container |
-| `className`, `style` | Add application-specific layout styles |
-| `showSidebar` | Show or hide thread navigation |
-| `showHeader` | Show or hide the widget header |
-| `walletPosition` | Place the wallet control in the header or footer; pass `null` to hide it |
-| `wallets` | Limit presented wallets, chains, and networks |
-| `persistThread` | Restore the active thread after a reload |
+`theme` is `"light"`, `"dark"` or `"system"` (the default, which follows the
+visitor's operating system) and applies per instance. Compiled styles,
+dialogs, popovers, tooltips and notifications stay inside that widget's scope.
+Two instances can use different themes on the same page. Embeds omit the product
+switcher by default; composed first-party hosts can pass `products` to the frame.
 
-These props change presentation. The Application ID selects the deployed App; action review and wallet execution remain visible client responsibilities.
+## Routing
 
-## Apply themes and styles
-
-Import the default stylesheet once:
+`applicationId` identifies the hosted App. `routing` chooses Auto or a Direct
+target independently:
 
 ```tsx
-import "@aomi-labs/widget-lib/styles.css";
+"use client";
+import { AomiWidget } from "@aomi-labs/widget";
+import "@aomi-labs/widget/styles.css";
+export default function Assistant() {
+  return <AomiWidget applicationId="123" routing={{ defaultMode: "direct", targets: [{ mode: "direct", apps: [{ applicationId: 456 }] }] }} />;
+}
 ```
 
-Then override its CSS variables in your application stylesheet. Keep transaction warnings, fees, owner addresses, and confirmation states visually distinct when changing colors.
+## Thread selection
 
-## Compose with AomiFrame
-
-Use the compound API when the standard widget layout is close to what you need, but you want to rearrange its sections.
+Pass `initialThreadId` to open a specific existing chat on mount. For a controlled
+integration, store `threadId` in your host and update it through `onThreadChange`:
 
 ```tsx
-import { AomiFrame } from "@aomi-labs/widget-lib";
-
-<AomiFrame.Root
-  backendUrl="https://chat.aomi.dev"
-  applicationId="123"
-  height="720px"
-  showSidebar={false}
->
-  <AomiFrame.Header showSidebarTrigger={false} />
-  <AomiFrame.Composer
-    withControl
-    welcomeTitle="How can I help?"
-  />
-</AomiFrame.Root>;
+"use client";
+import { useState } from "react";
+import { AomiWidget } from "@aomi-labs/widget";
+import "@aomi-labs/widget/styles.css";
+export default function Assistant() {
+  const [threadId, setThreadId] = useState<string | undefined>();
+  return <AomiWidget applicationId="123" threadId={threadId} onThreadChange={setThreadId} />;
+}
 ```
 
-`AomiFrame` provides the chat surface and runtime. If you use it outside `AomiWidget`, your application must supply the surrounding authentication and account integration.
+The callback reports user thread selection without echoing controlled prop
+changes. Switching chats preserves the shell, each chat's draft and its display
+state within the same account. By default, selection persists for a signed-in
+account or when you supply a persistence key or scope. Anonymous embeds
+otherwise keep it in memory. Set `persistThread={false}` to keep selection in
+memory explicitly. Use `threadPersistenceScope` to add
+your host's tenant or user scope, or `threadPersistenceKey` for an explicit
+storage key. Persisted selection does not authorize access to another account's
+chat.
 
-## Own the source with shadcn
+## Composed hosts
 
-Copy the widget components into your repository when you need to change markup or component behavior:
-
-```bash
-npx shadcn add https://aomi.dev/r/aomi-widget.json
+```tsx
+"use client";
+import { AomiFrame } from "@aomi-labs/widget/frame";
+import "@aomi-labs/widget/styles.css";
+export default function Assistant() {
+  return <AomiFrame.Root backendUrl="https://chat.aomi.dev" applicationId="123"><AomiFrame.Composer /></AomiFrame.Root>;
+}
 ```
 
-Copied components become application code. Review registry updates before overwriting local changes.
+Use the compiled `AomiFrame` entry and its compound components when your host
+provides its own chrome. Pass `backendUrl` explicitly, or use `""` for a
+same-origin API. Account management transport and wallet-provider configuration
+remain explicit host inputs. Prefer the standalone widget for ordinary embeds.
+
+Add `aui-suggestions-marquee` to the composed frame's `className` to enable the
+two moving recommendation rows with faded edges. The rows use the original
+30-second and 72-second animations. They wrap without animation when the visitor
+requests reduced motion.
+
+Browser preferences are scoped by backend, App and account where available.
+Old preference keys migrate once to the first scope that reads them. API keys
+stay in memory by default. First-party frame hosts can explicitly opt into scoped
+session storage; plaintext local-storage API keys are removed and never written
+back.
 
 ## Build a headless UI
 
-Choose the headless library when props, themes, composition, and copied components are not enough. Aomi continues to provide thread, chat, user, event, notification, and wallet-request state. You provide every visible interaction.
+Choose the headless library when props, themes, and composition are not enough. Aomi continues to provide thread, chat, user, event, notification, and wallet-request state. You provide every visible interaction.
 
 ### Install the library
 
 ```bash
-npm install @aomi-labs/react @assistant-ui/react
+npm install @aomi-labs/react @assistant-ui/react@0.14.26
 ```
 
 ### Add the runtime provider
 
 ```tsx
-import { AomiRuntimeProvider } from "@aomi-labs/react";
+import { AomiRuntimeProvider, type RuntimeAccount } from "@aomi-labs/react";
 
-export function Providers({ children }: { children: React.ReactNode }) {
+export function Providers({ children, account }: {
+  children: React.ReactNode;
+  account?: RuntimeAccount | null;
+}) {
   return (
     <AomiRuntimeProvider
       backendUrl="https://chat.aomi.dev"
       applicationId="123"
+      account={account}
     >
       {children}
     </AomiRuntimeProvider>
   );
 }
 ```
+
+Pass the confirmed account as `{ kind: "user", id }` or `{ kind: "guest", id }`.
+Use `undefined` while resolving the session and `null` when no account is signed
+in. This scopes displayed account data; it does not supply authentication.
+Configure credentials through `clientOptions` for your chosen transport.
 
 ### Your responsibilities
 
@@ -127,7 +137,7 @@ A headless interface must provide:
 - Submitted, confirmed, expired, and failed operation states.
 
 <Warning>
-  Returning a generic transaction result is not enough. Your interface must narrow each action by `action.request.kind`, show the exact request, and return the result that kind expects. Prefer `AomiWidget` unless you need to own the full approval experience.
+  Returning a generic transaction result is not enough. Your interface must narrow each action by `action.request.type`, show the exact request, and return the result that type expects. Prefer `AomiWidget` unless you need to own the full approval experience.
 </Warning>
 
 ## Hooks
@@ -160,7 +170,7 @@ Read active-thread messages with `useAomiRuntime().getMessages()`.
 | --- | --- |
 | `useNotification` | Notice, success, wallet, and error messages |
 
-Read ordered backend events from `useAomiRuntime().events` and the active lifecycle from `turnState`. `pendingActions` contains canonical Actions; narrow on `action.request.kind` before reading its payload. Use the exported TypeScript types as the source of truth for complete signatures and payloads.
+Read ordered backend events from `useAomiRuntime().events` and the active lifecycle from `turnState`. `pendingActions` contains canonical Actions; narrow on `action.request.type` before reading its payload. Use the exported TypeScript types as the source of truth for complete signatures and payloads.
 
 ## Complete custom UI example
 

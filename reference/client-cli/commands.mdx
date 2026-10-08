@@ -4,7 +4,12 @@ sidebarTitle: "Commands"
 description: "Reference the aomi client commands, flags, environment variables, and local session state."
 ---
 
-Run `aomi --help` for the installed top-level surface and `aomi <command> --help` for exact options. This page describes npm `latest` (`0.7.6` on September 22, 2026) and calls out the additional commands in merged `0.9.4` source.
+Run `aomi --help` for the installed top-level surface and `aomi <command> --help`
+for exact options. This page describes `@aomi-labs/cli` 0.1.0 in merged frontend
+source `d888c04fe`, which uses client 0.10.0. Use it after the matching npm release
+is published; source versions do not establish publication or backend availability.
+See [Install the CLI](/reference/client-cli#install) for the canonical package and
+the deprecated client shim.
 
 ## Agent commands
 
@@ -24,7 +29,10 @@ The message is positional. `--verbose` or `-v` streams Agent messages, tool call
 
 | Command                    | Purpose                                     |
 | -------------------------- | ------------------------------------------- |
-| `aomi session list`        | List local session records.                 |
+| `aomi session list`        | List account-owned remote threads.          |
+| `aomi session local-list`  | List local session records.                 |
+| `aomi session rename <id> <title>` | Rename an account-owned remote thread. |
+| `aomi session archive <id>` | Archive an account-owned remote thread.    |
 | `aomi session new`         | Create a session and make it active.        |
 | `aomi session resume <id>` | Resume `session-N` or a backend session ID. |
 | `aomi session delete <id>` | Delete one local session record.            |
@@ -36,6 +44,10 @@ The message is positional. `--verbose` or `-v` streams Agent messages, tool call
 
 Closing or deleting a local record does not turn a session ID into an authentication boundary. Backend session ownership still comes from the guest or account credential.
 
+Remote thread commands accept a backend thread ID or a local `session-N`
+selector. Renaming and archiving change the backend thread; `session delete`
+removes only its local record.
+
 ### model
 
 | Command                | Purpose                                          |
@@ -46,20 +58,14 @@ Closing or deleting a local record does not turn a session ID into an authentica
 
 ### app
 
-The published `0.7.6` package provides:
-
-| Command            | Purpose                                                 |
-| ------------------ | ------------------------------------------------------- |
-| `aomi app list`    | List Apps available through the selected environment.   |
-| `aomi app current` | Show the current routing mode and Direct App selection. |
-
 Select an App with `--app`, `--application-id`, or `/app` in the REPL. There is no `aomi app use` command.
 
-Merged client `0.9.4` source adds account-owned App installation and credentials:
+The CLI supports account-owned App installation and credentials:
 
 | Command                                     | Purpose                                                  |
 | ------------------------------------------- | -------------------------------------------------------- |
 | `aomi app list`                             | List account Apps and installation state.                |
+| `aomi app current`                          | Show the current routing mode and Direct App selection. |
 | `aomi app available`                        | List executable Pipeline Apps.                           |
 | `aomi app add <app>`                        | Install an account App by exact name or Application ID.  |
 | `aomi app remove <app>`                     | Remove an installed account App.                         |
@@ -69,8 +75,8 @@ Merged client `0.9.4` source adds account-owned App installation and credentials
 | `aomi app credentials remove <app> <name>`  | Remove one saved credential.                             |
 
 <Warning>
-  The account App commands require client `0.9.4` or newer and matching Account
-  API support. They are not in npm `latest` `0.7.6`. Credential values are never
+  Account App commands require sign-in and matching Account API support.
+  Credential values are never
   command-line arguments: an interactive terminal reads without echo, and a
   non-interactive process reads one value from stdin.
 </Warning>
@@ -91,6 +97,35 @@ The command group is named `tx`, but its records are Agent Actions:
 | `aomi tx sign <id...>`     | Execute selected pending Actions with configured wallet capabilities. |
 
 `tx export` supports `--format eip5792` (default), `moss`, and `metamask`. See [Transactions and signing](/reference/client-cli/transactions-and-signing).
+
+### guard
+
+Read the active thread's transaction policy with `aomi guard`. Pass a level to
+change it, or use `--account` for your account default:
+
+```bash
+aomi guard
+aomi guard balanced --thread <thread-id>
+aomi guard guarded_only --account
+```
+
+Levels are `guarded_only`, `balanced`, and `unrestricted`. Account defaults
+cannot be `unrestricted`. `--account` and `--thread` are mutually exclusive.
+The CLI reads the authoritative revision before updating the policy; a policy
+change does not approve or sign a wallet Action.
+
+### byok
+
+| Command | Purpose |
+| --- | --- |
+| `aomi byok list` | Show masked model-provider keys. |
+| `aomi byok set <provider:key>` | Save a model-provider key. |
+| `aomi byok clear` | Remove the saved model-provider keys. |
+
+Providers are `openai`, `anthropic`, and `openrouter`. Use
+`--inference-funding user_byok` to select your account's saved key for a turn.
+The `provider:key` argument can appear in shell history; keep it out of Agent
+prompts and shared command logs.
 
 ### chain
 
@@ -181,7 +216,7 @@ Pipeline Build values are opaque transition inputs. Pass the complete staged val
 
 There is no top-level `--secret` flag. Shell history can retain `NAME=value`; prefer a private shell input mechanism for sensitive values.
 
-The client bundle also exposes `aomi deploy`, `aomi deploy status`, and `aomi deploy activate` for Project deployment. Use `aomi deploy --help` for its Project ID, activation token, branch, commit, and preflight options. Builder documentation remains canonical for authoring and release workflows.
+The CLI also exposes `aomi deploy`, `aomi deploy status`, and `aomi deploy activate` for Project deployment. Use `aomi deploy --help` for its Project ID, activation token, branch, commit, and preflight options. Builder documentation remains canonical for authoring and release workflows.
 
 ## Global flags and environment variables
 

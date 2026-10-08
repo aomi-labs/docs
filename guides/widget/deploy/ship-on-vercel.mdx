@@ -30,7 +30,7 @@ NEXT_PUBLIC_AOMI_API_URL=https://chat.aomi.dev
 NEXT_PUBLIC_AOMI_APPLICATION_ID=123
 ```
 
-Pass these values to `AomiWidget` through `apiUrl` and `applicationId`, replacing `123` with your activated App ID. Pass public provider identifiers through the selected `auth` object as shown in [Installation](/guides/widget/installation). Serve the embed over HTTPS and allow the production Vercel origin in your wallet provider settings when that provider requires it.
+Pass these values to `AomiWidget` through `baseUrl` and `applicationId`, replacing `123` with your activated App ID. Pass public provider identifiers through the selected `auth` object as shown in [Installation](/guides/widget/installation). Serve the embed over HTTPS and allow the production Vercel origin in your wallet provider settings when that provider requires it.
 
 <Warning>
   Never add App keys, provider secrets, paymaster credentials, or gas-policy credentials to frontend environment variables.

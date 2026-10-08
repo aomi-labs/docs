@@ -15,9 +15,9 @@ address identifies a key on a chain. It does not identify the whole person.
 flowchart TD
     A["Aomi account<br/>threads, Apps, settings, and usage"]
     I["Sign-in methods<br/>email, social, or wallet"]
-    E["EVM wallet<br/>0x12…89 · Manual"]
+    E["EVM wallet<br/>0x12…89 · Ask me"]
     S["Solana wallet<br/>7gK…4pQ · Locked"]
-    W["Embedded wallet<br/>0xA4…7C · Auto"]
+    W["Embedded wallet<br/>0xA4…7C · Automatic signing"]
     G["Revocable delegated grant<br/>covers this wallet"]
 
     I --> A
@@ -33,26 +33,33 @@ Changing one wallet does not silently change another.
 
 ## What belongs to the account
 
-The **General** and **Usage** tabs in Settings describe account-level state.
-The **Account** tab describes the wallets linked to that account.
+Settings separates account access from signing permission.
 
-<CardGroup cols={3}>
-  <Card title="General" icon="gear">
-    Your account, plan, monthly allowance, theme, default network, and current
-    wallet connection.
-  </Card>
-  <Card title="Account" icon="wallet">
-    Linked wallets, the signing policy for each wallet, and delegated signing
-    grants you can revoke.
-  </Card>
-  <Card title="Usage" icon="chart-line">
-    Account-wide model, tool, and onchain spend, with a breakdown by App.
-  </Card>
-</CardGroup>
+| Tab | What you manage |
+| --- | --- |
+| **General** | Appearance, defaults, account overview, plan, and monthly allowance |
+| **Account** | Your profile, **Wallets & access**, social sign-in methods, and the session on this device |
+| **Safety** | Transaction safety, per-wallet **Signing**, and provider-delegated **Automatic signing** |
+| **Usage** | Account-wide spend, allowance, and statements |
 
-A connected wallet is not necessarily linked yet. Connecting makes a wallet
-available to the current browser session. Linking proves that the wallet
-belongs to your Aomi account and makes it available as a signing endpoint.
+## Connected, linked, and Active
+
+These describe different relationships:
+
+- **Connected** means a wallet is available to this browser through a wallet
+  app or provider. A connection alone does not prove ownership to Aomi.
+- **Linked** means Aomi has verified the wallet's relationship to your account.
+  A linked wallet can remain on the account while disconnected from this device.
+- **Active** identifies the usable wallet selected for signing in its chain
+  family on this device. Selecting it does not enable automatic signing.
+
+You can use different active wallets for EVM and Solana. If a selected wallet
+needs reconnection or another verification step, complete that step before it
+can sign. A saved selection alone is not signing authority.
+
+Disconnecting a wallet ends its local connection. Removing it from the account
+removes its account relationship. Neither action moves its funds or deletes
+its keys.
 
 ## How wallets become linked
 
@@ -77,60 +84,51 @@ wallet.
 
 ## Every wallet has its own signing policy
 
-In **Settings → Account**, the **Wallet signing policy** section lets you choose
-how each wallet handles a transaction.
+In **Settings → Safety → Signing**, each user-controlled wallet has three
+aligned choices. A choice that the wallet cannot support stays disabled.
 
-| Setting | Stored mode | What happens |
+| UI choice | Stored mode | What happens |
 | --- | --- | --- |
-| **Locked** | `denied` | The wallet cannot sign until you change its policy. Unknown policy states also fail closed to this mode. |
-| **Manual** | `manual` | Aomi sends the request to your wallet. You inspect and approve each transaction. |
-| **Accept transactions** | `client_auto` | Your own key-holding client can sign without a prompt each time. Aomi verifies that the returned signature came from the linked wallet. |
-| **Auto** | `auto` | A supported wallet provider may sign without a prompt, but only while a live delegated grant covers this exact wallet. |
+| **Ask me** | `manual` | You inspect and approve each transaction in your wallet. |
+| **Auto** | `client_auto` | A compatible Privy or Para wallet client signs without a separate prompt for each transaction. It still needs an available signing client. |
+| **Locked** | `denied` | The wallet cannot sign until you change its policy. |
 
-The options shown for a wallet depend on where its key lives and what its
-provider supports. For example, a provider-managed signer cannot use a
-client-side mode because your browser does not hold that key. A self-custody
-wallet cannot use provider **Auto** unless a supported delegation exists.
+External browser wallets currently offer **Ask me** and **Locked**; their
+**Auto** choice is disabled. Provider-managed agent wallets have separate
+controls under **Automatic signing** because you do not hold their key.
 
 ## Automatic signing has two gates
 
-**Auto** is intentionally controlled by two independent records:
+The **Automatic signing** section configures provider-delegated signing for
+work that can continue when this browser is closed. It uses the stored mode
+`auto`, which is different from the **Auto** choice in the Signing row.
 
-1. The wallet policy must be set to `auto`.
-2. A live delegated grant must authorize a supported provider to sign for that
-   exact wallet.
+Two independent records must agree:
 
-```mermaid
-flowchart LR
-    R["A transaction is ready to sign"] --> P{"Wallet policy"}
-    P -->|Locked| X["Stop"]
-    P -->|Manual| H["Ask you to sign"]
-    P -->|Accept transactions| C["Ask your client<br/>then verify the signer"]
-    P -->|Auto| G{"Live grant covers<br/>this wallet?"}
-    G -->|No| X
-    G -->|Yes| D["Provider signs"]
-```
+1. This wallet's policy must permit provider-delegated automatic signing.
+2. A live delegated grant must cover that exact wallet.
 
-Neither gate can substitute for the other. Logging in through a wallet
-provider does not automatically authorize signing. A delegated grant does not
-override a wallet that is **Manual** or **Locked**.
+Logging in through Privy or Para does not grant this permission. A delegation
+also cannot override a wallet that is **Ask me** or **Locked**.
 
-When you enable automatic signing, the provider asks you once to authorize
-Aomi as a delegated requester. You can revoke that grant in Settings. The next
-signing attempt checks the current policy and grant again, so a revoked or
-expired grant cannot be used.
+Privy uses a separate one-time delegation for an eligible wallet. Para uses a
+separate provider-managed agent wallet; creating it does not change the
+user-controlled login wallet. Read [Configure approvals](/security/configure-approvals)
+for setup and revocation.
 
 <Warning>
 Automatic signing removes the per-transaction prompt. Enable it only for a
-wallet whose intended use and risk you understand. You can switch the wallet
-back to **Manual** or **Locked** at any time.
+wallet whose intended use and risk you understand. An expired or revoked grant
+blocks signing even if the saved policy still permits it.
 </Warning>
 
 ## Policy changes require a signature
 
 Aomi does not change a wallet policy from an authenticated click alone. The
 change includes the account, wallet, requested mode, expiry, and current policy
-version, then requires a qualifying linked-wallet signature.
+version, then requires a qualifying linked-wallet signature. Loosening a policy
+requires that wallet to sign; a qualifying wallet on the account can authorize
+a tighter policy.
 
 This protects three boundaries:
 
@@ -142,6 +140,42 @@ This protects three boundaries:
 The Settings flow handles this ceremony for you. If a signature is rejected or
 the policy changed in another session, nothing changes and you can try again
 from the current state.
+
+## When two sign-in methods open different accounts
+
+A wallet or provider login may already belong to another Aomi account. Proving
+that login while signed in can produce a **Merge accounts** offer. An address
+or matching email shown in the interface is not enough: Aomi first verifies a
+wallet signature or provider credential for the other account.
+
+The offer shows the other account's chats, wallets, credits, and saved keys
+that will not carry over. Confirming **Merge into this account** moves its
+chats, wallets, and credits into the account you are signed in to. The other
+account closes, and its linked sign-in methods resolve to the retained account.
+Where offered, **Switch to that account instead** changes this browser's
+session without merging the accounts.
+
+<Warning>
+Review the destination before merging. Saved model keys and App secrets from
+the other account are dropped, including keys that do not conflict. Re-enter
+them on the retained account if needed. Existing keys on the retained account
+stay intact. The other account's signed-in browser and widget sessions end.
+</Warning>
+
+A merge combines account records. It does not move onchain funds, combine
+private keys, or turn on automatic signing for all wallets. Each wallet keeps
+its signing policy and provider-delegation requirements.
+
+## Account sessions and proof
+
+An account session identifies the account making a request. It does not prove
+control of a new wallet or authorize a policy change by itself. Wallet linking
+and policy changes require their own qualifying proof.
+
+A provider credential must be verified for its provider and application;
+matching email text is not a substitute. An API token authorizes requests
+within its permissions, rather than acting as a wallet signature. Keep tokens
+private and revoke them when no longer needed.
 
 ## What Aomi stores
 
@@ -162,9 +196,9 @@ grant. Aomi verifies the signature and enforces the selected policy.
 <AccordionGroup>
   <Accordion title="Email login with an embedded wallet">
     Your login resolves to one Aomi account. The provider-created wallet appears
-    beneath it. It can remain **Manual**, use **Accept transactions** when the
-    provider signs on your device, or use **Auto** only when the provider and a
-    live grant support delegated signing for that wallet.
+    beneath it. It can remain **Ask me**, use **Auto** with an available
+    compatible client, or use provider-delegated **Automatic signing** when a
+    live grant supports that exact wallet.
   </Accordion>
   <Accordion title="One browser wallet on several EVM networks">
     The address represents one EVM key, so Aomi links it once and applies one
@@ -174,16 +208,19 @@ grant. Aomi verifies the signature and enforces the selected policy.
   <Accordion title="Several wallets on one account">
     Link each wallet with its own proof. Your history and usage stay together at
     the account level, while each wallet keeps an independent policy. You can
-    leave a trading wallet **Manual** and lock a second wallet.
+    leave a trading wallet **Ask me** and lock a second wallet.
   </Accordion>
-  <Accordion title="A background action with a Manual wallet">
+  <Accordion title="A background action with an Ask me wallet">
     The action may continue preparing work, but the transaction cannot complete
-    until you sign. Use **Accept transactions** or **Auto** only when you want a
-    compatible signer to act without a prompt.
+    until you sign. Use **Auto** for an available compatible client, or configure
+    **Automatic signing** for eligible provider-delegated background work.
   </Accordion>
 </AccordionGroup>
 
 ## Further reading
+
+For the sign-in, linking, and merge walkthrough, read
+[Sign in and manage wallets](/guides/accounts-and-wallets).
 
 <CardGroup cols={2}>
   <Card title="Account abstraction" icon="user-shield" href="/concepts/account-abstraction">

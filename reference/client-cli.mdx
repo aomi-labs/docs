@@ -4,7 +4,7 @@ sidebarTitle: "Overview"
 description: "Install the aomi client CLI, run Agent and Pipeline commands, manage sessions, and review wallet Actions."
 ---
 
-The `aomi` command ships in the [`@aomi-labs/client`](https://www.npmjs.com/package/@aomi-labs/client) npm package. It gives terminal users and coding agents the same Agent, Pipeline, account, and wallet surfaces as the TypeScript client.
+The `aomi` command ships in the [`@aomi-labs/cli`](https://www.npmjs.com/package/@aomi-labs/cli) npm package. It gives terminal users and coding agents the same Agent, Pipeline, account, and wallet surfaces as the TypeScript client, `@aomi-labs/client`.
 
 <Warning>
   This is the **client** CLI. It calls a running Aomi environment. Use the Rust
@@ -13,11 +13,11 @@ The `aomi` command ships in the [`@aomi-labs/client`](https://www.npmjs.com/pack
 </Warning>
 
 <Note>
-  Release availability matters. On September 22, 2026, npm `latest` is `0.7.6`,
-  while merged frontend source is `0.9.4`. The `0.9.4` source adds account App
-  installation and persistent App credential commands. Those commands require a
-  matching npm release and backend deployment. Check `aomi --version` before
-  using a version-specific command.
+  These pages describe merged frontend source `d888c04fe`: `@aomi-labs/cli`
+  0.1.0 and `@aomi-labs/client` 0.10.0. A merged package version does not confirm
+  npm publication. Use these examples after the matching CLI release is
+  published, and check `aomi --version` and command help against your installed
+  release. Account and wallet operations also need a compatible backend.
 </Note>
 
 By default, the CLI calls `https://chat.aomi.dev`. Override the environment for one command with `--backend-url`, or persist it with `aomi config set-backend`.
@@ -27,26 +27,30 @@ By default, the CLI calls `https://chat.aomi.dev`. Override the environment for 
 Run once without installing globally:
 
 ```bash
-npx @aomi-labs/client@latest --version
-npx @aomi-labs/client@latest --help
+npx @aomi-labs/cli@latest --version
+npx @aomi-labs/cli@latest --help
 ```
 
 Install the `aomi` binary globally:
 
 ```bash
-npm install -g @aomi-labs/client@latest
+npm install -g @aomi-labs/cli@latest
 aomi --version
 aomi --help
 ```
 
-Or add the client to a project:
+Or add the CLI to a project:
 
 ```bash
-pnpm add @aomi-labs/client
+pnpm add @aomi-labs/cli
 pnpm exec aomi --version
 ```
 
-Examples on this page use the global `aomi` binary. Substitute `npx @aomi-labs/client@latest` when you do not want a global install.
+Examples on this page use the global `aomi` binary. Substitute `npx @aomi-labs/cli@latest` when you do not want a global install.
+
+Client 0.10.0 retains a deprecated `aomi` shim that forwards to an installed
+`@aomi-labs/cli`. Without that package, it exits with installation instructions.
+The shim will be removed in client 1.0.0; install the CLI directly for new setups.
 
 ## Start with Agent chat
 
@@ -123,7 +127,9 @@ aomi account login
 aomi account whoami
 ```
 
-The default login uses OAuth device authorization for exact resources. npm `0.7.6` requests Agent and Pipeline grants. Merged `0.9.4` source also requests an Account grant for App installation and credential management. Wallet login is also available:
+The default login uses OAuth device authorization for separate Agent, Pipeline,
+and Account grants. The Account grant covers account-owned operations, including
+App installation and credential management. Wallet login is also available:
 
 ```bash
 aomi account login --wallet --private-key 0xYourPrivateKey

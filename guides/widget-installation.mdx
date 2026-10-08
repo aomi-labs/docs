@@ -1,14 +1,25 @@
 ---
-title: Widget installation
-description: Choose the packaged Aomi widget or own its component source.
+title: "Widget installation"
+description: "Install the compiled Aomi widget from npm."
 ---
 
-Use the packaged widget for a new embed:
+Install the compiled package:
 
 ```bash
-npm install @aomi-labs/widget-lib
+npm install @aomi-labs/widget
 ```
 
-Follow [Installation](/guides/widget/installation) to configure the API origin, Application ID, and browser-wallet, Para, or Privy authentication. Follow [Quickstart](/guides/widget/quickstart) for a complete frontend scaffold.
+```tsx
+"use client";
+import { AomiWidget } from "@aomi-labs/widget";
+import "@aomi-labs/widget/styles.css";
+export default function Assistant() { return <AomiWidget applicationId="123" />; }
+```
 
-For a custom UI, use the [headless library](/integrate/ui/headless-library). Authentication identifies the caller; it does not grant unattended wallet signing.
+Follow the [widget quickstart](/guides/widget/quickstart) for origin registration,
+[installation guide](/guides/widget/installation) for optional wallet providers,
+and [customization guide](/guides/widget/customization) for layout and routing.
+
+Existing registry installs continue using frozen JSON during the announced
+retention window. New integrations use npm and do not require Tailwind, shadcn
+initialization or copied component source.

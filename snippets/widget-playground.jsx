@@ -2,6 +2,60 @@
 
 // Mintlify pre-injects React hooks: https://www.mintlify.com/docs/customize/react-components
 
+export function generateWidgetPlaygroundCode({
+  showSidebar,
+  showHeader,
+  walletPosition,
+  mode,
+  controls,
+  theme,
+}) {
+  const controlBarProps = {
+    hideModel: !controls.Model,
+    hideApiKey: !controls["API Key"],
+    hideWallet: !controls.Wallet,
+    hideNetwork: !controls.Network,
+  };
+  const wallet = walletPosition === "hidden" ? "{null}" : `"${walletPosition}"`;
+  const jsx = `"use client";
+import { AomiWidget } from "@aomi-labs/widget";
+import "@aomi-labs/widget/styles.css";
+import "./assistant-theme.css";
+
+export default function Assistant() {
+  return (
+    <div className="assistant-theme">
+      <AomiWidget
+        applicationId="123"
+        height="640px"
+        theme="${mode}"
+        showSidebar={${showSidebar}}
+        showHeader={${showHeader}}
+        walletPosition=${wallet}
+        controlBarProps={${JSON.stringify(controlBarProps)}}
+      />
+    </div>
+  );
+}`;
+  const css = `.assistant-theme .aomi-widget.light,
+.assistant-theme .aomi-widget.dark {
+  --background: ${theme.background};
+  --foreground: ${theme.foreground};
+  --sidebar: ${theme.sidebar};
+  --sidebar-foreground: ${theme.foreground};
+  --aomi-bg: ${theme.background};
+  --aomi-fg: ${theme.foreground};
+  --aomi-muted: ${theme.muted};
+  --aomi-surface: ${theme.sidebar};
+  --aomi-surface-2: ${theme.panel};
+  --aomi-border: ${theme.border ?? "#e4e4e7"};
+  --aomi-accent: ${theme.primary};
+  --aomi-accent-strong: ${theme.primary};
+  --radius: ${theme.radius / 16}rem;
+}`;
+  return { jsx, css };
+}
+
 export function WidgetPlayground() {
 const PRESETS = {
   Default: { background: "#ffffff", foreground: "#09090b", muted: "#71717a", panel: "#f4f4f5", sidebar: "#fafafa", primary: "#5288c2", border: "#e4e4e7", radius: 16 },
@@ -18,11 +72,11 @@ const PRESETS = {
   Mono: { background: "#ffffff", foreground: "#111111", muted: "#737373", panel: "#eeeeee", sidebar: "#f8f8f8", primary: "#111111", radius: 0 },
 };
 
-const CONTROL_OPTIONS = ["Model", "App", "Wallet", "Network"];
+const CONTROL_OPTIONS = ["Model", "API Key", "Wallet", "Network"];
 
 const controlLabel = {
   Model: "Auto",
-  App: "Basic Apps",
+  "API Key": "API key",
   Wallet: "Wallet",
   Network: "Base",
 };
@@ -148,8 +202,8 @@ function copyToClipboard(text) {
   const [radius, setRadius] = useState(PRESETS.Default.radius);
   const [showSidebar, setShowSidebar] = useState(true);
   const [walletPosition, setWalletPosition] = useState("footer");
-  const [controlPlacement, setControlPlacement] = useState("composer");
-  const [controls, setControls] = useState({ Model: true, App: true, Wallet: false, Network: true });
+  const [showHeader, setShowHeader] = useState(true);
+  const [controls, setControls] = useState({ Model: true, "API Key": false, Wallet: false, Network: true });
   const [codeTab, setCodeTab] = useState("jsx");
   const [copied, setCopied] = useState(false);
 
@@ -159,14 +213,8 @@ function copyToClipboard(text) {
   );
 
   const visibleControls = CONTROL_OPTIONS.filter((name) => controls[name]);
-  const rootProps = [
-    'height="640px"',
-    `showSidebar={${showSidebar}}`,
-    walletPosition === "hidden" ? "walletPosition={null}" : `walletPosition="${walletPosition}"`,
-  ].join(" ");
-  const generatedJsx = `<AomiFrame.Root ${rootProps}>\n  <AomiFrame.Header showSidebarTrigger={${showSidebar}}${controlPlacement === "header" ? " withControl" : ""} />\n  <AomiFrame.Composer${controlPlacement === "composer" ? " withControl" : ""} />\n</AomiFrame.Root>`;
-  const generatedCss = `:root {\n  --aomi-bg: ${theme.background};\n  --aomi-fg: ${theme.foreground};\n  --aomi-muted: ${theme.muted};\n  --aomi-surface: ${theme.sidebar};\n  --aomi-surface-2: ${theme.panel};\n  --aomi-border: ${theme.border ?? "#e4e4e7"};\n  --aomi-accent: ${theme.primary};\n  --radius: ${theme.radius / 16}rem;\n}`;
-  const generatedCode = codeTab === "jsx" ? generatedJsx : generatedCss;
+  const generated = generateWidgetPlaygroundCode({ showSidebar, showHeader, walletPosition, mode: previewMode, controls, theme });
+  const generatedCode = codeTab === "jsx" ? generated.jsx : generated.css;
 
   function selectPreset(name) {
     setPresetName(name);
@@ -262,22 +310,17 @@ function copyToClipboard(text) {
           )}
 
           <main style={{ minWidth: 0, flex: 1, display: "flex", flexDirection: "column" }}>
-            <header style={{ minHeight: 54, display: "flex", alignItems: "center", gap: 10, padding: "0 14px", borderBottom: `1px solid ${border}` }}>
+            {showHeader && <header style={{ minHeight: 54, display: "flex", alignItems: "center", gap: 10, padding: "0 14px", borderBottom: `1px solid ${border}` }}>
               {showSidebar && <span aria-label="Toggle sidebar" style={{ color: theme.muted }}>◧</span>}
               <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 8 }}>
                 {controls.Network && (
                   <span style={{ padding: "6px 10px", border: `1px solid ${border}`, borderRadius: 999, color: theme.muted, fontSize: 10 }}>♦&nbsp; Ethereum&nbsp; / &nbsp;≋ Solana&nbsp;⌄</span>
                 )}
-                {controlPlacement === "header" && visibleControls.filter((name) => name !== "Network").map((name) => (
-                  <span key={name} style={{ padding: "5px 8px", borderRadius: 999, background: theme.panel, color: theme.muted, fontSize: 10 }}>
-                    {controlLabel[name]}
-                  </span>
-                ))}
                 <span aria-label="Packages" style={{ color: theme.muted, fontSize: 16 }}>◇</span>
                 <span aria-label="Settings" style={{ color: theme.muted, fontSize: 15 }}>⚙</span>
                 <span aria-label="Theme" style={{ display: "grid", placeItems: "center", width: 27, height: 22, borderRadius: 999, background: theme.panel, color: theme.foreground, fontSize: 12 }}>☼</span>
               </div>
-            </header>
+            </header>}
             <div style={{ flex: 1, minHeight: 0, padding: "22px 20px", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", overflow: "hidden" }}>
               <div style={{ display: "grid", placeItems: "center" }}>{aomiMark(48)}</div>
               <h2 style={{ margin: "14px 0 18px", fontFamily: "Georgia, serif", fontSize: 28, fontWeight: 400, letterSpacing: "-.02em", textAlign: "center" }}>What should happen on-chain?</h2>
@@ -304,12 +347,10 @@ function copyToClipboard(text) {
               </div>
               <div style={{ width: "min(100%, 680px)", border: `1px solid ${border}`, borderRadius: Math.max(14, theme.radius), background: theme.sidebar, padding: "12px 13px 10px" }}>
                 <div style={{ minHeight: 36, color: theme.muted, fontSize: 12 }}>Ask Aomi to swap, bridge, send, or deploy…</div>
-                {controlPlacement === "composer" && (
                   <div style={{ display: "flex", alignItems: "center", gap: 7, marginTop: 6 }}>
-                    {visibleControls.filter((name) => name !== "Network").map((name) => <span key={name} style={{ padding: "4px 7px", borderRadius: 999, color: theme.muted, fontSize: 9 }}>{controlLabel[name]}⌄</span>)}
+                    {visibleControls.filter((name) => name !== "Network" || !showHeader).map((name) => <span key={name} style={{ padding: "4px 7px", borderRadius: 999, color: theme.muted, fontSize: 9 }}>{controlLabel[name]}⌄</span>)}
                     <span aria-label="Send" style={{ marginLeft: "auto", display: "grid", placeItems: "center", width: 25, height: 25, borderRadius: "50%", background: theme.muted, color: theme.background, fontSize: 15 }}>↑</span>
                   </div>
-                )}
               </div>
             </div>
           </main>
@@ -349,14 +390,7 @@ function copyToClipboard(text) {
                 </fieldset>
                 <fieldset style={{ display: "grid", gap: 12, border: 0, padding: 0, margin: 0 }}>
                   <legend style={{ marginBottom: 10, fontSize: 10, fontWeight: 700, letterSpacing: ".12em", textTransform: "uppercase" }}>Control panel</legend>
-                  {segmented({
-                    options: [
-                      { value: "header", label: "Header" },
-                      { value: "composer", label: "Composer" },
-                    ],
-                    value: controlPlacement,
-                    onChange: setControlPlacement,
-                  })}
+                  <div>{chip({ checked: showHeader, onChange: () => setShowHeader(!showHeader), children: "Header shown" })}</div>
                   <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
                     {CONTROL_OPTIONS.map((name) => (
                       <span key={name}>{chip({ checked: controls[name], onChange: () => toggleControl(name), children: name })}</span>

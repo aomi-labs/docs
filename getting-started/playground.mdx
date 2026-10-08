@@ -1,10 +1,15 @@
 ---
 title: Playground
-description: "Explore an AomiFrame layout fragment, then connect it to the runtime and authentication in your host application."
+description: "Configure the widget's layout, scoped theme, sidebar and controls, then copy a complete client component."
 mode: custom
 ---
 
 import { WidgetPlayground } from "../snippets/widget-playground.jsx";
+
+Install the package using the [widget quickstart](/guides/widget/quickstart).
+Replace Application ID `123` with your activated App's ID. Save the generated
+theme as `assistant-theme.css`; the client component imports it after the widget
+stylesheet so it customizes only this instance.
 
 <div className="max-w-8xl mx-auto" style={{
   minHeight: "calc(100vh - 64px)",
@@ -57,15 +62,9 @@ import { WidgetPlayground } from "../snippets/widget-playground.jsx";
       overflow: "hidden",
       textOverflow: "ellipsis"
     }}>
-      Adjust layout, theme, and options, then copy the JSX into your app
+      Replace Application ID 123, then copy the JSX and assistant-theme.css into your App
     </span>
   </div>
-
-  <p className="px-4 lg:px-8 py-3 text-sm">
-    This is a layout preview. Generated JSX is a fragment that needs your runtime,
-    authentication, and wallet provider composition. For a complete embed, follow
-    the <a href="/guides/widget/installation">packaged widget installation</a>.
-  </p>
 
   <WidgetPlayground />
 
