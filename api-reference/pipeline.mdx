@@ -6,6 +6,8 @@ description: "The /v1/pipeline capability filesystem: catalog discovery, operati
 
 The Pipeline resource lives at `/v1/pipeline` — a stateless capability filesystem. For TypeScript, the [Pipeline API](/integrate/pipeline) SDK surface drives this same resource for you. See the [Overview](/api-reference/overview) for authentication and request conventions.
 
+For a paid, asynchronous Arc intent that returns an unsigned bundle, use the separate [Task API](/integrate/task-api). Its x402 payment flow does not use Pipeline bearer credentials or `commit`.
+
 ## Discover, don't hard-code
 
 Begin at a live catalog collection such as `/v1/pipeline/apps` or `/v1/pipeline/skills` and follow returned links instead of constructing an independent catalog. Operation descriptors include the current JSON Schema — validate arguments against the live schema before invoking or building any operation. Catalog contents vary by environment.

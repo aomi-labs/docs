@@ -4,9 +4,9 @@ sidebarTitle: "Overview"
 description: "The versioned Aomi HTTP API: resources, authentication, request conventions, and the interactive endpoint reference."
 ---
 
-The Aomi API turns natural-language intent and deterministic operations into verified on-chain execution. The public API is served from `https://chat.aomi.dev`. Use `https://chat-staging.aomi.dev` when you deliberately target staging.
+The Agent, Account, and Pipeline APIs turn natural-language intent and deterministic operations into verified onchain execution. These resources are served from `https://chat.aomi.dev`. Use `https://chat-staging.aomi.dev` when you deliberately target staging.
 
-Three versioned resources cover the public surface:
+Three versioned resources share this host and its bearer-token conventions:
 
 | Resource | Owns | Use it for |
 | --- | --- | --- |
@@ -14,7 +14,9 @@ Three versioned resources cover the public surface:
 | [`/v1/pipeline`](/api-reference/pipeline) | Nothing — stateless | Catalog discovery and the build → simulate → commit lifecycle |
 | `/v1/account` | Account configuration | Credits, statements, App installation, and write-only App credentials |
 
-Every endpoint on the pages in this tab has an interactive playground. The TypeScript [Client SDK](/integrate/client-sdk) wraps this same API with typed transports, automatic authentication, and schema validation — prefer it when your application is TypeScript.
+The separate [Task API](/api-reference/task) lives at `https://api.aomi.dev`. It uses x402 payments and does not require a bearer token. The authentication and request conventions below apply to the `chat.aomi.dev` resources only.
+
+The Agent, Account, and Pipeline endpoints in this tab have an interactive playground. The TypeScript [Client SDK](/integrate/client-sdk) wraps those resources with typed transports, automatic authentication, and schema validation — prefer it when your application is TypeScript.
 
 <Info>
   This reference schema was generated from backend source revision `f217b970`
