@@ -5,7 +5,7 @@ description: "Use x402 to prepare an Arc transaction, inspect its signed simulat
 
 The Task API gives an agent or application a paid way to turn an onchain intent into a simulated, unsigned transaction bundle. You decide whether to buy the bundle after you inspect the preparation result. Your wallet keeps signing authority; the Task API does not sign or broadcast transactions.
 
-Task API is a separate HTTP surface at `https://api.aomi.dev`. It currently supports Arc Mainnet (`chainId: 5042`) and Arc Testnet (`chainId: 5042002`). It uses x402 payments instead of the bearer token used by the [Agent and Pipeline APIs](/api-reference/overview).
+Task API is a separate HTTP surface at `https://api.aomi.dev` for production and `https://api-staging.aomi.dev` for staging. Arc Mainnet uses `chainId: 5042`; Arc Testnet uses `chainId: 5042002`. Check [production](https://api.aomi.dev/v1/task/build) or [staging](https://api-staging.aomi.dev/v1/task/build) payment metadata to see which network the chosen host currently accepts. Task API uses x402 payments instead of the bearer token used by the [Agent and Pipeline APIs](/api-reference/overview).
 
 ## Request and payment sequence
 

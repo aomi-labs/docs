@@ -4,9 +4,9 @@ sidebarTitle: "Overview and endpoints"
 description: "Task API endpoints, request fields, x402 responses, and the live OpenAPI contract."
 ---
 
-Base URL: `https://api.aomi.dev`. The Task API uses JSON and x402 v2 `Payment-Required` and `Payment-Signature` headers. It does not require an Agent or Pipeline bearer token, `Idempotency-Key`, or `TaskAuthorization`.
+Use `https://api.aomi.dev` for production or `https://api-staging.aomi.dev` for staging. Both hosts use the endpoint paths below. The Task API uses JSON and x402 v2 `Payment-Required` and `Payment-Signature` headers. It does not require an Agent or Pipeline bearer token, `Idempotency-Key`, or `TaskAuthorization`.
 
-The [live Task OpenAPI document](https://api.aomi.dev/openapi.json) is the complete, current schema for request bodies, responses, and signed evidence. The public [payment metadata](https://api.aomi.dev/v1/task/build) lists supported networks and the current payment scheme. Use the `402` challenge from your own POST request for the exact payment details.
+The [production Task OpenAPI document](https://api.aomi.dev/v1/task/openapi.json) and [staging Task OpenAPI document](https://api-staging.aomi.dev/v1/task/openapi.json) give the current schema for each host. Check [production payment metadata](https://api.aomi.dev/v1/task/build) or [staging payment metadata](https://api-staging.aomi.dev/v1/task/build) before choosing a chain: available networks and payment recipients can differ. Use the `402` challenge from your own POST request for the exact payment details.
 
 | Endpoint | Purpose | Payment |
 | --- | --- | --- |
@@ -23,7 +23,7 @@ The [live Task OpenAPI document](https://api.aomi.dev/openapi.json) is the compl
 | Field | Type | Meaning |
 | --- | --- | --- |
 | `intent` | string | Plain-language task, 1–8,000 characters |
-| `chainId` | integer | `5042` for Arc Mainnet or `5042002` for Arc Testnet |
+| `chainId` | integer | `5042` for Arc Mainnet or `5042002` for Arc Testnet; check the selected host's payment metadata for current availability |
 | `sender` | string | Address whose actions are prepared and simulated |
 | `payer` | string | Optional payment identity if different from `sender` |
 | `executionKind` | string | `eoa_transactions` (default) or `smart_account_calls` |
