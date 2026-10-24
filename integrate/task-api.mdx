@@ -7,14 +7,69 @@ The Task API gives an agent or application a paid way to turn an onchain intent 
 
 Task API is a separate HTTP surface at `https://api.aomi.dev`. It currently supports Arc Mainnet (`chainId: 5042`) and Arc Testnet (`chainId: 5042002`). It uses x402 payments instead of the bearer token used by the [Agent and Pipeline APIs](/api-reference/overview).
 
-## The two purchases
+## Request and payment sequence
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor User
+    participant Client as Your agent or application
+    participant Wallet as Payment wallet
+    participant Task as Task API
+
+    User->>Client: Choose intent, Arc chain, and sender
+    Client->>Task: POST /v1/task/build with JSON body
+    Task-->>Client: 402 Payment-Required (0.01 USDC)
+    Client->>Wallet: Show preparation payment
+    User->>Wallet: Authorize 0.01 USDC
+    Wallet-->>Client: Payment-Signature A
+    Client->>Task: Retry identical build POST with signature A
+    Task-->>Client: 202 quoteId, retrievalToken, statusUrl, resultUrl
+    loop Until ready or terminal failure
+        Client->>Task: POST statusUrl with retrievalToken (free)
+        Task-->>Client: 200/202 progress or signed preview
+    end
+    Client->>Task: GET /.well-known/jwks.json
+    Task-->>Client: Public verification keys
+    Client->>Client: Verify attestation, request, simulation, and fee
+    User->>Client: Decide whether to buy the bundle
+    opt User chooses retrieval
+        Client->>Task: POST resultUrl with retrievalToken
+        alt Simulated outgoing USDC is greater than zero
+            Task-->>Client: 402 signed preview and 3% payment challenge
+            Client->>Wallet: Show exact retrieval quote
+            User->>Wallet: Authorize retrieval payment
+            Wallet-->>Client: Payment-Signature B
+            Client->>Task: Retry identical result POST with signature B
+            Task-->>Client: 200 immutable unsigned bundle
+        else Simulated outgoing USDC is zero
+            Task-->>Client: 200 immutable unsigned bundle (no second payment)
+        end
+    end
+    Client-->>User: Show exact actions for separate approval and signing
+```
+
+The preparation and retrieval signatures authorize separate purchases. Neither signature authorizes the prepared transaction. If preparation fails, there is no bundle to buy.
+
+## Pricing
 
 | Stage | What you get | Price |
 | --- | --- | --- |
-| Preparation | A job and, when ready, a signed simulation summary with a retrieval price | 0.01 USDC per attempt |
-| Retrieval | The immutable unsigned transaction bundle | 3% of simulated gross outgoing USDC; free when that outflow is zero |
+| Preparation | A job and, when ready, a signed simulation summary with a retrieval price | 0.01 USDC for each new attempt (`10,000` micro-USDC) |
+| Status checks | Progress or the signed preview | Free |
+| Retrieval | The immutable unsigned transaction bundle | 3% of simulated gross outgoing USDC, quoted after preparation; free when that outflow is zero |
 
-Preparation is charged per attempt, including attempts that do not produce a usable bundle. Payment buys computation or retrieval, not permission to execute a transaction.
+Preparation is charged per attempt and is non-refundable, including when an attempt fails to produce a usable bundle. The 3% fee is based on **gross outgoing USDC in the simulation**, not on the value of incoming assets or the number of calls. Read the signed preview's `pricing.fee_microusd` and the second `Payment-Required` challenge for the exact retrieval amount before paying.
+
+| Simulated gross outgoing USDC | Preparation | Illustrative retrieval | Illustrative Task API total |
+| ---: | ---: | ---: | ---: |
+| 0 USDC | 0.01 USDC | 0 USDC | 0.01 USDC |
+| 10 USDC | 0.01 USDC | 0.30 USDC | 0.31 USDC |
+| 100 USDC | 0.01 USDC | 3.00 USDC | 3.01 USDC |
+
+These examples assume one preparation attempt. A new attempt adds another 0.01 USDC. The preview also reports `pricing.outgoing_usdc_wei` (18-decimal USDC base units) and `pricing.preparation_fee_microusd`. Use the quoted fee for payment rather than calculating it from this table. The Task API does not sign or broadcast the bundle, so any later transaction execution is outside these Task API charges.
+
+After a successful retrieval, the API supports repeat retrieval of the same frozen bundle for 30 days. Keep the `retrievalToken` private so only your application can access it.
 
 ## 1. Request preparation
 
