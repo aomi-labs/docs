@@ -55,6 +55,7 @@
               "integrate/choose-surface",
               "integrate/agent",
               "integrate/pipeline",
+              "integrate/task-api",
               "integrate/authentication",
               "integrate/actions-and-signing",
               "integrate/recipes"
@@ -257,6 +258,12 @@
                   "POST /v1/pipeline/svm/commit"
                 ]
               }
+            ]
+          },
+          {
+            "group": "Task API",
+            "pages": [
+              "api-reference/task"
             ]
           }
         ]
