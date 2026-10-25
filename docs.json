@@ -262,8 +262,13 @@
           },
           {
             "group": "Task API",
+            "openapi": "https://api.aomi.dev/v1/task/openapi.json",
             "pages": [
-              "api-reference/task"
+              "api-reference/task",
+              "api-reference/task-payment-metadata",
+              "api-reference/task-status",
+              "api-reference/task-result",
+              "api-reference/task-signing-keys"
             ]
           }
         ]
