@@ -1,45 +1,10 @@
 ---
-title: "Task API reference"
-sidebarTitle: "Overview and endpoints"
-description: "Task API endpoints, request fields, x402 responses, and the live OpenAPI contract."
+title: "Prepare a task"
+sidebarTitle: "Prepare a task"
+description: "Validate an intent and purchase one preparation attempt over x402."
+openapi: "https://api.aomi.dev/v1/task/openapi.json POST /v1/task/build"
 ---
 
-Use `https://api.aomi.dev` for production or `https://api-staging.aomi.dev` for staging. Both hosts use the endpoint paths below. The Task API uses JSON and x402 v2 `Payment-Required` and `Payment-Signature` headers. It does not require an Agent or Pipeline bearer token, `Idempotency-Key`, or `TaskAuthorization`.
+This reference uses the [production OpenAPI document](https://api.aomi.dev/v1/task/openapi.json) at `https://api.aomi.dev`. For staging, use `https://api-staging.aomi.dev` and its [OpenAPI document](https://api-staging.aomi.dev/v1/task/openapi.json). Check the chosen host's [payment metadata](https://api.aomi.dev/v1/task/build) before paying; accepted networks and recipients can differ.
 
-The [production Task OpenAPI document](https://api.aomi.dev/v1/task/openapi.json) and [staging Task OpenAPI document](https://api-staging.aomi.dev/v1/task/openapi.json) give the current schema for each host. Check [production payment metadata](https://api.aomi.dev/v1/task/build) or [staging payment metadata](https://api-staging.aomi.dev/v1/task/build) before choosing a chain: available networks and payment recipients can differ. Use the `402` challenge from your own POST request for the exact payment details.
-
-| Endpoint | Purpose | Payment |
-| --- | --- | --- |
-| `GET /v1/task/build` | Read public payment metadata; this GET cannot buy preparation | None |
-| `POST /v1/task/build` | Validate an intent and start a preparation attempt | 0.01 USDC x402 challenge |
-| `POST /v1/task/{quoteId}/status` | Check progress and retrieve the signed preview | None |
-| `POST /v1/task/{quoteId}/result` | Retrieve the immutable unsigned bundle | 3% of simulated gross outgoing USDC, or free for zero outflow |
-| `GET /.well-known/jwks.json` | Read public keys for verifying Task attestations | None |
-
-## Prepare a task
-
-`POST /v1/task/build` requires JSON with `intent`, `chainId`, and `sender`.
-
-| Field | Type | Meaning |
-| --- | --- | --- |
-| `intent` | string | Plain-language task, 1–8,000 characters |
-| `chainId` | integer | `5042` for Arc Mainnet or `5042002` for Arc Testnet; check the selected host's payment metadata for current availability |
-| `sender` | string | Address whose actions are prepared and simulated |
-| `payer` | string | Optional payment identity if different from `sender` |
-| `executionKind` | string | `eoa_transactions` (default) or `smart_account_calls` |
-| `transactionSafetyMode` | string | Optional safety selection; see the live schema for values |
-| `calls` | array | Up to 16 exact ordered calls, only with `smart_account_calls` |
-| `constraints` | object | Optional limits on outgoing USDC, gas, targets, and minimum received amounts |
-
-A valid unpaid request returns `402` and a `Payment-Required` header. Retry the identical request with `Payment-Signature`. A paid or pending attempt returns `202` with `quoteId`, `retrievalToken`, `statusUrl`, `resultUrl`, and `retryAfter`. Invalid input returns `422` without a charge. Treat `retrievalToken` as a private capability.
-
-## Check progress and retrieve
-
-Send `{ "retrievalToken": "..." }` as JSON to each URL returned by the build response. Use `POST` for both calls.
-
-- **Status:** `200` or `202` reports progress or returns a signed preview. Poll no faster than `retryAfter`. An unknown quote or invalid token returns `404`.
-- **Result:** `202` means the job is still pending. For a paid bundle, `402` includes the preview and a retrieval payment challenge. Verify the signed preview and fee before retrying the identical token request with a new `Payment-Signature`. `200` returns the frozen unsigned bundle. Retrieval is free when simulated gross outgoing USDC is zero.
-
-Verify Task attestations with [the published JWKS](https://api.aomi.dev/.well-known/jwks.json), and confirm the request hash, actions, simulated effects, and price before allowing any signing flow. Payment never authorizes execution.
-
-For a guided integration, see [Use the Task API](/integrate/task-api). For the separate stateless build and commit resource, see [Pipeline REST API](/api-reference/pipeline).
+For the two-purchase workflow and wallet controls, see [Use the Task API](/integrate/task-api).
