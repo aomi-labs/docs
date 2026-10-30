@@ -95,7 +95,7 @@ The runtime component that connects agent threads to models. Your plugin declare
 
 ### MCP
 
-Model Context Protocol is a standard for connecting an AI client to external tools. Aomi hosts an MCP server at `chat.aomi.dev/api/mcp`. Clients can search tools, read chain state, and stage transactions inside your account. Signing always completes on a wallet surface. See [MCP](/guides/mcp).
+Model Context Protocol is a standard for connecting an AI client to external tools. Aomi hosts Agent MCP at `https://chat.aomi.dev/v1/agent/mcp` and Pipeline MCP at `https://chat.aomi.dev/v1/pipeline/mcp`. Each requires its own exact OAuth audience. Clients can search tools, read chain state, and stage transactions inside your account. Signing always completes on a wallet surface. See [MCP](/guides/mcp).
 
 ### namespace
 

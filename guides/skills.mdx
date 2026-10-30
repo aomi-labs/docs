@@ -8,7 +8,7 @@ Aomi publishes two operating procedures in the [`aomi-labs/skills`](https://gith
 
 | Skill                                                                          | What it teaches                                                                                                  |
 | ------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------- |
-| [`aomi-transact`](https://github.com/aomi-labs/skills/tree/main/aomi-transact) | Drive the npm client CLI through Agent chat, Action review, EVM batch simulation, and explicit wallet execution. |
+| [`aomi-transact`](https://github.com/aomi-labs/skills/tree/main/aomi-transact) | Drive the npm client CLI through Agent chat, Commit review and simulation, and explicit wallet execution. |
 | [`aomi-build`](https://github.com/aomi-labs/skills/tree/main/aomi-build)       | Turn an API, SDK, or product requirement into a Rust Aomi plugin that you ship as an App.                        |
 
 Skills are markdown instructions and supporting references. Your coding agent reads them and uses the local tools declared by the skill.
@@ -45,11 +45,11 @@ The skills and client CLI update independently. Installing or refreshing a skill
 For transaction work, install or update the npm client separately:
 
 ```bash
-npm install -g @aomi-labs/client@latest
+npm install -g @aomi-labs/cli@latest
 aomi --version
 ```
 
-`aomi-transact` requires client `0.6.0` or newer. Its first step checks the detected version and can use `npx @aomi-labs/client@latest` when no global binary is available.
+`aomi-transact` requires standalone CLI `0.2.0` or newer. Its first step checks the detected version and can use `npx @aomi-labs/cli@latest` when no global binary is available.
 
 ## Transaction workflow
 
@@ -60,27 +60,29 @@ aomi chat "swap 1 ETH for USDC" \
   --new-session \
   --public-key 0xYourAddress \
   --chain 1
-aomi tx list
-aomi tx simulate <action-id>
-aomi tx sign <action-id>
+aomi tx list --json
+aomi tx export <commit-id> --format commit
+# Review the exported Commit and its simulation evidence before signing.
+aomi tx sign <commit-id>
 ```
 
-The skill treats a quote or chat answer as different from a pending Action. It lists the current Action before signing and simulates dependent EVM execution Actions together.
-
-Local CLI execution uses the configured wallet key. Account abstraction is prepared in the backend lane. The `--aa` and `--eoa` flags only assert the kind of the pending Action; the skill does not select an AA provider or implementation from the signing command.
+The skill exports the exact durable Commit and reviews its intent and simulation
+before signing. `tx simulate` applies to legacy EVM Actions; it does not replace
+Commit review. Retain the original session, full Commit ID, and transaction hash
+when reconciling a payment. A bridge also needs destination settlement evidence.
 
 ## Security boundary
 
 The canonical `aomi-transact` manifest declares `risk_tier: L2` because it can sign and broadcast onchain transactions. Its default permissions are narrow:
 
-- shell commands are limited to `aomi` and `npx @aomi-labs/client@latest`;
+- shell commands are limited to `aomi` and `npx @aomi-labs/cli@latest`;
 - file reads and writes are limited to `~/.aomi/`, with identity files denied;
 - network access is limited to `chat.aomi.dev` in the manifest;
 - no MCP tools are granted by the skill;
 - credential setup and transaction signing require an explicit user request;
-- the procedure lists a pending Action and simulates dependent EVM steps before signing.
+- the procedure reviews the exact Commit and its simulation evidence before signing.
 
-The CLI can also contact a user-supplied `--rpc-url` during wallet execution. Review that endpoint and the prepared Action before authorizing a signing run.
+The CLI can also contact a user-supplied `--rpc-url` during wallet execution. Review that endpoint and the prepared Commit before authorizing a signing run.
 
 The skill never invents or echoes a credential value. `aomi secret add` sends a temporary secret value to the Aomi backend and stores only its handle locally, so the backend becomes part of the credential's trust boundary. Persistent per-user App credentials use a separate Account API and never return saved values.
 
@@ -90,7 +92,7 @@ The skill never invents or echoes a credential value. `aomi secret add` sends a 
 | ------------------ | ---------------------------------------------------------------------------- | --------------------------------------------------------------------- |
 | Control plane      | Instructions drive local CLI or build tools.                                 | A Streamable HTTP client calls the hosted Agent or Pipeline resource. |
 | Installation       | Install the repository or Codex plugin bundle.                               | Add one MCP URL and complete OAuth.                                   |
-| Transaction review | `aomi-transact` reviews and executes a local CLI Action with a local signer. | Agent MCP hands a pending Action to a human wallet surface.           |
+| Transaction review | `aomi-transact` reviews and executes a durable Commit with a local signer. | Agent MCP hands a pending Action to a human wallet surface.           |
 | State              | Local CLI records plus backend Agent sessions.                               | Account-owned Agent sessions or stateless Pipeline calls.             |
 | Best fit           | Guided transaction procedures and App authoring.                             | Hosted Agent turns or direct Pipeline discovery from any MCP client.  |
 
@@ -107,7 +109,7 @@ npx skills add aomi-labs/skills
 Then update the CLI independently if you use `aomi-transact`:
 
 ```bash
-npm install -g @aomi-labs/client@latest
+npm install -g @aomi-labs/cli@latest
 aomi --help
 ```
 
