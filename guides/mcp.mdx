@@ -23,7 +23,6 @@ Use the same paths on another Aomi environment by replacing the origin. Accounts
   <Tab title="Codex">
     ```bash
     codex mcp add aomi-agent --url https://chat.aomi.dev/v1/agent/mcp
-    codex mcp login aomi-agent
     ```
   </Tab>
 
@@ -54,11 +53,41 @@ Use the same paths on another Aomi environment by replacing the origin. Accounts
   </Tab>
 </Tabs>
 
+Codex starts browser authorization when it discovers OAuth. Do not add
+`--oauth-resource`: Codex derives the resource from the MCP URL. Adding it can
+send the parameter twice, which Aomi rejects.
+
+If Codex reports `Failed to fetch metadata document (network error or redirect blocked)`,
+use dynamic client registration for that login:
+
+```bash
+codex mcp login aomi-agent --oauth-client-registration dcr
+```
+
+Use the same option for `aomi-pipeline`. This is a workaround for the CIMD metadata
+fetch failure; it does not change the token's exact resource audience.
+
 Then ask your MCP client to use Aomi, for example:
 
 ```text
 Use Aomi to read my USDC balance on Base, then explain the result.
 ```
+
+## Verify the connection
+
+After authorizing each resource, check its configuration:
+
+```bash
+codex mcp get aomi-agent
+codex mcp get aomi-pipeline
+```
+
+Open a fresh client session to reload tool discovery. Use `aomi_list_sessions`
+for an Agent read and `aomi_list_apps` for Pipeline discovery. OAuth credentials
+must be issued for the exact URL you connected; do not copy tokens between resources.
+
+The MCP endpoints accept POST and OPTIONS. A plain browser GET can return `404`
+without indicating a missing server. Check OAuth discovery and an MCP request.
 
 ## Agent MCP tools
 

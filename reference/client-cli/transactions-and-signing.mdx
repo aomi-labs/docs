@@ -4,6 +4,42 @@ sidebarTitle: "Transactions and signing"
 description: "Review, simulate, export, and execute EVM and SVM Agent Actions with the aomi client CLI."
 ---
 
+## Durable Commits
+
+Use CLI `0.2.0` or newer from `@aomi-labs/cli`. An Agent turn can produce a
+durable Commit containing the prepared transaction and review evidence:
+
+```bash
+aomi tx list --json
+aomi tx export <commit-id> --format commit
+```
+
+Review the exact sender, chain, token, amount, recipient, calldata, fees, and
+simulation results. A Commit's simulation belongs to its durable review;
+`tx simulate` accepts legacy EVM execution Actions, not Commit IDs.
+
+Execute only the exact reviewed Commit with your authorized signer:
+
+```bash
+aomi tx sign <commit-id>
+```
+
+For external signing, preserve the exported `aomi.commit.v1` envelope and report
+the signed payloads or exact prepared broadcast hash:
+
+```bash
+aomi tx submit <commit-id> --signed-file <signed-export-file>
+aomi tx submit <commit-id> --tx-hash <prepared-broadcast-hash>
+```
+
+Refresh the same Commit with `tx list --json` before retrying. An outstanding
+wallet attempt or known hash needs reconciliation. Confirmation requires a
+successful receipt; a bridge also requires spendable funds at the destination.
+
+## Legacy Actions
+
+The following commands apply to sessions containing legacy Actions.
+
 An Agent turn can produce a durable Action that needs your wallet. The CLI fetches those Actions from the active Agent session and exposes them through the historically named `tx` command group.
 
 An Action can request:
