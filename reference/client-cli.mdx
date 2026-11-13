@@ -19,7 +19,7 @@ The `aomi` command ships in the [`@aomi-labs/cli`](https://www.npmjs.com/package
   Installing a skill does not upgrade an existing global binary.
 </Note>
 
-By default, the CLI calls `https://aomi.chat`. Override the environment for one command with `--backend-url`, or persist it with `aomi config set-backend`.
+Use `https://aomi.chat` for production. Published CLI `0.2.0` still has the retired hostname as its built-in default, so explicitly set the backend after installing. Override the environment for one command with `--backend-url`, or persist it with `aomi config set-backend`.
 
 ## Install
 
@@ -28,6 +28,7 @@ Run once without installing globally:
 ```bash
 npx @aomi-labs/cli@latest --version
 npx @aomi-labs/cli@latest --help
+npx @aomi-labs/cli@latest config set-backend https://aomi.chat
 ```
 
 Install the `aomi` binary globally:
@@ -36,6 +37,7 @@ Install the `aomi` binary globally:
 npm install -g @aomi-labs/cli@latest
 aomi --version
 aomi --help
+aomi config set-backend https://aomi.chat
 ```
 
 Or add the client to a project:
@@ -43,6 +45,7 @@ Or add the client to a project:
 ```bash
 pnpm add @aomi-labs/cli
 pnpm exec aomi --version
+pnpm exec aomi config set-backend https://aomi.chat
 ```
 
 Examples on this page use the global `aomi` binary. Substitute `npx @aomi-labs/cli@latest` when you do not want a global install.
