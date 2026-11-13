@@ -10,7 +10,7 @@ wallet provider. Aomi resolves the App's tools and execution settings from the
 Application ID.
 
 The widget runs on your application's origin. It does not reuse cookies from
-`chat.aomi.dev`. Instead, it creates a widget session for the signed-in user and
+`aomi.chat`. Instead, it creates a widget session for the signed-in user and
 binds that session to the exact origin that created it. There is no origin
 registration or allowlist: any HTTPS origin can mint a session, and the session
 is only valid when presented from that same origin.
@@ -77,7 +77,7 @@ application. Add only the provider you use.
 <Tabs>
   <Tab title="Next.js">
     ```bash
-    NEXT_PUBLIC_AOMI_API_URL=https://chat.aomi.dev
+    NEXT_PUBLIC_AOMI_API_URL=https://aomi.chat
     NEXT_PUBLIC_AOMI_APPLICATION_ID=123
 
     # Add one only when you use that provider
@@ -87,7 +87,7 @@ application. Add only the provider you use.
   </Tab>
   <Tab title="Vite">
     ```bash
-    VITE_AOMI_API_URL=https://chat.aomi.dev
+    VITE_AOMI_API_URL=https://aomi.chat
     VITE_AOMI_APPLICATION_ID=123
 
     # Add one only when you use that provider

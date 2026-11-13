@@ -39,7 +39,7 @@ npm ls @aomi-labs/client
 curl --fail "$AOMI_BASE_URL/openapi.json" -o openapi.json
 ```
 
-The production origin is `https://chat.aomi.dev`. Its published OpenAPI lists the versioned Agent and Pipeline routes, but a listed route does not guarantee that the environment implements every contract on `main`. The newer account credential and durable Commit APIs require a matching package and deployment. Select an environment that explicitly supports the feature you use; do not combine portable Builds from incompatible versions.
+The production origin is `https://aomi.chat`. Its published OpenAPI lists the versioned Agent and Pipeline routes, but a listed route does not guarantee that the environment implements every contract on `main`. The newer account credential and durable Commit APIs require a matching package and deployment. Select an environment that explicitly supports the feature you use; do not combine portable Builds from incompatible versions.
 
 These guides describe merged contracts only. Open pull requests are not part of the supported examples.
 
@@ -74,7 +74,7 @@ npm install --save-dev tsx @types/node
 Set the API origin supplied for your environment:
 
 ```bash
-export AOMI_BASE_URL="https://chat.aomi.dev"
+export AOMI_BASE_URL="https://aomi.chat"
 ```
 
 ### Run two Agent turns

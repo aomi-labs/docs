@@ -130,13 +130,13 @@ aomi account whoami
 For your own service or bot, register a public device client with one request. Registration is self-serve and needs no account:
 
 ```bash
-curl -sS -X POST https://chat.aomi.dev/api/auth/oauth2/register \
+curl -sS -X POST https://aomi.chat/api/auth/oauth2/register \
   -H "content-type: application/json" \
   -d '{
     "client_name": "my-aomi-service",
     "token_endpoint_auth_method": "none",
     "grant_types": ["urn:ietf:params:oauth:grant-type:device_code", "refresh_token"],
-    "resources": ["https://chat.aomi.dev/v1/agent"],
+    "resources": ["https://aomi.chat/v1/agent"],
     "scope": "agent:read agent:write agent:actions:resolve offline_access"
   }'
 ```
@@ -150,9 +150,9 @@ The response contains your `client_id`. Registration enforces these rules:
 
 | Resource | Scopes to request |
 | --- | --- |
-| `https://chat.aomi.dev/v1/agent` | `agent:read agent:write agent:actions:resolve offline_access` |
-| `https://chat.aomi.dev/v1/pipeline` | `pipeline:catalog pipeline:execute offline_access` |
-| `https://chat.aomi.dev/v1/account` | Only the `account:*` scopes you need, such as `account:apps:read account:credentials:read` |
+| `https://aomi.chat/v1/agent` | `agent:read agent:write agent:actions:resolve offline_access` |
+| `https://aomi.chat/v1/pipeline` | `pipeline:catalog pipeline:execute offline_access` |
+| `https://aomi.chat/v1/account` | Only the `account:*` scopes you need, such as `account:apps:read account:credentials:read` |
 
 <Warning>
   A self-registered client is bound to the one resource it was registered for. Using it for another resource fails with `invalid_target` ("OAuth client is bound to another Aomi resource"). Register one client per resource, and request only that resource from the SDK, for example `aomi.auth.login({ for: "agent" })`. For one SDK client that covers both Agent and Pipeline, ask the Aomi team for a provisioned client ID.
@@ -270,7 +270,7 @@ aomi chat "run the selected App" \
 
 ### Create an App key
 
-App keys look like `aomi-` followed by 64 hex characters, and Aomi always generates them. The first key for a private App is issued by the Aomi team to the owner's account. After that, an account that holds an active key for the App can mint additional or replacement keys and revoke old ones. There is no portal screen for App keys today; call the account endpoint from a signed-in `chat.aomi.dev` session:
+App keys look like `aomi-` followed by 64 hex characters, and Aomi always generates them. The first key for a private App is issued by the Aomi team to the owner's account. After that, an account that holds an active key for the App can mint additional or replacement keys and revoke old ones. There is no portal screen for App keys today; call the account endpoint from a signed-in `aomi.chat` session:
 
 | Method | Path | Body | Returns |
 | --- | --- | --- | --- |

@@ -7,8 +7,8 @@ Aomi exposes two Streamable HTTP MCP resources. Choose the resource that matches
 
 | Resource     | Production URL                          | Use it for                                                                                        |
 | ------------ | --------------------------------------- | ------------------------------------------------------------------------------------------------- |
-| Agent MCP    | `https://chat.aomi.dev/v1/agent/mcp`    | Start or continue Agent turns, read progress, interrupt work, and find account-owned sessions.    |
-| Pipeline MCP | `https://chat.aomi.dev/v1/pipeline/mcp` | Discover Apps and operation schemas, then execute one operation or a multi-step program directly. |
+| Agent MCP    | `https://aomi.chat/v1/agent/mcp`    | Start or continue Agent turns, read progress, interrupt work, and find account-owned sessions.    |
+| Pipeline MCP | `https://aomi.chat/v1/pipeline/mcp` | Discover Apps and operation schemas, then execute one operation or a multi-step program directly. |
 
 Use the same paths on another Aomi environment by replacing the origin. Accounts, OAuth grants, sessions, and App inventory are environment-specific.
 
@@ -17,19 +17,25 @@ Use the same paths on another Aomi environment by replacing the origin. Accounts
   versioned resources.
 </Warning>
 
+<Note>
+  If you connected using `chat.aomi.dev`, update the server URL to `aomi.chat`
+  and authorize it again. OAuth credentials are bound to the exact MCP resource
+  URL; credentials for the old origin do not authorize the new one.
+</Note>
+
 ## Connect Agent MCP
 
 <Tabs>
   <Tab title="Codex">
     ```bash
-    codex mcp add aomi-agent --url https://chat.aomi.dev/v1/agent/mcp
+    codex mcp add aomi-agent --url https://aomi.chat/v1/agent/mcp
     ```
   </Tab>
 
   <Tab title="Claude Code">
     ```bash
     claude mcp add --transport http aomi-agent \
-      https://chat.aomi.dev/v1/agent/mcp
+      https://aomi.chat/v1/agent/mcp
     ```
 
     Run `/mcp` and authenticate **aomi-agent** if the browser flow does not start automatically.
@@ -41,7 +47,7 @@ Use the same paths on another Aomi environment by replacing the origin. Accounts
     {
       "mcpServers": {
         "aomi-agent": {
-          "url": "https://chat.aomi.dev/v1/agent/mcp"
+          "url": "https://aomi.chat/v1/agent/mcp"
         }
       }
     }
@@ -49,7 +55,7 @@ Use the same paths on another Aomi environment by replacing the origin. Accounts
   </Tab>
 
   <Tab title="Other clients">
-    Configure a Streamable HTTP server at `https://chat.aomi.dev/v1/agent/mcp`. The origin publishes OAuth authorization-server and protected-resource metadata.
+    Configure a Streamable HTTP server at `https://aomi.chat/v1/agent/mcp`. The origin publishes OAuth authorization-server and protected-resource metadata.
   </Tab>
 </Tabs>
 
@@ -112,7 +118,7 @@ When the response includes a pending Action, send the user to the Aomi portal or
 
 ```bash
 codex mcp add aomi-pipeline \
-  --url https://chat.aomi.dev/v1/pipeline/mcp
+  --url https://aomi.chat/v1/pipeline/mcp
 codex mcp login aomi-pipeline
 ```
 

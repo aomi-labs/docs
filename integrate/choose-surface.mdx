@@ -10,7 +10,7 @@ Aomi reaches users through several surfaces. They differ in what you build, whet
 
 | Surface | Best for | Needs your own App? | Activation? | Application ID? | End-user auth | App key? | Effort |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| [Hosted portal](/trade/portal) at chat.aomi.dev | Trying Aomi, demos, users who just want to transact | No. The default Agent and public Apps are ready | No | No | Wallet sign-in on chat.aomi.dev | Never | None |
+| [Hosted portal](/trade/portal) at aomi.chat | Trying Aomi, demos, users who just want to transact | No. The default Agent and public Apps are ready | No | No | Wallet sign-in on aomi.chat | Never | None |
 | [Widget](/guides/widget/quickstart) on your site | Adding chat, threads, and wallet approval to a React app | Only to use your own tools | Only for your own App | Yes, a required prop. Add [Direct routing](/guides/widget/quickstart#route-turns-to-your-app) to reach that App | Browser wallet, Para, or Privy; origin-bound session | Not supported. Private Apps cannot be used in the widget | Low |
 | [Custom UI](/integrate/ui/headless-library) with the client SDK | Your own design on top of Aomi threads and actions | Only to use your own tools | Only for your own App | Only for Direct routing | Guest, host account session, or OAuth | Not in browser code | Medium |
 | [SDK only](/integrate/client-sdk): server, CLI, bot | Scripts, backends, bots, agents, and automation | No. Auto routing uses the default Agent | Only for your own App | Only for Direct routing | Guest by default; [OAuth](/integrate/authentication#get-an-oauth-client-id) for an account | Only for a private App, kept on the server | Low |
@@ -25,7 +25,7 @@ flowchart TD
     Q1{"Do users need your own<br/>APIs or tools?"}
     Q1 -->|No| Q2{"Do you need your<br/>own interface?"}
     Q1 -->|Yes| APP["Build your own App<br/>then ship it through a surface below"]
-    Q2 -->|No| PORTAL["Hosted portal<br/>chat.aomi.dev"]
+    Q2 -->|No| PORTAL["Hosted portal<br/>aomi.chat"]
     Q2 -->|Yes| Q3{"Is there a<br/>browser UI?"}
     Q3 -->|No| SDK["SDK only<br/>server, CLI, bot"]
     Q3 -->|Yes| Q4{"Is the standard chat<br/>layout good enough?"}
@@ -86,7 +86,7 @@ const applicationId = Number(process.env.NEXT_PUBLIC_AOMI_APPLICATION_ID); // fr
 
 <AomiWidget
   applicationId={String(applicationId)}
-  apiUrl="https://chat.aomi.dev"
+  apiUrl="https://aomi.chat"
   auth={{ kind: "browser_wallet" }}
   routing={{ targets: [{ mode: "direct", apps: [{ applicationId }] }] }}
 />
@@ -96,7 +96,7 @@ From a server, the same App is one option away. Add `apiKey` only if the App is 
 
 ```ts
 const aomi = new Aomi({
-  baseUrl: "https://chat.aomi.dev",
+  baseUrl: "https://aomi.chat",
   apiKey: process.env.AOMI_API_KEY, // private Apps only
 });
 

@@ -22,7 +22,7 @@ Use presentation props to fit the widget into a page, panel, or modal.
 ```tsx
 <AomiWidget
   applicationId="123"
-  apiUrl="https://chat.aomi.dev"
+  apiUrl="https://aomi.chat"
   auth={{ kind: "browser_wallet" }}
   width="100%"
   height="min(780px, calc(100dvh - 160px))"
@@ -62,7 +62,7 @@ Use the compound API when the standard widget layout is close to what you need, 
 import { AomiFrame } from "@aomi-labs/widget-lib";
 
 <AomiFrame.Root
-  backendUrl="https://chat.aomi.dev"
+  backendUrl="https://aomi.chat"
   applicationId="123"
   height="720px"
   showSidebar={false}
@@ -105,7 +105,7 @@ import { AomiRuntimeProvider } from "@aomi-labs/react";
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <AomiRuntimeProvider
-      backendUrl="https://chat.aomi.dev"
+      backendUrl="https://aomi.chat"
       applicationId="123"
     >
       {children}

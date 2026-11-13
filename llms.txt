@@ -4,7 +4,7 @@
 
 ## Use Aomi
 - [Introduction](https://aomi.dev/docs/index): what Aomi is, demo clips, and the architecture.
-- [Portal](https://aomi.dev/docs/trade/portal): the hosted chat at chat.aomi.dev — connect a wallet and trade by chat.
+- [Portal](https://aomi.dev/docs/trade/portal): the hosted chat at aomi.chat — connect a wallet and trade by chat.
 - [Agents with MCP](https://aomi.dev/docs/guides/mcp): connect Claude Code, Cursor, or any MCP client to the Aomi server.
 - [Client CLI](https://aomi.dev/docs/reference/client-cli): install the aomi command, chat, simulate, and sign from the terminal — every command, flag, and environment variable.
 
