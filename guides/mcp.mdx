@@ -32,12 +32,14 @@ For staging, use `https://mcp-staging.aomi.dev/` and `https://mcp-staging.aomi.d
   </Tab>
 
   <Tab title="Claude Code">
+    If this scope already contains an `aomi-agent` entry, choose a fresh name such as `aomi-agent-mcp` in the command below. Select that name in `/mcp` to authenticate it.
+
     ```bash
     claude mcp add --transport http aomi-agent \
       https://mcp.aomi.dev/
     ```
 
-    Run `/mcp` and authenticate **aomi-agent** if the browser flow does not start automatically.
+    Run `/mcp` and authenticate the server you added if the browser flow does not start automatically.
 
   </Tab>
 
