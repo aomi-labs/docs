@@ -7,10 +7,10 @@ Aomi exposes two Streamable HTTP MCP resources. Choose the resource that matches
 
 | Resource     | Production URL                          | Use it for                                                                                        |
 | ------------ | --------------------------------------- | ------------------------------------------------------------------------------------------------- |
-| Agent MCP    | `https://aomi.chat/v1/agent/mcp`    | Start or continue Agent turns, read progress, interrupt work, and find account-owned sessions.    |
-| Pipeline MCP | `https://aomi.chat/v1/pipeline/mcp` | Discover Apps and operation schemas, then execute one operation or a multi-step program directly. |
+| Agent MCP    | `https://mcp.aomi.dev/`    | Start or continue Agent turns, read progress, interrupt work, and find account-owned sessions.    |
+| Pipeline MCP | `https://mcp.aomi.dev/pipeline` | Discover Apps and operation schemas, then execute one operation or a multi-step program directly. |
 
-Use the same paths on another Aomi environment by replacing the origin. Accounts, OAuth grants, sessions, and App inventory are environment-specific.
+For staging, use `https://mcp-staging.aomi.dev/` and `https://mcp-staging.aomi.dev/pipeline`. Accounts, OAuth grants, sessions, and App inventory are environment-specific.
 
 <Warning>
   `/api/mcp` and `/api/mcp/direct` are removed. They are not aliases for the
@@ -18,8 +18,7 @@ Use the same paths on another Aomi environment by replacing the origin. Accounts
 </Warning>
 
 <Note>
-  If you connected using `chat.aomi.dev`, update the server URL to `aomi.chat`
-  and authorize it again. OAuth credentials are bound to the exact MCP resource
+  When switching from a versioned Chat endpoint, add the new MCP URL and authorize it again. OAuth credentials are bound to the exact MCP resource
   URL; credentials for the old origin do not authorize the new one.
 </Note>
 
@@ -28,17 +27,19 @@ Use the same paths on another Aomi environment by replacing the origin. Accounts
 <Tabs>
   <Tab title="Codex">
     ```bash
-    codex mcp add aomi-agent --url https://aomi.chat/v1/agent/mcp
+    codex mcp add aomi-agent --url https://mcp.aomi.dev/
     ```
   </Tab>
 
   <Tab title="Claude Code">
+    If this scope already contains an `aomi-agent` entry, choose a fresh name such as `aomi-agent-mcp` in the command below. Select that name in `/mcp` to authenticate it.
+
     ```bash
     claude mcp add --transport http aomi-agent \
-      https://aomi.chat/v1/agent/mcp
+      https://mcp.aomi.dev/
     ```
 
-    Run `/mcp` and authenticate **aomi-agent** if the browser flow does not start automatically.
+    Run `/mcp` and authenticate the server you added if the browser flow does not start automatically.
 
   </Tab>
 
@@ -47,7 +48,7 @@ Use the same paths on another Aomi environment by replacing the origin. Accounts
     {
       "mcpServers": {
         "aomi-agent": {
-          "url": "https://aomi.chat/v1/agent/mcp"
+          "url": "https://mcp.aomi.dev/"
         }
       }
     }
@@ -55,7 +56,7 @@ Use the same paths on another Aomi environment by replacing the origin. Accounts
   </Tab>
 
   <Tab title="Other clients">
-    Configure a Streamable HTTP server at `https://aomi.chat/v1/agent/mcp`. The origin publishes OAuth authorization-server and protected-resource metadata.
+    Configure a Streamable HTTP server at `https://mcp.aomi.dev/`. The MCP host publishes protected-resource metadata pointing to the authorization server on `aomi.chat`.
   </Tab>
 </Tabs>
 
@@ -118,7 +119,7 @@ When the response includes a pending Action, send the user to the Aomi portal or
 
 ```bash
 codex mcp add aomi-pipeline \
-  --url https://aomi.chat/v1/pipeline/mcp
+  --url https://mcp.aomi.dev/pipeline
 codex mcp login aomi-pipeline
 ```
 
@@ -171,7 +172,7 @@ OAuth authorizes the caller. It does not give an MCP client a private key or reu
 | ----------------------- | ----------------------------------------------------------------------------------------------------------- |
 | `401 Unauthorized`      | Complete the browser login for this exact MCP server.                                                       |
 | `403 Forbidden`         | Re-authenticate this resource; do not reuse an Agent, Pipeline, REST, or guest token from another audience. |
-| `404` on `/api/mcp*`    | Replace the retired path with `/v1/agent/mcp` or `/v1/pipeline/mcp`.                                        |
+| `404` on `/api/mcp*`    | Replace the retired path with `https://mcp.aomi.dev/` or `https://mcp.aomi.dev/pipeline`.                                        |
 | Browser does not open   | Use the client's explicit login command or its MCP status UI.                                               |
 | Session not found       | Confirm the environment and account own that session.                                                       |
 | Action remains pending  | Complete review through the portal or authenticated wallet client, then call `aomi_check` again.            |

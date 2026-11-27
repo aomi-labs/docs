@@ -6594,8 +6594,8 @@
         "x-aomi-resources": {
           "agent": "https://aomi.chat/v1/agent",
           "pipeline": "https://aomi.chat/v1/pipeline",
-          "agentMcp": "https://aomi.chat/v1/agent/mcp",
-          "pipelineMcp": "https://aomi.chat/v1/pipeline/mcp",
+          "agentMcp": "https://mcp.aomi.dev/",
+          "pipelineMcp": "https://mcp.aomi.dev/pipeline",
           "account": "https://aomi.chat/v1/account"
         }
       }
